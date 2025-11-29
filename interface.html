@@ -27,27 +27,35 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 30px;
+            padding: 10px 30px;
             background: rgba(28, 28, 28, 0.9);
             border-bottom: 1px solid #259FDE;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            height: 70px;
         }
 
-        .site-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #259FDE;
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
+            height: 100%;
         }
 
         .logo {
-            height: 90%;
+            height: 90%; /* 90% of header height */
             width: auto;
-             max-height: 80px; /* Optional: set a maximum height if needed */
+            max-height: 50px;
+        }
+
+        .site-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #259FDE;
         }
 
         .user-profile {
@@ -384,7 +392,16 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .header {
-                padding: 10px 15px;
+                padding: 8px 15px;
+                height: 60px;
+            }
+            
+            .left-section {
+                gap: 15px;
+            }
+            
+            .site-name {
+                font-size: 22px;
             }
             
             .user-info {
@@ -401,14 +418,20 @@
                 top: 10px;
             }
             
-            .site-name {
-                font-size: 20px;
-            }
-            
             .location-info {
                 max-width: 250px;
                 right: 10px;
                 bottom: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .site-name {
+                font-size: 18px;
+            }
+            
+            .left-section {
+                gap: 10px;
             }
         }
     </style>
@@ -420,10 +443,15 @@
     </div>
 
     <div class="header" style="display: none;" id="mainHeader">
-        <div class="site-name">EMProb</div>
-        <div class="logo-container">
-            <img src="https://iili.io/fnM2iqx.png" alt="EMProb Logo" class="logo">
+        <!-- Left Section: Logo + EMProb -->
+        <div class="left-section">
+            <div class="logo-container">
+                <img src="https://iili.io/fnM2iqx.png" alt="EMProb Logo" class="logo">
+            </div>
+            <div class="site-name">EMProb</div>
         </div>
+
+        <!-- Right Section: User Profile -->
         <div class="user-profile" id="userProfile">
             <div class="user-info">
                 <div class="user-avatar" id="userAvatar">JD</div>
@@ -496,105 +524,104 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-<!-- Firebase SDK -->
-<script type="module">
-    // Import the functions you need from the SDKs you need
-    import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    <!-- Firebase SDK - FIXED VERSION -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-    // Your web app's Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
-        authDomain: "probationlocator.firebaseapp.com",
-        databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
-        projectId: "probationlocator",
-        storageBucket: "probationlocator.firebasestorage.app",
-        messagingSenderId: "323066331183",
-        appId: "1:323066331183:web:61f35b70cb07c0618106da"
-    };
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
+            authDomain: "probationlocator.firebaseapp.com",
+            databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
+            projectId: "probationlocator",
+            storageBucket: "probationlocator.firebasestorage.app",
+            messagingSenderId: "323066331183",
+            appId: "1:323066331183:web:61f35b70cb07c0618106da"
+        };
 
-    // Initialize Firebase
-    const app = initializeFirebase(firebaseConfig);
-    const database = getDatabase(app);
-    const auth = getAuth(app);
+        // Initialize Firebase
+        const app = initializeFirebase(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
 
-    // Authentication check function
-    function checkAuth() {
-        const username = localStorage.getItem('emprobUsername');
-        if (!username) {
-            window.location.href = 'index.html';
-        }
-        return username;
-    }
-
-    // Get user data from Firebase
-    async function getUserData(username) {
-        try {
-            const userRef = ref(database, 'credentials/' + username);
-            const snapshot = await get(userRef);
-            
-            if (snapshot.exists()) {
-                return snapshot.val();
-            } else {
-                console.error('User data not found in Firebase');
-                return null;
-            }
-        } catch (error) {
-            console.error('Error fetching user data:', error);
-            return null;
-        }
-    }
-
-    // Initialize the application
-    async function initApplication() {  // ← Renamed this function
-        const username = checkAuth();
-        
-        if (!username) {
-            return;
-        }
-
-        try {
-            // Authenticate anonymously with Firebase
-            await signInAnonymously(auth);
-            console.log("Anonymous authentication successful");
-
-            // Get user data from Firebase
-            const userData = await getUserData(username);
-            
-            if (userData) {
-                // Update UI with user data
-                document.getElementById('usernameDisplay').textContent = userData.username;
-                document.getElementById('emailDisplay').textContent = userData.email;
-                document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
-                
-                // Show the main interface
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('mainHeader').style.display = 'flex';
-                document.getElementById('mapContainer').style.display = 'block';
-                
-                // Initialize the map
-                initializeMap();
-            } else {
-                // If user data not found, redirect to login
-                localStorage.removeItem('emprobUsername');
+        // Authentication check function
+        function checkAuth() {
+            const username = localStorage.getItem('emprobUsername');
+            if (!username) {
                 window.location.href = 'index.html';
             }
-        } catch (error) {
-            console.error("Initialization error:", error);
-            document.getElementById('loadingScreen').innerHTML = `
-                <div style="text-align: center; color: #ff6b6b;">
-                    <h3>Error Loading Application</h3>
-                    <p>Please refresh the page or try again later.</p>
-                </div>
-            `;
+            return username;
         }
-    }
 
-    // Call initialization when page loads
-    document.addEventListener('DOMContentLoaded', initApplication);  // ← Updated function name
-</script>
+        // Get user data from Firebase
+        async function getUserData(username) {
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    return snapshot.val();
+                } else {
+                    console.error('User data not found in Firebase');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                return null;
+            }
+        }
+
+        // Initialize the application
+        async function initApplication() {
+            const username = checkAuth();
+            
+            if (!username) {
+                return;
+            }
+
+            try {
+                // Authenticate anonymously with Firebase
+                await signInAnonymously(auth);
+                console.log("Anonymous authentication successful");
+
+                // Get user data from Firebase
+                const userData = await getUserData(username);
+                
+                if (userData) {
+                    // Update UI with user data
+                    document.getElementById('usernameDisplay').textContent = userData.username;
+                    document.getElementById('emailDisplay').textContent = userData.email;
+                    document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
+                    
+                    // Show the main interface
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainHeader').style.display = 'flex';
+                    document.getElementById('mapContainer').style.display = 'block';
+                    
+                    // Initialize the map
+                    initializeMap();
+                } else {
+                    // If user data not found, redirect to login
+                    localStorage.removeItem('emprobUsername');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                document.getElementById('loadingScreen').innerHTML = `
+                    <div style="text-align: center; color: #ff6b6b;">
+                        <h3>Error Loading Application</h3>
+                        <p>Please refresh the page or try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Call initialization when page loads
+        document.addEventListener('DOMContentLoaded', initApplication);
+    </script>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
