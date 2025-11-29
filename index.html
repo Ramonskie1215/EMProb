@@ -266,8 +266,25 @@
         </div>
 
         <div class="form-container">
+            <!-- Login Form (Now Default) -->
+            <form id="loginForm" class="form active">
+                <h2>Welcome Back</h2>
+                <div class="input-group">
+                    <input type="text" id="loginUsername" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                </div>
+                <button type="submit" class="submit-btn">Login</button>
+                <div class="spinner" id="loginSpinner"></div>
+                <div class="message" id="loginMessage"></div>
+                <button type="button" class="switch-btn" onclick="switchToRegister()">
+                    Don't have an account? Register
+                </button>
+            </form>
+
             <!-- Registration Form -->
-            <form id="registerForm" class="form active">
+            <form id="registerForm" class="form">
                 <h2>Create Account</h2>
                 <div class="input-group">
                     <input type="text" id="regUsername" placeholder="Username" required>
@@ -283,23 +300,6 @@
                 <div class="message" id="registerMessage"></div>
                 <button type="button" class="switch-btn" onclick="switchToLogin()">
                     Already have an account? Login
-                </button>
-            </form>
-
-            <!-- Login Form -->
-            <form id="loginForm" class="form">
-                <h2>Welcome Back</h2>
-                <div class="input-group">
-                    <input type="text" id="loginUsername" placeholder="Username" required>
-                </div>
-                <div class="input-group">
-                    <input type="password" id="loginPassword" placeholder="Password" required>
-                </div>
-                <button type="submit" class="submit-btn">Login</button>
-                <div class="spinner" id="loginSpinner"></div>
-                <div class="message" id="loginMessage"></div>
-                <button type="button" class="switch-btn" onclick="switchToRegister()">
-                    Don't have an account? Register
                 </button>
             </form>
         </div>
@@ -337,6 +337,18 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
+
+        // Check if user is already logged in
+        function checkLoginStatus() {
+            const username = localStorage.getItem('emprobUsername');
+            if (username) {
+                // User is logged in, redirect to interface.html
+                window.location.href = '/interface.html';
+            }
+        }
+
+        // Check login status when page loads
+        checkLoginStatus();
 
         // Authenticate anonymously
         signInAnonymously(auth)
@@ -441,12 +453,15 @@
                 const userData = snapshot.val();
                 
                 if (userData.password === password) {
+                    // Store username in localStorage
+                    localStorage.setItem('emprobUsername', username);
+                    
                     showMessage('loginMessage', 'Login successful! Redirecting...', 'success');
                     document.getElementById('loginForm').reset();
                     
-                    // Redirect to interface.html with user data
+                    // Redirect to interface.html after successful login
                     setTimeout(() => {
-                        redirectToInterface(userData);
+                        window.location.href = '/interface.html';
                     }, 1500);
                 } else {
                     showMessage('loginMessage', 'Invalid username or password', 'error');
@@ -459,45 +474,6 @@
                 showSpinner('loginSpinner', false);
                 disableForm('loginForm', false);
             }
-        }
-
-        // Method 1: Using URL Parameters (Recommended for simple data)
-        function redirectToInterface(userData) {
-            // Encode user data as URL parameters
-            const params = new URLSearchParams({
-                username: userData.username,
-                email: userData.email,
-                loginTime: new Date().toISOString()
-            });
-            
-            // Redirect to interface page with parameters
-            window.location.href = `/interface.html?${params.toString()}`;
-        }
-
-        // Method 2: Using localStorage (Alternative approach)
-        function redirectToInterfaceWithLocalStorage(userData) {
-            // Store user data in localStorage
-            localStorage.setItem('currentUser', JSON.stringify({
-                username: userData.username,
-                email: userData.email,
-                loginTime: new Date().toISOString()
-            }));
-            
-            // Redirect to interface page
-            window.location.href = '/interface.html';
-        }
-
-        // Method 3: Using sessionStorage (Alternative approach)
-        function redirectToInterfaceWithSessionStorage(userData) {
-            // Store user data in sessionStorage
-            sessionStorage.setItem('currentUser', JSON.stringify({
-                username: userData.username,
-                email: userData.email,
-                loginTime: new Date().toISOString()
-            }));
-            
-            // Redirect to interface page
-            window.location.href = '/interface.html';
         }
 
         function switchToLogin() {
