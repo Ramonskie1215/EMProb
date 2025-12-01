@@ -91,6 +91,19 @@
             justify-content: center;
             font-weight: bold;
             font-size: 18px;
+            overflow: hidden;
+            border: 2px solid #FFFFFF;
+        }
+
+        .user-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-avatar-initials {
+            font-weight: bold;
+            font-size: 18px;
         }
 
         .user-details {
@@ -454,7 +467,10 @@
         <!-- Right Section: User Profile -->
         <div class="user-profile" id="userProfile">
             <div class="user-info">
-                <div class="user-avatar" id="userAvatar">JD</div>
+                <div class="user-avatar" id="userAvatar">
+                    <!-- Profile picture will be inserted here -->
+                    <div class="user-avatar-initials" id="avatarInitials">JD</div>
+                </div>
                 <div class="user-details">
                     <div class="username" id="usernameDisplay">John Doe</div>
                     <div class="email" id="emailDisplay">john.doe@example.com</div>
@@ -580,6 +596,31 @@
             }
         }
 
+        // Update avatar with profile picture
+        function updateAvatar(userData) {
+            const userAvatar = document.getElementById('userAvatar');
+            const avatarInitials = document.getElementById('avatarInitials');
+            
+            if (userData.profilePicture) {
+                // Create img element for profile picture
+                const img = document.createElement('img');
+                img.src = userData.profilePicture;
+                img.alt = userData.username + ' profile picture';
+                img.className = 'user-avatar-img';
+                
+                // Clear the avatar div and add the image
+                userAvatar.innerHTML = '';
+                userAvatar.appendChild(img);
+                
+                // Hide initials if image loads successfully
+                avatarInitials.style.display = 'none';
+            } else {
+                // If no profile picture, show initials
+                avatarInitials.textContent = userData.username.charAt(0).toUpperCase();
+                avatarInitials.style.display = 'flex';
+            }
+        }
+
         // Initialize the application
         async function initApplication() {
             const username = checkAuth();
@@ -600,7 +641,9 @@
                     // Update UI with user data
                     document.getElementById('usernameDisplay').textContent = userData.username;
                     document.getElementById('emailDisplay').textContent = userData.email;
-                    document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
+                    
+                    // Update avatar with profile picture or initials
+                    updateAvatar(userData);
                     
                     // Show the main interface
                     document.getElementById('loadingScreen').style.display = 'none';
