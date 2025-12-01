@@ -225,6 +225,12 @@
             border: 1px solid #f1c40f;
         }
 
+        .status-na {
+            background: rgba(132, 132, 132, 0.2);
+            color: #848484;
+            border: 1px solid #848484;
+        }
+
         .device-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -281,6 +287,10 @@
 
         .battery-low {
             background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .battery-na {
+            background: linear-gradient(90deg, #848484, #5E5E5E);
         }
 
         .violations-section {
@@ -987,32 +997,6 @@
             }, duration);
         }
 
-        // Generate device status (for demo purposes)
-        function generateDeviceStatus() {
-            const statuses = ['active', 'offline', 'tampered'];
-            return statuses[Math.floor(Math.random() * statuses.length)];
-        }
-
-        // Generate battery percentage (for demo purposes)
-        function generateBatteryPercentage() {
-            return Math.floor(Math.random() * 100) + 1;
-        }
-
-        // Generate sample violations (for demo purposes)
-        function generateSampleViolations() {
-            const violations = [
-                { time: '2024-01-15T14:30:00', type: 'Curfew violation' },
-                { time: '2024-01-14T22:15:00', type: 'Restricted area entry' },
-                { time: '2024-01-13T09:45:00', type: 'Device tampering attempt' },
-                { time: '2024-01-12T16:20:00', type: 'Alcohol consumption' },
-                { time: '2024-01-11T11:10:00', type: 'Missed check-in' }
-            ];
-            
-            // Randomly select 0-3 violations for demo
-            const count = Math.floor(Math.random() * 4);
-            return violations.slice(0, count);
-        }
-
         // Format date for display
         function formatDate(dateString) {
             try {
@@ -1042,6 +1026,7 @@
 
         // Get battery class based on percentage
         function getBatteryClass(percentage) {
+            if (percentage === 'N/A' || percentage === null || percentage === undefined) return 'battery-na';
             if (percentage >= 60) return 'battery-high';
             if (percentage >= 30) return 'battery-medium';
             return 'battery-low';
@@ -1090,10 +1075,12 @@
                     probationerData.updatedAt = new Date().toISOString();
                 }
                 
-                // Add demo data (in real app, this would come from IoT devices)
-                probationerData.deviceStatus = probationerData.deviceStatus || generateDeviceStatus();
-                probationerData.batteryPercentage = probationerData.batteryPercentage || generateBatteryPercentage();
-                probationerData.violations = probationerData.violations || generateSampleViolations();
+                // Set default values for new probationers
+                if (!editingId) {
+                    probationerData.deviceStatus = 'N/A';
+                    probationerData.batteryPercentage = 'N/A';
+                    probationerData.violations = [];
+                }
                 
                 // Save to /probationers/{id}
                 const probationerRef = ref(database, `probationers/${id}`);
@@ -1134,8 +1121,8 @@
             
             probationers.forEach(probationer => {
                 const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
-                const status = probationer.deviceStatus || 'offline';
-                const battery = probationer.batteryPercentage || 0;
+                const status = probationer.deviceStatus || 'N/A';
+                const battery = probationer.batteryPercentage || 'N/A';
                 const violations = probationer.violations || [];
                 
                 const card = document.createElement('div');
@@ -1143,7 +1130,7 @@
                 card.dataset.id = probationer.id;
                 
                 card.innerHTML = `
-                    <div class="status-badge status-${status}">
+                    <div class="status-badge status-${status.toLowerCase().replace('/', '-')}">
                         ${status}
                     </div>
                     
@@ -1163,14 +1150,17 @@
                     <div class="device-info">
                         <div class="info-item">
                             <span class="info-label">Device Status</span>
-                            <span class="info-value">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                            <span class="info-value">${status}</span>
                         </div>
                         <div class="info-item">
                             <span class="info-label">Battery</span>
-                            <div class="info-value">${battery}%</div>
+                            <div class="info-value">${battery}</div>
                             <div class="battery-container">
                                 <div class="battery-level">
-                                    <div class="battery-fill ${getBatteryClass(battery)}" style="width: ${battery}%"></div>
+                                    ${battery !== 'N/A' ? 
+                                        `<div class="battery-fill ${getBatteryClass(battery)}" style="width: ${battery}%"></div>` :
+                                        `<div class="battery-fill battery-na" style="width: 100%"></div>`
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -1357,9 +1347,9 @@
             if (editingId) {
                 const existingProbationer = probationers.find(p => p.id === editingId);
                 if (existingProbationer) {
-                    probationerData.deviceStatus = existingProbationer.deviceStatus;
-                    probationerData.batteryPercentage = existingProbationer.batteryPercentage;
-                    probationerData.violations = existingProbationer.violations;
+                    probationerData.deviceStatus = existingProbationer.deviceStatus || 'N/A';
+                    probationerData.batteryPercentage = existingProbationer.batteryPercentage || 'N/A';
+                    probationerData.violations = existingProbationer.violations || [];
                     probationerData.createdAt = existingProbationer.createdAt;
                 }
             }
