@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMProb Map Portal</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Settings - EMProb Map Portal</title>
     
     <style>
         * {
@@ -20,7 +17,7 @@
             background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
             min-height: 100vh;
             color: #FFFFFF;
-            overflow: hidden;
+            padding: 20px;
         }
 
         .header {
@@ -32,6 +29,8 @@
             border-bottom: 1px solid #259FDE;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
             height: 70px;
+            border-radius: 10px;
+            margin-bottom: 30px;
         }
 
         .left-section {
@@ -47,7 +46,7 @@
         }
 
         .logo {
-            height: 90%; /* 90% of header height */
+            height: 90%;
             width: auto;
             max-height: 50px;
         }
@@ -56,7 +55,6 @@
             font-size: 28px;
             font-weight: bold;
             color: #259FDE;
-            cursor: pointer;
         }
 
         .nav-links {
@@ -179,217 +177,225 @@
             background: rgba(222, 37, 37, 0.2);
         }
 
-        .map-container {
-            height: calc(100vh - 70px);
-            width: 100%;
-            position: relative;
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
 
-        #map {
-            height: 100%;
-            width: 100%;
-        }
-
-        .map-controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(28, 28, 28, 0.9);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #259FDE;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            max-width: 300px;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
-        }
-
-        .map-controls.hidden {
-            transform: translateX(-100%);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .controls-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .settings-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #259FDE;
             margin-bottom: 10px;
+            text-align: center;
         }
 
-        .control-title {
+        .settings-subtitle {
             font-size: 16px;
-            font-weight: 600;
-            color: #259FDE;
-        }
-
-        .hide-controls-btn {
-            background: transparent;
-            border: none;
             color: #848484;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 5px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
+            margin-bottom: 30px;
+            text-align: center;
         }
 
-        .hide-controls-btn:hover {
-            color: #259FDE;
-            background: rgba(37, 159, 222, 0.1);
-        }
-
-        .show-controls-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 999;
+        .settings-card {
             background: rgba(28, 28, 28, 0.9);
+            border-radius: 15px;
             border: 1px solid #259FDE;
-            border-radius: 10px;
-            padding: 10px 15px;
-            color: #259FDE;
-            cursor: pointer;
-            font-weight: 600;
-            display: none;
-            transition: all 0.3s ease;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(5px);
+            margin-bottom: 30px;
         }
 
-        .show-controls-btn:hover {
-            background: rgba(37, 159, 222, 0.1);
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #5E5E5E;
         }
 
-        .control-group {
-            margin-bottom: 15px;
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .control-label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .control-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 2px solid #5E5E5E;
-            border-radius: 5px;
-            font-size: 14px;
-            background: #1C1C1C;
+        .card-title {
+            font-size: 22px;
+            font-weight: 600;
             color: #FFFFFF;
         }
 
-        .control-input:focus {
-            outline: none;
-            border-color: #259FDE;
+        .setting-group {
+            margin-bottom: 30px;
         }
 
-        .control-btn {
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
+        .setting-label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #259FDE;
+            margin-bottom: 15px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .radio-input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .radio-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: rgba(37, 159, 222, 0.1);
+            border: 2px solid #5E5E5E;
+            border-radius: 10px;
+            min-width: 120px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .radio-input:checked + .radio-label {
+            background: rgba(37, 159, 222, 0.3);
+            border-color: #259FDE;
+            box-shadow: 0 0 15px rgba(37, 159, 222, 0.3);
+        }
+
+        .radio-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .radio-text {
             font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .radio-description {
+            font-size: 12px;
+            color: #848484;
+            text-align: center;
+            max-width: 150px;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #5E5E5E;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
-            color: white;
-            width: 100%;
+            min-width: 120px;
         }
 
-        .control-btn:hover {
+        .btn-primary {
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(37, 159, 222, 0.4);
         }
 
-        .control-btn.secondary {
+        .btn-secondary {
             background: transparent;
-            border: 1px solid #259FDE;
-            margin-top: 5px;
+            border: 1px solid #5E5E5E;
+            color: #FFFFFF;
         }
 
-        .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #1C1C1C;
-            border: 1px solid #259FDE;
-            border-top: none;
-            border-radius: 0 0 5px 5px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1001;
-            display: none;
-        }
-
-        .search-result-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid #5E5E5E;
-        }
-
-        .search-result-item:hover {
-            background: rgba(37, 159, 222, 0.2);
-        }
-
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-
-        .search-result-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .search-result-details {
-            font-size: 12px;
-            color: #848484;
-        }
-
-        .location-info {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(28, 28, 28, 0.9);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #259FDE;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            max-width: 300px;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .location-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 10px;
+        .btn-secondary:hover {
+            border-color: #259FDE;
             color: #259FDE;
         }
 
-        .location-details {
-            font-size: 14px;
-            line-height: 1.5;
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
-        .spinner {
+        .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-message {
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             display: none;
-            text-align: center;
-            margin: 10px 0;
+            align-items: center;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
         }
 
-        .spinner::after {
-            content: '';
+        .status-message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+            display: flex;
+        }
+
+        .status-message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #F44336;
+            color: #F44336;
+            display: flex;
+        }
+
+        .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             border: 2px solid #5E5E5E;
             border-top: 2px solid #259FDE;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         @keyframes spin {
@@ -423,6 +429,7 @@
             .header {
                 padding: 8px 15px;
                 height: 60px;
+                margin-bottom: 20px;
             }
             
             .left-section {
@@ -451,16 +458,30 @@
                 display: none;
             }
             
-            .map-controls {
-                max-width: 250px;
-                left: 10px;
-                top: 10px;
+            .settings-container {
+                padding: 0 10px;
             }
             
-            .location-info {
-                max-width: 250px;
-                right: 10px;
-                bottom: 10px;
+            .settings-title {
+                font-size: 26px;
+            }
+            
+            .settings-card {
+                padding: 20px;
+            }
+            
+            .radio-group {
+                gap: 10px;
+                justify-content: center;
+            }
+            
+            .radio-label {
+                min-width: 100px;
+                padding: 12px 15px;
+            }
+            
+            .action-buttons {
+                justify-content: center;
             }
         }
 
@@ -469,20 +490,42 @@
                 font-size: 18px;
             }
             
-            .left-section {
-                gap: 10px;
-            }
-            
             .nav-links {
                 display: none;
+            }
+            
+            .settings-title {
+                font-size: 22px;
+            }
+            
+            .card-title {
+                font-size: 18px;
+            }
+            
+            .radio-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .radio-label {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
     <div class="loading-screen" id="loadingScreen">
-        <div class="spinner"></div>
-        <div class="loading-text">Loading EMProb Portal...</div>
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Settings...</div>
     </div>
 
     <div class="header" style="display: none;" id="mainHeader">
@@ -492,9 +535,10 @@
                 <img src="https://iili.io/fnM2iqx.png" alt="EMProb Logo" class="logo">
             </div>
             <div class="site-name">EMProb</div>
+            
             <div class="nav-links">
-                <a href="interface.html" class="nav-link active">Map Portal</a>
-                <a href="settings.html" class="nav-link">Settings</a>
+                <a href="map-portal.html" class="nav-link">Map Portal</a>
+                <a href="settings.html" class="nav-link active">Settings</a>
             </div>
         </div>
 
@@ -508,12 +552,12 @@
                 </div>
             </div>
             <div class="profile-dropdown" id="profileDropdown">
-                <div class="dropdown-item">
+                <a href="map-portal.html" class="dropdown-item">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
                     </svg>
                     My Profile
-                </div>
+                </a>
                 <a href="settings.html" class="dropdown-item">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                         <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
@@ -529,53 +573,78 @@
             </div>
         </div>
     </div>
-    
-    <div class="map-container" style="display: none;" id="mapContainer">
-        <div id="map"></div>
+
+    <div class="settings-container" style="display: none;" id="settingsContainer">
+        <h1 class="settings-title">Settings</h1>
+        <p class="settings-subtitle">Customize your EMProb Map Portal experience</p>
         
-        <button class="show-controls-btn" id="showControlsBtn">Show Controls</button>
+        <div id="statusMessage" class="status-message"></div>
         
-        <div class="map-controls" id="mapControls">
-            <div class="controls-header">
-                <div class="control-title">Map Controls</div>
-                <button class="hide-controls-btn" id="hideControlsBtn">Hide</button>
+        <div class="settings-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8s8 3.58 8 8-3.58 8-8 8-8-3.58-8-8z"/>
+                        <circle cx="12" cy="12" r="5"/>
+                    </svg>
+                </div>
+                <h2 class="card-title">Default Map Settings</h2>
             </div>
             
-            <div class="control-group">
-                <label class="control-label">Search Location</label>
-                <input type="text" class="control-input" id="searchInput" placeholder="Enter location...">
-                <div class="search-results" id="searchResults"></div>
-                <div class="spinner" id="searchSpinner"></div>
+            <div class="setting-group">
+                <label class="setting-label">Default Map Layer</label>
+                <p style="margin-bottom: 15px; color: #848484; font-size: 14px;">
+                    Choose your preferred default map layer. This will be used when you first open the Map Portal.
+                </p>
+                
+                <div class="radio-group">
+                    <!-- Streets Option -->
+                    <div class="radio-option">
+                        <input type="radio" id="streets" name="defaultMap" value="streets" class="radio-input">
+                        <label for="streets" class="radio-label">
+                            <div class="radio-icon">S</div>
+                            <span class="radio-text">Streets</span>
+                            <span class="radio-description">Standard street map view</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Satellite Option -->
+                    <div class="radio-option">
+                        <input type="radio" id="satellite" name="defaultMap" value="satellite" class="radio-input">
+                        <label for="satellite" class="radio-label">
+                            <div class="radio-icon">S</div>
+                            <span class="radio-text">Satellite</span>
+                            <span class="radio-description">Aerial imagery view</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Terrain Option -->
+                    <div class="radio-option">
+                        <input type="radio" id="terrain" name="defaultMap" value="terrain" class="radio-input">
+                        <label for="terrain" class="radio-label">
+                            <div class="radio-icon">T</div>
+                            <span class="radio-text">Terrain</span>
+                            <span class="radio-description">Topographic terrain view</span>
+                        </label>
+                    </div>
+                </div>
             </div>
             
-            <div class="control-group">
-                <label class="control-label">Map Layer</label>
-                <select class="control-input" id="layerSelect">
-                    <option value="streets">Streets</option>
-                    <option value="satellite">Satellite</option>
-                    <option value="terrain">Terrain</option>
-                </select>
-            </div>
-            
-            <button class="control-btn" id="searchBtn">Search</button>
-            <button class="control-btn secondary" id="currentLocationBtn">My Location</button>
-        </div>
-        
-        <div class="location-info">
-            <div class="location-title">Current Location</div>
-            <div class="location-details" id="locationDetails">
-                Latitude: 14.7596° N<br>
-                Longitude: 120.9633° E<br>
-                <span id="locationAddress">Loading address...</span>
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBtn" disabled>
+                    <span id="saveBtnText">Save Changes</span>
+                    <div class="loading-spinner" id="saveSpinner" style="display: none;"></div>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDK - FIXED VERSION -->
+    <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -639,6 +708,32 @@
             }
         }
 
+        // Save user settings to Firebase
+        async function saveUserSettings(username, settings) {
+            try {
+                const settingsRef = ref(database, 'settings/' + username);
+                await set(settingsRef, settings);
+                return true;
+            } catch (error) {
+                console.error('Error saving user settings:', error);
+                return false;
+            }
+        }
+
+        // Show status message
+        function showStatusMessage(message, type = 'success') {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = `status-message ${type}`;
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+
         // Initialize the application
         async function initApplication() {
             const username = checkAuth();
@@ -661,14 +756,19 @@
                     document.getElementById('emailDisplay').textContent = userData.email;
                     document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
                     
+                    // Get user settings
+                    const settings = await getUserSettings(username);
+                    
+                    // Set radio button based on saved settings
+                    document.getElementById(settings.defaultMap).checked = true;
+                    
                     // Show the main interface
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainHeader').style.display = 'flex';
-                    document.getElementById('mapContainer').style.display = 'block';
+                    document.getElementById('settingsContainer').style.display = 'block';
                     
-                    // Get user settings and initialize the map with saved settings
-                    const settings = await getUserSettings(username);
-                    initializeMap(settings.defaultMap || 'streets');
+                    // Initialize event listeners
+                    initializeEventListeners(username);
                 } else {
                     // If user data not found, redirect to login
                     localStorage.removeItem('emprobUsername');
@@ -678,140 +778,76 @@
                 console.error("Initialization error:", error);
                 document.getElementById('loadingScreen').innerHTML = `
                     <div style="text-align: center; color: #ff6b6b;">
-                        <h3>Error Loading Application</h3>
+                        <h3>Error Loading Settings</h3>
                         <p>Please refresh the page or try again later.</p>
                     </div>
                 `;
             }
         }
 
-        // Call initialization when page loads
-        document.addEventListener('DOMContentLoaded', initApplication);
-        
-        // Navigate to interface when clicking logo or site name
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelector('.site-name').addEventListener('click', function() {
-                window.location.href = 'interface.html';
-            });
-
-            document.querySelector('.logo-container').addEventListener('click', function() {
-                window.location.href = 'interface.html';
-            });
-        });
-    </script>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <script>
-        // Map initialization function
-        function initializeMap(defaultLayer = 'streets') {
-            // Your current coordinates
-            const currentLat = 14.7596;
-            const currentLng = 120.9633;
+        // Initialize event listeners
+        function initializeEventListeners(username) {
+            const saveBtn = document.getElementById('saveBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userProfile = document.getElementById('userProfile');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const radioButtons = document.querySelectorAll('input[name="defaultMap"]');
             
-            // Initialize the map with your current location
-            const map = L.map('map').setView([currentLat, currentLng], 13);
+            let originalSettings = null;
             
-            // Add tile layers
-            const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            // Get original settings for comparison
+            getUserSettings(username).then(settings => {
+                originalSettings = settings;
             });
             
-            const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-            });
-            
-            const terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-                attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
-            });
-            
-            // Add the default layer based on user settings
-            let activeLayer;
-            switch(defaultLayer) {
-                case 'satellite':
-                    satelliteLayer.addTo(map);
-                    activeLayer = satelliteLayer;
-                    break;
-                case 'terrain':
-                    terrainLayer.addTo(map);
-                    activeLayer = terrainLayer;
-                    break;
-                default:
-                    streetLayer.addTo(map);
-                    activeLayer = streetLayer;
-            }
-            
-            // Set the dropdown to show the current layer
-            document.getElementById('layerSelect').value = defaultLayer;
-            
-            // Layer control
-            const baseLayers = {
-                "Streets": streetLayer,
-                "Satellite": satelliteLayer,
-                "Terrain": terrainLayer
-            };
-            
-            // Add layer control to map
-            L.control.layers(baseLayers).addTo(map);
-            
-            // Create a custom circle icon for all locations
-            function createCircleIcon(color = '#259FDE') {
-                return L.divIcon({
-                    html: `<div style="background: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
-                    iconSize: [26, 26],
-                    className: 'circle-location-marker'
+            // Enable save button when radio buttons change
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    saveBtn.disabled = false;
                 });
-            }
+            });
             
-            // Add a marker for your current location
-            let marker = L.marker([currentLat, currentLng], {icon: createCircleIcon()}).addTo(map)
-                .bindPopup('<b>Your Current Location</b><br>Latitude: 14.7596° N<br>Longitude: 120.9633° E')
-                .openPopup();
-            
-            // Get address for current location
-            async function getAddress(lat, lng) {
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
-                    );
-                    
-                    if (!response.ok) {
-                        throw new Error('Reverse geocoding failed');
-                    }
-                    
-                    const data = await response.json();
-                    return data.display_name || 'Address not available';
-                } catch (error) {
-                    console.error('Reverse geocoding error:', error);
-                    return 'Address not available';
+            // Save button click handler
+            saveBtn.addEventListener('click', async function() {
+                const selectedMap = document.querySelector('input[name="defaultMap"]:checked').value;
+                const settings = { defaultMap: selectedMap };
+                
+                // Show loading state
+                const saveBtnText = document.getElementById('saveBtnText');
+                const saveSpinner = document.getElementById('saveSpinner');
+                saveBtnText.style.display = 'none';
+                saveSpinner.style.display = 'inline-block';
+                saveBtn.disabled = true;
+                
+                // Save to Firebase
+                const success = await saveUserSettings(username, settings);
+                
+                // Hide loading state
+                saveBtnText.style.display = 'inline';
+                saveSpinner.style.display = 'none';
+                
+                if (success) {
+                    showStatusMessage('Settings saved successfully!', 'success');
+                    originalSettings = settings;
+                    saveBtn.disabled = true;
+                } else {
+                    showStatusMessage('Error saving settings. Please try again.', 'error');
+                    saveBtn.disabled = false;
                 }
-            }
-            
-            // Update location info with address
-            getAddress(currentLat, currentLng).then(address => {
-                document.getElementById('locationAddress').textContent = address;
             });
             
-            // Map Controls hide/show functionality
-            const mapControls = document.getElementById('mapControls');
-            const hideControlsBtn = document.getElementById('hideControlsBtn');
-            const showControlsBtn = document.getElementById('showControlsBtn');
-            
-            hideControlsBtn.addEventListener('click', function() {
-                mapControls.classList.add('hidden');
-                showControlsBtn.style.display = 'block';
-            });
-            
-            showControlsBtn.addEventListener('click', function() {
-                mapControls.classList.remove('hidden');
-                showControlsBtn.style.display = 'none';
+            // Cancel button click handler
+            cancelBtn.addEventListener('click', function() {
+                // Reset to original settings
+                if (originalSettings && originalSettings.defaultMap) {
+                    document.getElementById(originalSettings.defaultMap).checked = true;
+                }
+                saveBtn.disabled = true;
+                showStatusMessage('Changes cancelled.', 'success');
             });
             
             // Profile dropdown functionality
-            const userProfile = document.getElementById('userProfile');
-            const profileDropdown = document.getElementById('profileDropdown');
-            
             userProfile.addEventListener('click', function(e) {
                 e.stopPropagation();
                 profileDropdown.classList.toggle('active');
@@ -822,173 +858,26 @@
                 profileDropdown.classList.remove('active');
             });
             
-            // Search functionality
-            const searchInput = document.getElementById('searchInput');
-            const searchResults = document.getElementById('searchResults');
-            const searchSpinner = document.getElementById('searchSpinner');
-            let searchTimeout;
-            
-            // Search when typing with debounce
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                const query = this.value.trim();
-                
-                if (query.length < 3) {
-                    searchResults.style.display = 'none';
-                    return;
-                }
-                
-                searchTimeout = setTimeout(() => {
-                    searchLocation(query);
-                }, 500);
-            });
-            
-            // Search when button is clicked
-            document.getElementById('searchBtn').addEventListener('click', function() {
-                const query = searchInput.value.trim();
-                if (query) {
-                    searchLocation(query);
-                }
-            });
-            
-            // Return to current location
-            document.getElementById('currentLocationBtn').addEventListener('click', function() {
-                map.setView([currentLat, currentLng], 13);
-                marker.setLatLng([currentLat, currentLng])
-                    .bindPopup('<b>Your Current Location</b><br>Latitude: 14.7596° N<br>Longitude: 120.9633° E')
-                    .openPopup();
-            });
-            
-            // Search for location using Nominatim API
-            async function searchLocation(query) {
-                searchSpinner.style.display = 'block';
-                searchResults.style.display = 'none';
-                
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
-                    );
-                    
-                    if (!response.ok) {
-                        throw new Error('Search failed');
-                    }
-                    
-                    const results = await response.json();
-                    displaySearchResults(results);
-                } catch (error) {
-                    console.error('Search error:', error);
-                    searchResults.innerHTML = '<div class="search-result-item">Error searching for location</div>';
-                    searchResults.style.display = 'block';
-                } finally {
-                    searchSpinner.style.display = 'none';
-                }
-            }
-            
-            // Display search results
-            function displaySearchResults(results) {
-                searchResults.innerHTML = '';
-                
-                if (results.length === 0) {
-                    searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
-                    searchResults.style.display = 'block';
-                    return;
-                }
-                
-                results.forEach(result => {
-                    const item = document.createElement('div');
-                    item.className = 'search-result-item';
-                    
-                    const name = document.createElement('div');
-                    name.className = 'search-result-name';
-                    name.textContent = result.display_name.split(',')[0];
-                    
-                    const details = document.createElement('div');
-                    details.className = 'search-result-details';
-                    details.textContent = result.display_name;
-                    
-                    item.appendChild(name);
-                    item.appendChild(details);
-                    
-                    item.addEventListener('click', () => {
-                        selectLocation(result);
-                    });
-                    
-                    searchResults.appendChild(item);
-                });
-                
-                searchResults.style.display = 'block';
-            }
-            
-            // Select a location from search results
-            function selectLocation(location) {
-                const lat = parseFloat(location.lat);
-                const lon = parseFloat(location.lon);
-                
-                // Update map view
-                map.setView([lat, lon], 13);
-                
-                // Update or create marker - always use circle icon
-                if (marker) {
-                    map.removeLayer(marker);
-                }
-                
-                // Use a slightly different color for searched locations
-                const searchedLocationColor = '#0E3CBD';
-                
-                marker = L.marker([lat, lon], {icon: createCircleIcon(searchedLocationColor)}).addTo(map)
-                    .bindPopup(`<b>${location.display_name.split(',')[0]}</b><br>${location.display_name}`)
-                    .openPopup();
-                
-                // Clear search results
-                searchResults.style.display = 'none';
-                searchInput.value = location.display_name;
-                
-                // Update location info
-                document.getElementById('locationDetails').innerHTML = `
-                    Latitude: ${lat.toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}<br>
-                    Longitude: ${lon.toFixed(4)}° ${lon >= 0 ? 'E' : 'W'}<br>
-                    <span id="locationAddress">${location.display_name}</span>
-                `;
-            }
-            
-            // Layer selection
-            document.getElementById('layerSelect').addEventListener('change', function() {
-                const selectedLayer = this.value;
-                
-                // Remove current active layer
-                map.removeLayer(activeLayer);
-                
-                // Add the selected layer
-                switch(selectedLayer) {
-                    case 'satellite':
-                        satelliteLayer.addTo(map);
-                        activeLayer = satelliteLayer;
-                        break;
-                    case 'terrain':
-                        terrainLayer.addTo(map);
-                        activeLayer = terrainLayer;
-                        break;
-                    default:
-                        streetLayer.addTo(map);
-                        activeLayer = streetLayer;
-                }
-            });
-            
             // Logout functionality
-            document.getElementById('logoutBtn').addEventListener('click', function() {
+            logoutBtn.addEventListener('click', function() {
                 if (confirm('Are you sure you want to logout?')) {
                     localStorage.removeItem('emprobUsername');
                     window.location.href = 'index.html';
                 }
             });
             
-            // Close search results when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!event.target.closest('.control-group')) {
-                    searchResults.style.display = 'none';
-                }
+            // Navigate to map portal when clicking logo or site name
+            document.querySelector('.site-name').addEventListener('click', function() {
+                window.location.href = 'map-portal.html';
+            });
+            
+            document.querySelector('.logo-container').addEventListener('click', function() {
+                window.location.href = 'map-portal.html';
             });
         }
+
+        // Call initialization when page loads
+        document.addEventListener('DOMContentLoaded', initApplication);
     </script>
 </body>
 </html>
