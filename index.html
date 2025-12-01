@@ -405,17 +405,36 @@
         });
 
         async function checkUsernameExists(username) {
-            const userRef = ref(database, 'credentials/' + username);
-            const snapshot = await get(userRef);
-            return snapshot.exists();
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                const snapshot = await get(userRef);
+                return snapshot.exists();
+            } catch (error) {
+                console.error('Error checking username:', error);
+                return false;
+            }
         }
 
         async function checkEmailExists(email) {
-            // Query the database to check if email already exists
-            const usersRef = ref(database, 'credentials');
-            const emailQuery = query(usersRef, orderByChild('email'), equalTo(email));
-            const snapshot = await get(emailQuery);
-            return snapshot.exists();
+            try {
+                // Query the database to check if email already exists
+                const usersRef = ref(database, 'credentials');
+                const snapshot = await get(usersRef);
+                
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    // Check each user's email
+                    for (const userId in users) {
+                        if (users[userId].email === email) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking email:', error);
+                return false;
+            }
         }
 
         async function registerUser(username, email, password) {
@@ -423,19 +442,23 @@
             disableForm('registerForm', true);
 
             try {
+                console.log('Checking username...');
                 // Check if username already exists
                 const usernameExists = await checkUsernameExists(username);
                 if (usernameExists) {
                     showMessage('registerMessage', 'Username already exists. Please choose a different username.', 'error');
                     return;
                 }
+                console.log('Username check passed');
 
+                console.log('Checking email...');
                 // Check if email already exists
                 const emailExists = await checkEmailExists(email);
                 if (emailExists) {
                     showMessage('registerMessage', 'Email already registered. Please use a different email or login.', 'error');
                     return;
                 }
+                console.log('Email check passed');
 
                 // Save user credentials
                 const userRef = ref(database, 'credentials/' + username);
@@ -447,6 +470,7 @@
                     lastLogin: null
                 });
 
+                console.log('User saved successfully');
                 showMessage('registerMessage', 'Registration successful! You can now login.', 'success');
                 document.getElementById('registerForm').reset();
                 
@@ -458,7 +482,7 @@
 
             } catch (error) {
                 console.error('Registration error:', error);
-                showMessage('registerMessage', 'Registration failed. Please try again.', 'error');
+                showMessage('registerMessage', `Registration failed: ${error.message}. Please try again.`, 'error');
             } finally {
                 showSpinner('registerSpinner', false);
                 disableForm('registerForm', false);
