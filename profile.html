@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMProb - User Profile</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
+            min-height: 100vh;
+            color: #FFFFFF;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: rgba(28, 28, 28, 0.9);
+            border-bottom: 1px solid #259FDE;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            height: 70px;
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo {
+            height: 90%;
+            width: auto;
+            max-height: 50px;
+        }
+
+        .site-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #259FDE;
+        }
+
+        .back-btn {
+            background: rgba(37, 159, 222, 0.2);
+            color: #259FDE;
+            border: 1px solid #259FDE;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: rgba(37, 159, 222, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .profile-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-title {
+            font-size: 32px;
+            color: #259FDE;
+            margin-bottom: 10px;
+        }
+
+        .profile-subtitle {
+            color: #848484;
+            font-size: 16px;
+        }
+
+        .profile-card {
+            background: rgba(28, 28, 28, 0.9);
+            border-radius: 15px;
+            border: 1px solid #259FDE;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .profile-avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #5E5E5E;
+        }
+
+        .avatar-large {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 159, 222, 0.3);
+        }
+
+        .avatar-info h2 {
+            font-size: 24px;
+            color: #259FDE;
+            margin-bottom: 5px;
+        }
+
+        .avatar-info p {
+            color: #848484;
+            font-size: 14px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .info-card {
+            background: rgba(28, 28, 28, 0.7);
+            border: 1px solid #5E5E5E;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            border-color: #259FDE;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(37, 159, 222, 0.1);
+        }
+
+        .info-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #5E5E5E;
+        }
+
+        .info-icon {
+            width: 24px;
+            height: 24px;
+            color: #259FDE;
+        }
+
+        .info-title {
+            font-size: 18px;
+            color: #259FDE;
+            font-weight: 600;
+        }
+
+        .info-content {
+            line-height: 1.6;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #848484;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .account-info {
+            background: linear-gradient(135deg, rgba(37, 159, 222, 0.1) 0%, rgba(14, 60, 189, 0.1) 100%);
+            border-color: #259FDE;
+        }
+
+        .personal-info {
+            background: linear-gradient(135deg, rgba(28, 28, 28, 0.8) 0%, rgba(40, 40, 40, 0.8) 100%);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .edit-btn {
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            color: white;
+        }
+
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 159, 222, 0.4);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #5E5E5E;
+            border-top: 3px solid #259FDE;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #FFFFFF;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(222, 37, 37, 0.2);
+            border: 1px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 50px auto;
+            max-width: 500px;
+        }
+
+        .error-message h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+
+        .error-message p {
+            margin-bottom: 20px;
+        }
+
+        .error-btn {
+            background: transparent;
+            border: 1px solid #259FDE;
+            color: #259FDE;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .error-btn:hover {
+            background: rgba(37, 159, 222, 0.1);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header {
+                padding: 8px 15px;
+                height: 60px;
+            }
+            
+            .site-name {
+                font-size: 22px;
+            }
+            
+            .profile-container {
+                margin: 20px auto;
+                padding: 0 15px;
+            }
+            
+            .profile-avatar-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .avatar-large {
+                width: 80px;
+                height: 80px;
+                font-size: 28px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .site-name {
+                font-size: 18px;
+            }
+            
+            .profile-title {
+                font-size: 24px;
+            }
+            
+            .profile-card {
+                padding: 20px;
+            }
+            
+            .info-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Profile...</div>
+    </div>
+
+    <div class="header" style="display: none;" id="mainHeader">
+        <div class="left-section">
+            <div class="logo-container">
+                <img src="https://iili.io/fnM2iqx.png" alt="EMProb Logo" class="logo">
+            </div>
+            <div class="site-name">EMProb</div>
+        </div>
+        
+        <a href="interface.html" class="back-btn">Back to Map</a>
+    </div>
+
+    <div class="profile-container" style="display: none;" id="profileContent">
+        <div class="profile-header">
+            <h1 class="profile-title">User Profile</h1>
+            <p class="profile-subtitle">View and manage your account information</p>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-avatar-section" id="avatarSection">
+                <!-- Avatar and name will be populated by JavaScript -->
+            </div>
+
+            <div class="info-grid">
+                <div class="info-card account-info">
+                    <div class="info-header">
+                        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <div class="info-title">Account Information</div>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-item">
+                            <span class="info-label">Username</span>
+                            <span class="info-value" id="infoUsername">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email Address</span>
+                            <span class="info-value" id="infoEmail">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Account Created</span>
+                            <span class="info-value" id="infoCreatedAt">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-card personal-info">
+                    <div class="info-header">
+                        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                        <div class="info-title">Personal Details</div>
+                    </div>
+                    <div class="info-content">
+                        <div class="info-item">
+                            <span class="info-label">Full Name</span>
+                            <span class="info-value" id="infoFullName">Not provided</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Address</span>
+                            <span class="info-value" id="infoAddress">Loading...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Phone Number</span>
+                            <span class="info-value" id="infoPhone">Not provided</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn edit-btn" id="editProfileBtn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M12.146 2.146a.5.5 0 0 1 .708 0l1 1a.5.5 0 0 1 0 .708l-1 1a.5.5 0 0 1-.708-.708L12.293 4l-.646-.646a.5.5 0 0 1 0-.708z"/>
+                        <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2zm10.5 4.5a.5.5 0 0 1 0 1H9a.5.5 0 0 1 0-1h3.5zM9 8.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2 3a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                    Edit Profile
+                </button>
+                <button class="action-btn logout-btn" id="logoutBtn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="error-message" id="errorMessage" style="display: none;">
+        <h3>Authentication Required</h3>
+        <p>Please log in to view your profile.</p>
+        <button class="error-btn" onclick="window.location.href='index.html'">Go to Login</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
+            authDomain: "probationlocator.firebaseapp.com",
+            databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
+            projectId: "probationlocator",
+            storageBucket: "probationlocator.firebasestorage.app",
+            messagingSenderId: "323066331183",
+            appId: "1:323066331183:web:61f35b70cb07c0618106da"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Authentication check
+        function checkAuth() {
+            const username = localStorage.getItem('emprobUsername');
+            if (!username) {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+                return null;
+            }
+            return username;
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return dateString;
+            }
+        }
+
+        // Get user data from Firebase
+        async function getUserData(username) {
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    return snapshot.val();
+                } else {
+                    console.error('User data not found in Firebase');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                return null;
+            }
+        }
+
+        // Update profile UI
+        function updateProfileUI(userData) {
+            // Update avatar section
+            const avatarSection = document.getElementById('avatarSection');
+            const initial = userData.username.charAt(0).toUpperCase();
+            
+            avatarSection.innerHTML = `
+                <div class="avatar-large">${initial}</div>
+                <div class="avatar-info">
+                    <h2>${userData.username}</h2>
+                    <p>${userData.email}</p>
+                </div>
+            `;
+            
+            // Update account information
+            document.getElementById('infoUsername').textContent = userData.username;
+            document.getElementById('infoEmail').textContent = userData.email;
+            document.getElementById('infoCreatedAt').textContent = formatDate(userData.createdAt);
+            
+            // Update personal details (if available)
+            document.getElementById('infoFullName').textContent = userData.fullName || 'Not provided';
+            document.getElementById('infoAddress').textContent = userData.address || 'Not provided';
+            document.getElementById('infoPhone').textContent = userData.phone || 'Not provided';
+        }
+
+        // Initialize the application
+        async function initApplication() {
+            const username = checkAuth();
+            
+            if (!username) {
+                return;
+            }
+
+            try {
+                // Authenticate anonymously with Firebase
+                await signInAnonymously(auth);
+                console.log("Anonymous authentication successful");
+
+                // Get user data from Firebase
+                const userData = await getUserData(username);
+                
+                if (userData) {
+                    // Update UI with user data
+                    updateProfileUI(userData);
+                    
+                    // Show the main interface
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainHeader').style.display = 'flex';
+                    document.getElementById('profileContent').style.display = 'block';
+                } else {
+                    // If user data not found, show error
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('errorMessage').innerHTML = `
+                        <h3>Profile Not Found</h3>
+                        <p>Unable to retrieve your profile information.</p>
+                        <button class="error-btn" onclick="window.location.href='index.html'">Go to Login</button>
+                    `;
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').innerHTML = `
+                    <h3>Error Loading Profile</h3>
+                    <p>Please try again later.</p>
+                    <button class="error-btn" onclick="window.location.href='index.html'">Go to Login</button>
+                `;
+            }
+        }
+
+        // Logout functionality
+        function setupLogout() {
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to logout?')) {
+                    localStorage.removeItem('emprobUsername');
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        // Edit profile functionality (placeholder)
+        function setupEditProfile() {
+            document.getElementById('editProfileBtn').addEventListener('click', function() {
+                alert('Edit profile functionality coming soon!');
+                // In a real implementation, this would open a modal or redirect to an edit page
+            });
+        }
+
+        // Call initialization when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initApplication();
+            setupLogout();
+            setupEditProfile();
+        });
+    </script>
+</body>
+</html>
