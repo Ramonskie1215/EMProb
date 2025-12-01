@@ -319,7 +319,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, set, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -366,7 +366,7 @@
             e.preventDefault();
             
             const username = document.getElementById('regUsername').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
             const password = document.getElementById('regPassword').value;
             
             if (!username || !email || !password) {
@@ -376,6 +376,13 @@
 
             if (password.length < 6) {
                 showMessage('registerMessage', 'Password must be at least 6 characters', 'error');
+                return;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('registerMessage', 'Please enter a valid email address', 'error');
                 return;
             }
 
@@ -397,26 +404,47 @@
             await loginUser(username, password);
         });
 
+        async function checkUsernameExists(username) {
+            const userRef = ref(database, 'credentials/' + username);
+            const snapshot = await get(userRef);
+            return snapshot.exists();
+        }
+
+        async function checkEmailExists(email) {
+            // Query the database to check if email already exists
+            const usersRef = ref(database, 'credentials');
+            const emailQuery = query(usersRef, orderByChild('email'), equalTo(email));
+            const snapshot = await get(emailQuery);
+            return snapshot.exists();
+        }
+
         async function registerUser(username, email, password) {
             showSpinner('registerSpinner', true);
             disableForm('registerForm', true);
 
             try {
                 // Check if username already exists
-                const userRef = ref(database, 'credentials/' + username);
-                const snapshot = await get(userRef);
-                
-                if (snapshot.exists()) {
-                    showMessage('registerMessage', 'Username already exists', 'error');
+                const usernameExists = await checkUsernameExists(username);
+                if (usernameExists) {
+                    showMessage('registerMessage', 'Username already exists. Please choose a different username.', 'error');
+                    return;
+                }
+
+                // Check if email already exists
+                const emailExists = await checkEmailExists(email);
+                if (emailExists) {
+                    showMessage('registerMessage', 'Email already registered. Please use a different email or login.', 'error');
                     return;
                 }
 
                 // Save user credentials
+                const userRef = ref(database, 'credentials/' + username);
                 await set(userRef, {
                     username: username,
                     email: email,
                     password: password, // Note: In production, never store plain text passwords!
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null
                 });
 
                 showMessage('registerMessage', 'Registration successful! You can now login.', 'success');
@@ -453,6 +481,9 @@
                 const userData = snapshot.val();
                 
                 if (userData.password === password) {
+                    // Update last login time
+                    await set(ref(database, 'credentials/' + username + '/lastLogin'), new Date().toISOString());
+                    
                     // Store username in localStorage
                     localStorage.setItem('emprobUsername', username);
                     
@@ -480,12 +511,16 @@
             document.getElementById('registerForm').classList.remove('active');
             document.getElementById('loginForm').classList.add('active');
             hideAllMessages();
+            // Clear registration form
+            document.getElementById('registerForm').reset();
         }
 
         function switchToRegister() {
             document.getElementById('loginForm').classList.remove('active');
             document.getElementById('registerForm').classList.add('active');
             hideAllMessages();
+            // Clear login form
+            document.getElementById('loginForm').reset();
         }
 
         function showSpinner(spinnerId, show) {
