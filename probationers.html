@@ -1047,11 +1047,11 @@
             return 'battery-low';
         }
 
-        // Load probationers from Firebase
+        // Load probationers from Firebase under /probationers path
         async function loadProbationers() {
             try {
-                const username = localStorage.getItem('emprobUsername');
-                const probationersRef = ref(database, `probationers/${username}`);
+                // Get probationers from /probationers path
+                const probationersRef = ref(database, 'probationers');
                 
                 onValue(probationersRef, (snapshot) => {
                     probationers = [];
@@ -1079,10 +1079,9 @@
             }
         }
 
-        // Save probationer to Firebase
+        // Save probationer to Firebase under /probationers path
         async function saveProbationer(probationerData) {
             try {
-                const username = localStorage.getItem('emprobUsername');
                 const id = editingId || `probationer_${Date.now()}`;
                 
                 // Add metadata
@@ -1096,7 +1095,8 @@
                 probationerData.batteryPercentage = probationerData.batteryPercentage || generateBatteryPercentage();
                 probationerData.violations = probationerData.violations || generateSampleViolations();
                 
-                const probationerRef = ref(database, `probationers/${username}/${id}`);
+                // Save to /probationers/{id}
+                const probationerRef = ref(database, `probationers/${id}`);
                 await set(probationerRef, probationerData);
                 
                 return true;
@@ -1109,8 +1109,7 @@
         // Delete probationer from Firebase
         async function deleteProbationer(probationerId) {
             try {
-                const username = localStorage.getItem('emprobUsername');
-                const probationerRef = ref(database, `probationers/${username}/${probationerId}`);
+                const probationerRef = ref(database, `probationers/${probationerId}`);
                 await remove(probationerRef);
                 return true;
             } catch (error) {
@@ -1445,7 +1444,7 @@
                 await signInAnonymously(auth);
                 console.log("Anonymous authentication successful");
 
-                // Load probationers
+                // Load probationers from /probationers path
                 await loadProbationers();
                 
             } catch (error) {
