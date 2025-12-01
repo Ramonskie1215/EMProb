@@ -87,6 +87,14 @@
             justify-content: center;
             font-weight: bold;
             font-size: 18px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .user-details {
@@ -464,7 +472,9 @@
         <!-- Right Section: User Profile -->
         <div class="user-profile" id="userProfile">
             <div class="user-info">
-                <div class="user-avatar" id="userAvatar">JD</div>
+                <div class="user-avatar" id="userAvatar">
+                    <!-- Profile picture will be inserted here by JavaScript -->
+                </div>
                 <div class="user-details">
                     <div class="username" id="usernameDisplay">John Doe</div>
                     <div class="email" id="emailDisplay">john.doe@example.com</div>
@@ -654,7 +664,32 @@
                     // Update UI with user data
                     document.getElementById('usernameDisplay').textContent = userData.username;
                     document.getElementById('emailDisplay').textContent = userData.email;
-                    document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
+                    
+                    // Update user avatar with profile picture from Firebase
+                    const userAvatar = document.getElementById('userAvatar');
+                    
+                    if (userData.profilePicture && userData.profilePicture.trim() !== '') {
+                        // Create an img element for the base64 profile picture
+                        const profileImg = document.createElement('img');
+                        profileImg.src = userData.profilePicture;
+                        profileImg.alt = userData.username + "'s profile picture";
+                        profileImg.style.width = '100%';
+                        profileImg.style.height = '100%';
+                        profileImg.style.objectFit = 'cover';
+                        
+                        // Clear any existing content and add the image
+                        userAvatar.innerHTML = '';
+                        userAvatar.appendChild(profileImg);
+                    } else {
+                        // If no profile picture, show initials as fallback
+                        userAvatar.textContent = userData.username.charAt(0).toUpperCase();
+                        userAvatar.style.display = 'flex';
+                        userAvatar.style.alignItems = 'center';
+                        userAvatar.style.justifyContent = 'center';
+                        userAvatar.style.fontWeight = 'bold';
+                        userAvatar.style.fontSize = '18px';
+                        userAvatar.style.background = 'linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%)';
+                    }
                     
                     // Load user settings
                     const settings = await loadSettings(username);
