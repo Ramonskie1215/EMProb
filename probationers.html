@@ -161,32 +161,34 @@
             margin-bottom: 20px;
             padding-bottom: 15px;
             border-bottom: 1px solid #5E5E5E;
+            flex-wrap: nowrap;
         }
 
-.probationer-avatar {
-    width: 80px;
-    height: 80px;
-    min-width: 80px; /* Prevents shrinking */
-    min-height: 80px; /* Prevents shrinking */
-    border-radius: 50%;
-    background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 28px;
-    color: white;
-    overflow: hidden;
-    border: 3px solid #259FDE;
-    flex-shrink: 0; /* Prevents flexbox from shrinking it */
-}
+        .probationer-avatar {
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
+            min-height: 80px;
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 28px;
+            color: white;
+            overflow: hidden;
+            border: 3px solid #259FDE;
+            flex-shrink: 0;
+        }
 
-.probationer-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block; /* Removes inline spacing */
-}
+        .probationer-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
 
         .probationer-info h3 {
             font-size: 20px;
@@ -338,6 +340,13 @@
             border-radius: 6px;
             margin-bottom: 8px;
             border-left: 3px solid #ff6b6b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .violation-item:hover {
+            background: rgba(40, 40, 40, 0.9);
+            transform: translateX(2px);
         }
 
         .violation-item:last-child {
@@ -353,6 +362,20 @@
         .violation-type {
             font-size: 12px;
             font-weight: 500;
+        }
+
+        .view-all-violations {
+            color: #259FDE;
+            font-size: 11px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .view-all-violations:hover {
+            color: #0E3CBD;
+            text-decoration: underline;
         }
 
         .no-violations {
@@ -386,12 +409,33 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
+            position: relative;
+            user-select: none;
+        }
+
+        .action-btn.pressing {
+            background: rgba(37, 159, 222, 0.4) !important;
+            transform: scale(0.95);
+        }
+
+        .press-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: rgba(37, 159, 222, 0.3);
+            border-radius: 6px;
+            transition: width 0.1s linear;
+            z-index: 1;
         }
 
         .view-btn {
             background: rgba(37, 159, 222, 0.2);
             color: #259FDE;
             border: 1px solid #259FDE;
+            position: relative;
+            overflow: hidden;
         }
 
         .view-btn:hover {
@@ -519,30 +563,31 @@
             margin-bottom: 20px;
         }
 
-.avatar-preview {
-    width: 120px;
-    height: 120px;
-    min-width: 120px;
-    min-height: 120px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-    color: white;
-    overflow: hidden;
-    border: 3px solid #259FDE;
-    cursor: pointer;
-    flex-shrink: 0;
-}
+        .avatar-preview {
+            width: 120px;
+            height: 120px;
+            min-width: 120px;
+            min-height: 120px;
+            aspect-ratio: 1/1;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            overflow: hidden;
+            border: 3px solid #259FDE;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
 
-.avatar-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
+        .avatar-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
 
         .upload-hint {
             font-size: 12px;
@@ -597,6 +642,88 @@
 
         .modal-btn.danger:hover {
             background: rgba(255, 107, 107, 0.1);
+        }
+
+        /* Violations Modal Specific Styles */
+        .violations-modal-content {
+            background: linear-gradient(135deg, #1C1C1C 0%, #2C2C2C 100%);
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid #259FDE;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .violations-list-modal {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 20px;
+        }
+
+        .violations-list-modal::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .violations-list-modal::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .violations-list-modal::-webkit-scrollbar-thumb {
+            background: #259FDE;
+            border-radius: 3px;
+        }
+
+        .violation-item-modal {
+            background: rgba(40, 40, 40, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .violation-item-modal:last-child {
+            margin-bottom: 0;
+        }
+
+        .violation-header-modal {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .violation-time-modal {
+            font-size: 12px;
+            color: #848484;
+        }
+
+        .violation-type-modal {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ff6b6b;
+            margin-bottom: 5px;
+        }
+
+        .violation-id {
+            font-size: 10px;
+            color: #259FDE;
+            background: rgba(37, 159, 222, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+            border: 1px solid rgba(37, 159, 222, 0.3);
+        }
+
+        .violation-count {
+            font-size: 14px;
+            color: #259FDE;
+            font-weight: 500;
         }
 
         /* Loading Screen */
@@ -776,8 +903,34 @@
                 width: 95%;
             }
             
+            .violations-modal-content {
+                padding: 20px;
+                width: 95%;
+                max-height: 85vh;
+            }
+            
             .form-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .probationer-header {
+                flex-wrap: wrap;
+            }
+            
+            .probationer-avatar {
+                width: 70px;
+                height: 70px;
+                min-width: 70px;
+                min-height: 70px;
+                font-size: 24px;
+            }
+            
+            .avatar-preview {
+                width: 100px;
+                height: 100px;
+                min-width: 100px;
+                min-height: 100px;
+                font-size: 30px;
             }
         }
 
@@ -800,6 +953,22 @@
             
             .modal-btn {
                 width: 100%;
+            }
+            
+            .probationer-avatar {
+                width: 60px;
+                height: 60px;
+                min-width: 60px;
+                min-height: 60px;
+                font-size: 20px;
+            }
+            
+            .avatar-preview {
+                width: 80px;
+                height: 80px;
+                min-width: 80px;
+                min-height: 80px;
+                font-size: 24px;
             }
         }
     </style>
@@ -902,6 +1071,26 @@
         </div>
     </div>
 
+    <!-- Violations Modal -->
+    <div class="modal" id="violationsModal">
+        <div class="violations-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="violationsModalTitle">Violations History</h2>
+                <button class="close-modal" id="closeViolationsModal">&times;</button>
+            </div>
+            
+            <div class="violation-count" id="violationCountText">0 violations found</div>
+            
+            <div class="violations-list-modal" id="violationsListModal">
+                <!-- Violations will be dynamically added here -->
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="closeViolationsBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div class="header" style="display: none;" id="mainHeader">
         <div class="left-section">
             <div class="logo-container">
@@ -982,6 +1171,9 @@
         let deletingId = null;
         let selectedFile = null;
         let fileReader = null;
+        let currentViewingViolationsId = null;
+        let pressTimers = {};
+        let pressProgressIntervals = {};
 
         // Authentication check
         function checkAuth() {
@@ -1032,12 +1224,290 @@
             }
         }
 
+        // Format datetime for display
+        function formatDateTime(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (error) {
+                return dateString;
+            }
+        }
+
         // Get battery class based on percentage
         function getBatteryClass(percentage) {
             if (percentage === 'N/A' || percentage === null || percentage === undefined) return 'battery-na';
             if (percentage >= 60) return 'battery-high';
             if (percentage >= 30) return 'battery-medium';
             return 'battery-low';
+        }
+
+        // Sort violations by time (most recent first)
+        function sortViolationsByTime(violations) {
+            return violations.sort((a, b) => {
+                const timeA = new Date(a.time || a.timestamp || a.date || 0);
+                const timeB = new Date(b.time || b.timestamp || b.date || 0);
+                return timeB - timeA; // Most recent first
+            });
+        }
+
+        // Get most recent violation
+        function getMostRecentViolation(violations) {
+            if (!violations || violations.length === 0) return null;
+            const sorted = sortViolationsByTime([...violations]);
+            return sorted[0];
+        }
+
+        // Generate random sample violations
+        function generateSampleViolations(count = 3) {
+            const violationTypes = [
+                "Curfew Violation",
+                "Geofence Breach",
+                "Device Tampering Attempt",
+                "Alcohol Consumption Detected",
+                "Missed Check-in",
+                "Restricted Area Entry",
+                "Associates Violation",
+                "Drug Test Positive",
+                "Weapon Possession Alert",
+                "Unauthorized Travel"
+            ];
+            
+            const locations = [
+                "45.6789° N, 73.1234° W",
+                "45.5123° N, 73.5678° W",
+                "45.7890° N, 73.3456° W",
+                "45.4321° N, 73.6789° W",
+                "45.6123° N, 73.4789° W",
+                "45.5432° N, 73.4321° W",
+                "45.3987° N, 73.5123° W",
+                "45.6543° N, 73.3210° W"
+            ];
+            
+            const details = [
+                "Probationer detected outside approved area. GPS coordinates confirmed location breach.",
+                "Electronic monitoring device showed signal interference for extended period.",
+                "Random check revealed prohibited substance in system.",
+                "Failed to report to probation officer as scheduled. No contact made.",
+                "Detected in presence of known felon. Association lasted several minutes.",
+                "Left residence during prohibited hours without authorization.",
+                "Attempted to remove or disable monitoring device.",
+                "Entered restricted zone near sensitive location.",
+                "Traveled outside approved county limits without permission.",
+                "Missed mandatory counseling session without valid excuse."
+            ];
+            
+            const violations = [];
+            const now = new Date();
+            
+            for (let i = 0; i < count; i++) {
+                // Generate random date within last 30 days
+                const daysAgo = Math.floor(Math.random() * 30);
+                const hoursAgo = Math.floor(Math.random() * 24);
+                const minutesAgo = Math.floor(Math.random() * 60);
+                
+                const violationDate = new Date(now);
+                violationDate.setDate(now.getDate() - daysAgo);
+                violationDate.setHours(now.getHours() - hoursAgo);
+                violationDate.setMinutes(now.getMinutes() - minutesAgo);
+                
+                const type = violationTypes[Math.floor(Math.random() * violationTypes.length)];
+                const location = locations[Math.floor(Math.random() * locations.length)];
+                const detail = details[Math.floor(Math.random() * details.length)];
+                
+                violations.push({
+                    time: violationDate.toISOString(),
+                    type: type,
+                    details: detail,
+                    location: Math.random() > 0.2 ? location : "N/A" // 80% have location
+                });
+            }
+            
+            // Sort by time (most recent first)
+            return sortViolationsByTime(violations);
+        }
+
+        // Generate random device data
+        function generateRandomDeviceData() {
+            const statuses = ['active', 'offline', 'tampered'];
+            return {
+                deviceStatus: statuses[Math.floor(Math.random() * statuses.length)],
+                batteryPercentage: Math.floor(Math.random() * 101)
+            };
+        }
+
+        // Update probationer with sample data
+        async function updateProbationerWithSampleData(probationerId) {
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (!probationer) {
+                showNotification('Probationer not found', 'error');
+                return;
+            }
+            
+            // Generate random number of violations (0-8)
+            const violationCount = Math.floor(Math.random() * 9);
+            const sampleViolations = generateSampleViolations(violationCount);
+            
+            // Generate random device data
+            const deviceData = generateRandomDeviceData();
+            
+            // Update probationer data
+            const updatedData = {
+                ...probationer,
+                deviceStatus: deviceData.deviceStatus,
+                batteryPercentage: deviceData.batteryPercentage,
+                violations: sampleViolations,
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Remove the ID from the data before saving
+            delete updatedData.id;
+            
+            try {
+                const probationerRef = ref(database, `probationers/${probationerId}`);
+                await set(probationerRef, updatedData);
+                
+                showNotification(
+                    `Generated ${violationCount} sample violations and random device data for ${probationer.fullName}`,
+                    'success'
+                );
+            } catch (error) {
+                console.error('Error updating probationer with sample data:', error);
+                showNotification('Failed to generate sample data', 'error');
+            }
+        }
+
+        // Handle long press on View button
+        function setupLongPress(button, probationerId) {
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (!probationer) return;
+            
+            let pressTimer;
+            let pressStartTime;
+            let progressInterval;
+            
+            // Create progress bar if it doesn't exist
+            if (!button.querySelector('.press-progress')) {
+                const progressBar = document.createElement('div');
+                progressBar.className = 'press-progress';
+                button.appendChild(progressBar);
+            }
+            
+            const progressBar = button.querySelector('.press-progress');
+            
+            const startPress = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                pressStartTime = Date.now();
+                button.classList.add('pressing');
+                
+                // Clear any existing timer
+                clearTimeout(pressTimers[probationerId]);
+                clearInterval(pressProgressIntervals[probationerId]);
+                
+                // Start progress animation
+                let progress = 0;
+                pressProgressIntervals[probationerId] = setInterval(() => {
+                    const elapsed = Date.now() - pressStartTime;
+                    progress = Math.min((elapsed / 5000) * 100, 100);
+                    progressBar.style.width = `${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(pressProgressIntervals[probationerId]);
+                    }
+                }, 50);
+                
+                // Set timer for 5 seconds
+                pressTimers[probationerId] = setTimeout(() => {
+                    updateProbationerWithSampleData(probationerId);
+                    resetPress(probationerId);
+                }, 5000);
+            };
+            
+            const cancelPress = (probationerId) => {
+                clearTimeout(pressTimers[probationerId]);
+                clearInterval(pressProgressIntervals[probationerId]);
+                
+                const button = document.querySelector(`[data-probationer-id="${probationerId}"] .view-btn`);
+                if (button) {
+                    button.classList.remove('pressing');
+                    const progressBar = button.querySelector('.press-progress');
+                    if (progressBar) {
+                        progressBar.style.width = '0%';
+                    }
+                }
+            };
+            
+            const resetPress = (probationerId) => {
+                clearTimeout(pressTimers[probationerId]);
+                clearInterval(pressProgressIntervals[probationerId]);
+                
+                const button = document.querySelector(`[data-probationer-id="${probationerId}"] .view-btn`);
+                if (button) {
+                    button.classList.remove('pressing');
+                    const progressBar = button.querySelector('.press-progress');
+                    if (progressBar) {
+                        progressBar.style.width = '0%';
+                    }
+                }
+            };
+            
+            // Mouse events for desktop
+            button.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // Left click only
+                    startPress(e);
+                }
+            });
+            
+            button.addEventListener('mouseup', () => {
+                if (pressTimers[probationerId]) {
+                    const elapsed = Date.now() - pressStartTime;
+                    if (elapsed < 5000) {
+                        showNotification('Hold for 5 seconds to generate sample data', 'info');
+                    }
+                    cancelPress(probationerId);
+                }
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                if (pressTimers[probationerId]) {
+                    cancelPress(probationerId);
+                }
+            });
+            
+            // Touch events for mobile
+            button.addEventListener('touchstart', (e) => {
+                startPress(e);
+            }, { passive: false });
+            
+            button.addEventListener('touchend', () => {
+                if (pressTimers[probationerId]) {
+                    const elapsed = Date.now() - pressStartTime;
+                    if (elapsed < 5000) {
+                        showNotification('Hold for 5 seconds to generate sample data', 'info');
+                    }
+                    cancelPress(probationerId);
+                }
+            });
+            
+            button.addEventListener('touchcancel', () => {
+                if (pressTimers[probationerId]) {
+                    cancelPress(probationerId);
+                }
+            });
+            
+            // Prevent context menu on long press
+            button.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                return false;
+            });
         }
 
         // Load probationers from Firebase under /probationers path
@@ -1113,6 +1583,52 @@
             }
         }
 
+        // Open violations modal
+        function openViolationsModal(probationerId) {
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (!probationer) return;
+            
+            currentViewingViolationsId = probationerId;
+            const violations = probationer.violations || [];
+            const sortedViolations = sortViolationsByTime([...violations]);
+            
+            // Update modal title and count
+            document.getElementById('violationsModalTitle').textContent = `Violations - ${probationer.fullName}`;
+            document.getElementById('violationCountText').textContent = `${violations.length} violation${violations.length !== 1 ? 's' : ''} found`;
+            
+            // Clear and populate violations list
+            const violationsList = document.getElementById('violationsListModal');
+            violationsList.innerHTML = '';
+            
+            if (sortedViolations.length === 0) {
+                violationsList.innerHTML = '<div class="no-violations">No violations recorded</div>';
+            } else {
+                sortedViolations.forEach((violation, index) => {
+                    const violationElement = document.createElement('div');
+                    violationElement.className = 'violation-item-modal';
+                    violationElement.innerHTML = `
+                        <div class="violation-header-modal">
+                            <div class="violation-id">VIOLATION #${sortedViolations.length - index}</div>
+                            <div class="violation-time-modal">${formatDateTime(violation.time)}</div>
+                        </div>
+                        <div class="violation-type-modal">${violation.type || 'Unknown violation'}</div>
+                        ${violation.details ? `<div style="font-size: 12px; color: #848484; margin-top: 5px;">${violation.details}</div>` : ''}
+                        ${violation.location ? `<div style="font-size: 11px; color: #259FDE; margin-top: 3px;">📍 ${violation.location}</div>` : ''}
+                    `;
+                    violationsList.appendChild(violationElement);
+                });
+            }
+            
+            // Show modal
+            document.getElementById('violationsModal').style.display = 'flex';
+        }
+
+        // Close violations modal
+        function closeViolationsModal() {
+            document.getElementById('violationsModal').style.display = 'none';
+            currentViewingViolationsId = null;
+        }
+
         // Render probationers to the grid
         function renderProbationers() {
             const grid = document.getElementById('probationersGrid');
@@ -1132,10 +1648,12 @@
                 const status = probationer.deviceStatus || 'N/A';
                 const battery = probationer.batteryPercentage || 'N/A';
                 const violations = probationer.violations || [];
+                const mostRecentViolation = getMostRecentViolation(violations);
                 
                 const card = document.createElement('div');
                 card.className = 'probationer-card';
                 card.dataset.id = probationer.id;
+                card.setAttribute('data-probationer-id', probationer.id);
                 
                 card.innerHTML = `
                     <div class="status-badge status-${status.toLowerCase().replace('/', '-')}">
@@ -1176,31 +1694,28 @@
                     
                     <div class="violations-section">
                         <div class="section-title">
-                            <span>Recent Violations</span>
-                            <span>${violations.length} total</span>
+                            <span>Recent Violation</span>
+                            ${violations.length > 0 ? 
+                                `<a class="view-all-violations" onclick="viewAllViolations('${probationer.id}')">View all (${violations.length})</a>` : 
+                                ''
+                            }
                         </div>
                         
                         <div class="violations-list">
-                            ${violations.length > 0 ? 
-                                violations.slice(0, 3).map(violation => `
-                                    <div class="violation-item">
-                                        <div class="violation-time">
-                                            ${formatDate(violation.time)} at ${formatTime(violation.time)}
-                                        </div>
-                                        <div class="violation-type">${violation.type}</div>
+                            ${mostRecentViolation ? 
+                                `<div class="violation-item" onclick="openViolationsModal('${probationer.id}')">
+                                    <div class="violation-time">
+                                        ${formatDate(mostRecentViolation.time)} at ${formatTime(mostRecentViolation.time)}
                                     </div>
-                                `).join('') : 
+                                    <div class="violation-type">${mostRecentViolation.type || 'Unknown violation'}</div>
+                                </div>` : 
                                 '<div class="no-violations">No violations recorded</div>'
-                            }
-                            ${violations.length > 3 ? 
-                                '<div class="violation-item" style="text-align: center; color: #848484; font-size: 12px;">... and ' + (violations.length - 3) + ' more</div>' : 
-                                ''
                             }
                         </div>
                     </div>
                     
                     <div class="actions-bar">
-                        <button class="action-btn view-btn" onclick="viewProbationer('${probationer.id}')">
+                        <button class="action-btn view-btn" data-probationer-id="${probationer.id}">
                             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                                 <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6zm-1-6h2v2H7V8zm0-4h2v2H7V4z"/>
                             </svg>
@@ -1223,6 +1738,20 @@
                 `;
                 
                 grid.appendChild(card);
+                
+                // Setup long press for view button
+                const viewButton = card.querySelector('.view-btn');
+                setupLongPress(viewButton, probationer.id);
+                
+                // Setup click for view button (short press)
+                viewButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Only trigger if not currently in a long press
+                    if (!pressTimers[probationer.id]) {
+                        viewProbationer(probationer.id);
+                    }
+                });
             });
         }
 
@@ -1395,6 +1924,16 @@
             }
         };
 
+        // View all violations
+        window.viewAllViolations = function(id) {
+            openViolationsModal(id);
+        };
+
+        // Open violations modal
+        window.openViolationsModal = function(id) {
+            openViolationsModal(id);
+        };
+
         // Confirm delete
         window.confirmDelete = function(id, name) {
             deletingId = id;
@@ -1492,6 +2031,10 @@
             document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
             document.getElementById('confirmDeleteBtn').addEventListener('click', deleteProbationerConfirmed);
             
+            // Violations modal
+            document.getElementById('closeViolationsModal').addEventListener('click', closeViolationsModal);
+            document.getElementById('closeViolationsBtn').addEventListener('click', closeViolationsModal);
+            
             // Close modals when clicking outside
             document.getElementById('probationerModal').addEventListener('click', (e) => {
                 if (e.target === this) {
@@ -1505,6 +2048,12 @@
                 }
             });
             
+            document.getElementById('violationsModal').addEventListener('click', (e) => {
+                if (e.target === this) {
+                    closeViolationsModal();
+                }
+            });
+            
             // Close modals with Escape key
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
@@ -1513,6 +2062,9 @@
                     }
                     if (document.getElementById('deleteModal').style.display === 'flex') {
                         closeDeleteModal();
+                    }
+                    if (document.getElementById('violationsModal').style.display === 'flex') {
+                        closeViolationsModal();
                     }
                 }
             });
