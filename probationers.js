@@ -1,14 +1,14 @@
 // ========================================
-// js/probationers.js - FULL COMPLETE VERSION
+// probationers.js - FULLY FIXED & WORKING
 // ========================================
 
-// Inject all Modal HTML (keeps HTML file clean)
+// Inject all Modal HTML
 const modalHTML = {
     probationer: `
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle">Add New Probationer</h2>
-                <button class="close-modal" id="closeModal">x</button>
+                <button class="close-modal" id="closeModal">×</button>
             </div>
             <div class="avatar-upload">
                 <div class="avatar-preview" id="avatarPreview">
@@ -38,7 +38,7 @@ const modalHTML = {
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Add Announcement</h2>
-                <button class="close-modal" id="closeAnnouncementModal">x</button>
+                <button class="close-modal" id="closeAnnouncementModal">×</button>
             </div>
             <div class="form-grid">
                 <div class="form-group" style="grid-column: span 2;">
@@ -60,7 +60,7 @@ const modalHTML = {
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Confirm Delete</h2>
-                <button class="close-modal" id="closeDeleteModal">x</button>
+                <button class="close-modal" id="closeDeleteModal">×</button>
             </div>
             <div style="text-align: center; padding: 20px 0;">
                 <div style="font-size: 48px; color: #ff6b6b; margin-bottom: 20px;">Warning</div>
@@ -79,7 +79,7 @@ const modalHTML = {
         <div class="violations-modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="violationsModalTitle">Violations History</h2>
-                <button class="close-modal" id="closeViolationsModal">x</button>
+                <button class="close-modal" id="closeViolationsModal">×</button>
             </div>
             <div class="violation-count" id="violationCountText">0 violations found</div>
             <div class="violations-list-modal" id="violationsListModal"></div>
@@ -92,7 +92,7 @@ const modalHTML = {
         <div class="announcements-modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="announcementsModalTitle">Announcements</h2>
-                <button class="close-modal" id="closeAnnouncementsModal">x</button>
+                <button class="close-modal" id="closeAnnouncementsModal">×</button>
             </div>
             <div class="announcement-count" id="announcementCountText">0 announcements found</div>
             <div class="announcements-list-modal" id="announcementsListModal"></div>
@@ -109,13 +109,12 @@ document.getElementById('deleteModal').innerHTML = modalHTML.delete;
 document.getElementById('violationsModal').innerHTML = modalHTML.violations;
 document.getElementById('announcementsModal').innerHTML = modalHTML.announcements;
 
-// ========================================
-// Firebase Configuration & Initialization
-// ========================================
+// Firebase Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, get, set, remove, onValue, push } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
     authDomain: "probationlocator.firebaseapp.com",
@@ -130,18 +129,15 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
-// Global variables
+// Global Variables
 let probationers = [];
 let editingId = null;
 let deletingId = null;
 let selectedFile = null;
 let currentViewingViolationsId = null;
-let currentViewingAnnouncementsId = null;
 let currentAddingAnnouncementId = null;
 
-// ========================================
 // Utility Functions
-// ========================================
 function checkAuth() {
     const username = localStorage.getItem('emprobUsername');
     if (!username) {
@@ -156,9 +152,7 @@ function showNotification(message, type = 'info', duration = 4000) {
     const notification = document.getElementById('notification');
     notification.textContent = message;
     notification.className = `notification ${type} show`;
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, duration);
+    setTimeout(() => notification.classList.remove('show'), duration);
 }
 
 function formatDate(timestamp) {
@@ -194,9 +188,7 @@ function closeAllModals() {
     document.getElementById('announcementsModal').style.display = 'none';
 }
 
-// ========================================
 // Render Probationers
-// ========================================
 function renderProbationers() {
     const grid = document.getElementById('probationersGrid');
     const emptyState = document.getElementById('emptyState');
@@ -213,7 +205,6 @@ function renderProbationers() {
     probationers.forEach(p => {
         const card = document.createElement('div');
         card.className = 'probationer-card';
-        card.onclick = () => openProbationerModal(p.id);
 
         const avatarHTML = p.avatar 
             ? `<img src="${p.avatar}" alt="${p.fullName}">`
@@ -249,9 +240,7 @@ function renderProbationers() {
                 </div>
                 <div class="info-item">
                     <span class="info-label">Coordinates</span>
-                    <div class="coordinates-container">
-                        <div class="coordinates-value">${p.latitude || 'N/A'}, ${p.longitude || 'N/A'}</div>
-                    </div>
+                    <div class="coordinates-value">${p.latitude || 'N/A'}, ${p.longitude || 'N/A'}</div>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Address</span>
@@ -268,7 +257,7 @@ function renderProbationers() {
                     ${violations.length > 0 ? violations.map(v => `
                         <div class="violation-item">
                             <div class="violation-time">${formatDate(v.timestamp)}</div>
-                            <div class="violation-type">${v.type || 'Unknown Violation'}</div>
+                            <div class="violation-type">${v.type || 'Unknown'}</div>
                         </div>
                     `).join('') : '<div class="no-violations">No violations recorded</div>'}
                 </div>
@@ -277,9 +266,7 @@ function renderProbationers() {
             <div class="announcements-section">
                 <div class="section-title">
                     Announcements
-                    <button class="add-announcement-btn" data-id="${p.id}">
-                        Add
-                    </button>
+                    <button class="add-announcement-btn" data-id="${p.id}">Add</button>
                 </div>
                 <div class="announcements-list">
                     ${announcements.length > 0 ? announcements.map(a => `
@@ -302,14 +289,15 @@ function renderProbationers() {
             </div>
         `;
 
+        card.onclick = () => openProbationerModal(p.id);
         grid.appendChild(card);
     });
 
-    // Re-attach event listeners for "View all violations" and "Add announcement"
-    document.querySelectorAll('.view-all-violations').forEach(btn => {
-        btn.onclick = (e) => {
+    // Re-attach event listeners
+    document.querySelectorAll('.view-all-violations').forEach(el => {
+        el.onclick = (e) => {
             e.stopPropagation();
-            openViolationsModal(btn.dataset.id);
+            openViolationsModal(el.dataset.id);
         };
     });
 
@@ -322,9 +310,7 @@ function renderProbationers() {
     });
 }
 
-// ========================================
 // Modal Functions
-// ========================================
 function openProbationerModal(id = null) {
     editingId = id;
     const modal = document.getElementById('probationerModal');
@@ -358,7 +344,7 @@ function openProbationerModal(id = null) {
         }
     } else {
         title.textContent = 'Add New Probationer';
-        document.querySelectorAll('.form-input, .form-textarea').forEach(input => input.value = '');
+        document.querySelectorAll('#probationerModal .form-input').forEach(i => i.value = '');
         avatarImage.style.display = 'none';
         avatarInitial.style.display = 'block';
         avatarInitial.textContent = '?';
@@ -383,7 +369,7 @@ function openViolationsModal(id) {
     list.innerHTML = '';
 
     const violations = p?.violations ? Object.values(p.violations) : [];
-    document.getElementById('violationCountText').textContent = `${violations.length} violation${violations.length !== 1 ? 's' : ''} found`;
+    document.getElementById('violationCountText').textContent = `${violations.length} violation${violations.length !== 1 ? 's' : ''}`;
 
     if (violations.length === 0) {
         list.innerHTML = '<div class="no-violations">No violations recorded</div>';
@@ -394,7 +380,6 @@ function openViolationsModal(id) {
             item.innerHTML = `
                 <div class="violation-header-modal">
                     <div class="violation-time-modal">${new Date(v.timestamp).toLocaleString()}</div>
-                    <div class="violation-id">#${v.id?.slice(-6) || '???'}</div>
                 </div>
                 <div class="violation-type-modal">${v.type || 'Unknown Violation'}</div>
             `;
@@ -405,52 +390,37 @@ function openViolationsModal(id) {
     document.getElementById('violationsModal').style.display = 'flex';
 }
 
-// ========================================
-// DOM Loaded - Main Init
-// ========================================
+// DOM Loaded
 document.addEventListener('DOMContentLoaded', function () {
     const username = checkAuth();
     if (!username) return;
 
-    // Show loading
     document.getElementById('loadingScreen').style.display = 'flex';
 
-    // Anonymous sign-in (required for Realtime DB rules)
-    signInAnonymously(auth)
-        .then(() => {
-            const probationersRef = ref(database, `probationers/${username}`);
-            onValue(probationersRef, (snapshot) => {
-                const data = snapshot.val();
-                probationers = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
-                renderProbationers();
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('mainHeader').style.display = 'flex';
-                document.getElementById('mainContent').style.display = 'block';
-            });
-        })
-        .catch((error) => {
-            console.error("Auth error:", error);
-            showNotification('Authentication failed. Please try again.', 'error');
+    signInAnonymously(auth).then(() => {
+        const probationersRef = ref(database, `probationers/${username}`);
+        onValue(probationersRef, (snapshot) => {
+            const data = snapshot.val();
+            probationers = data ? Object.keys(data).map(key => ({ id: key, ...data[key] })) : [];
+            renderProbationers();
             document.getElementById('loadingScreen').style.display = 'none';
-        }));
+            document.getElementById('mainHeader').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'block';
+        });
+    }).catch(err => {
+        console.error(err);
+        showNotification('Failed to connect. Check internet.', 'error');
+        document.getElementById('loadingScreen').style.display = 'none';
+    });
 
     // Event Listeners
     document.getElementById('addProbationerBtn').onclick = () => openProbationerModal();
     document.getElementById('addFirstProbationerBtn').onclick = () => openProbationerModal();
 
-    // Close modals
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.onclick = closeAllModals;
-    });
+    document.querySelectorAll('.close-modal').forEach(btn => btn.onclick = closeAllModals);
+    window.onclick = (e) => { if (e.target.classList.contains('modal')) closeAllModals(); };
 
-    window.onclick = (event) => {
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
-            if (event.target === modal) closeAllModals();
-        });
-    };
-
-    // Avatar upload
+    // Avatar
     document.getElementById('avatarPreview').onclick = () => document.getElementById('avatarInput').click();
     document.getElementById('avatarInput').onchange = (e) => {
         selectedFile = e.target.files[0];
@@ -465,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Save probationer
+    // Save Probationer (FIXED!)
     document.getElementById('saveBtn').onclick = async () => {
         const fullName = document.getElementById('fullName').value.trim();
         const assignedId = document.getElementById('assignedId').value.trim();
@@ -478,30 +448,16 @@ document.addEventListener('DOMContentLoaded', function () {
         const username = localStorage.getItem('emprobUsername');
         const probationerRef = ref(database, `probationers/${username}/${editingId || assignedId}`);
 
-        let avatarUrl = null;
-        if (selectedFile) {
-            // For demo, we use base64 (in real app you'd upload to Firebase Storage)
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                avatarUrl = e.target.result;
-                await saveProbationerData(avatarUrl);
-            };
-            reader.readAsDataURL(selectedFile);
-        } else {
-            await saveProbationerData(null);
-        }
-
-        async function saveProbationerData(avatar) {
+        const saveData = async (avatarUrl = null) => {
             const data = {
-                fullName,
-                assignedId,
+                fullName, assignedId,
                 email: document.getElementById('email').value.trim(),
                 phone: document.getElementById('phone').value.trim(),
                 address: document.getElementById('address').value.trim(),
                 dob: document.getElementById('dob').value,
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value,
-                avatar: avatar || (editingId ? probationers.find(p => p.id === editingId)?.avatar : null),
+                avatar: avatarUrl || (editingId ? probationers.find(p => p.id === editingId)?.avatar : null),
                 lastSeen: Date.now(),
                 status: 'Active',
                 battery: '85',
@@ -510,66 +466,52 @@ document.addEventListener('DOMContentLoaded', function () {
             };
 
             try {
-                if (editingId) {
-                    await set(probationerRef, data);
-                    showNotification('Probationer updated successfully!', 'success');
-                } else {
-                    await set(probationerRef, data);
-                    showNotification('Probationer added successfully!', 'success');
-                }
+                await set(probationerRef, data);
+                showNotification(editingId ? 'Updated successfully!' : 'Added successfully!', 'success');
                 closeAllModals();
+                selectedFile = null;
             } catch (err) {
-                showNotification('Error saving probationer', 'error');
+                showNotification('Save failed!', 'error');
             }
+        };
+
+        if (selectedFile) {
+            const reader = new FileReader();
+            reader.onload = (e) => saveData(e.target.result);
+            reader.readAsDataURL(selectedFile);
+        } else {
+            await saveData();
         }
     };
 
-    // Cancel buttons
+    // Cancel & Delete
     document.getElementById('cancelBtn').onclick = closeAllModals;
     document.getElementById('cancelAnnouncementBtn').onclick = closeAllModals;
     document.getElementById('cancelDeleteBtn').onclick = closeAllModals;
     document.getElementById('closeViolationsBtn').onclick = closeAllModals;
     document.getElementById('closeAnnouncementsBtn').onclick = closeAllModals;
 
-    // Delete confirmation
     document.getElementById('confirmDeleteBtn').onclick = async () => {
         if (!deletingId) return;
         const username = localStorage.getItem('emprobUsername');
-        try {
-            await remove(ref(database, `probationers/${username}/${deletingId}`));
-            showNotification('Probationer deleted', 'success');
-            closeAllModals();
-        } catch (err) {
-            showNotification('Error deleting probationer', 'error');
-        }
+        await remove(ref(database, `probationers/${username}/${deletingId}`));
+        showNotification('Deleted successfully', 'success');
+        closeAllModals();
     };
 
-    // Add Announcement
     document.getElementById('saveAnnouncementBtn').onclick = async () => {
         const subject = document.getElementById('announcementSubject').value.trim();
         const details = document.getElementById('announcementDetails').value.trim();
-
         if (!subject || !details) {
-            showNotification('Subject and details are required!', 'error');
+            showNotification('Fill all fields!', 'error');
             return;
         }
 
-        const username = localStorage.getItem('emprobUsername');
-        const newAnnRef = push(ref(database, `probationers/${username}/${currentAddingAnnouncementId}/announcements`));
-
-        try {
-            await set(newAnnRef, {
-                subject,
-                details,
-                timestamp: Date.now(),
-                acknowledged: false
-            });
-            showNotification('Announcement added!', 'success');
-            document.getElementById('announcementSubject').value = '';
-            document.getElementById('announcementDetails').value = '';
-            closeAllModals();
-        } catch (err) {
-            showNotification('Failed to add announcement', 'error');
-        }
+        const newRef = push(ref(database, `probationers/${localStorage.getItem('emprobUsername')}/${currentAddingAnnouncementId}/announcements`));
+        await set(newRef, { subject, details, timestamp: Date.now(), acknowledged: false });
+        showNotification('Announcement added!', 'success');
+        document.getElementById('announcementSubject').value = '';
+        document.getElementById('announcementDetails').value = '';
+        closeAllModals();
     };
 });
