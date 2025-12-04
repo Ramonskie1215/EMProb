@@ -1756,18 +1756,30 @@
             if (sortedAnnouncements.length === 0) {
                 announcementsList.innerHTML = '<div class="no-announcements">No announcements</div>';
             } else {
-                sortedAnnouncements.forEach((announcement, index) => {
+                // Get the original announcements (not sorted)
+                const originalAnnouncements = probationer.announcements || [];
+                
+                sortedAnnouncements.forEach((announcement, sortedIndex) => {
+                    // Find the original index of this announcement
+                    const originalIndex = originalAnnouncements.findIndex(a => 
+                        a.time === announcement.time && 
+                        a.subject === announcement.subject
+                    );
+                    
+                    // Use the original index, or fall back to sorted index
+                    const displayIndex = originalIndex !== -1 ? originalIndex : sortedIndex;
+                    
                     const announcementElement = document.createElement('div');
                     announcementElement.className = `announcement-item-modal ${announcement.acknowledge ? 'acknowledged' : ''}`;
                     announcementElement.innerHTML = `
                         <div class="announcement-header-modal">
-                            <div class="announcement-id">ANNOUNCEMENT #${sortedAnnouncements.length - index}</div>
+                            <div class="announcement-id">ANNOUNCEMENT #${sortedAnnouncements.length - sortedIndex}</div>
                             <div class="announcement-time-modal">${formatDateTime(announcement.time)}</div>
                         </div>
                         <div class="announcement-subject-modal">${announcement.subject || 'No subject'}</div>
                         <div class="announcement-details-modal">${announcement.details || 'No details provided'}</div>
-                                                <div class="announcement-status ${announcement.acknowledge ? 'acknowledged' : 'pending'}" 
-                             onclick="toggleAnnouncementStatus('${probationerId}', ${index})">
+                        <div class="announcement-status ${announcement.acknowledge ? 'acknowledged' : 'pending'}" 
+                             onclick="toggleAnnouncementStatus('${probationerId}', ${displayIndex})">
                             ${announcement.acknowledge ? '✓ Acknowledged' : '✗ Pending'}
                         </div>
                     `;
