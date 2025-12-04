@@ -1268,6 +1268,51 @@
         </div>
     </div>
 
+<!-- DELETE VIOLATION MODAL -->
+<div class="modal" id="deleteViolationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Delete Violation?</h2>
+            <button class="close-modal" id="closeDeleteViolationModal">&times;</button>
+        </div>
+        
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 48px; color: #ff6b6b; margin-bottom: 20px;">⚠️</div>
+            <h3 style="color: #259FDE; margin-bottom: 10px;">Confirm Deletion</h3>
+            <p style="color: #848484; margin-bottom: 10px;">Are you sure you want to delete this violation?</p>
+            <p style="color: #ff6b6b; font-weight: 500; font-size: 14px;" id="deleteViolationDetails"></p>
+            <p style="color: #848484; font-size: 12px; margin-top: 20px;">This cannot be undone.</p>
+        </div>
+        
+        <div class="modal-buttons">
+            <button class="modal-btn secondary" id="cancelDeleteViolationBtn">Cancel</button>
+            <button class="modal-btn danger" id="confirmDeleteViolationBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOGGLE ANNOUNCEMENT MODAL -->
+<div class="modal" id="toggleAnnouncementModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title" id="toggleAnnouncementModalTitle">Change Status</h2>
+            <button class="close-modal" id="closeToggleAnnouncementModal">&times;</button>
+        </div>
+        
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 48px; color: #259FDE; margin-bottom: 20px;">⚠️</div>
+            <h3 style="color: #259FDE; margin-bottom: 10px;" id="toggleAnnouncementQuestion"></h3>
+            <p style="color: #848484; margin-bottom: 10px;" id="toggleAnnouncementDetails"></p>
+        </div>
+        
+        <div class="modal-buttons">
+            <button class="modal-btn secondary" id="cancelToggleAnnouncementBtn">Cancel</button>
+            <button class="modal-btn primary" id="confirmToggleAnnouncementBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+<!-- *********** END OF NEW MODALS *********** -->
+
     <div class="header" style="display: none;" id="mainHeader">
         <div class="left-section">
             <div class="logo-container">
@@ -1638,9 +1683,11 @@
             if (sortedViolations.length === 0) {
                 violationsList.innerHTML = '<div class="no-violations">No violations recorded</div>';
             } else {
-                sortedViolations.forEach((violation, index) => {
+                                sortedViolations.forEach((violation, index) => {
                     const violationElement = document.createElement('div');
                     violationElement.className = 'violation-item-modal';
+                    violationElement.dataset.index = index;
+                    violationElement.dataset.probationerId = probationerId;
                     violationElement.innerHTML = `
                         <div class="violation-header-modal">
                             <div class="violation-id">VIOLATION #${sortedViolations.length - index}</div>
@@ -1649,7 +1696,38 @@
                         <div class="violation-type-modal">${violation.type || 'Unknown violation'}</div>
                         ${violation.details ? `<div style="font-size: 12px; color: #848484; margin-top: 5px;">${violation.details}</div>` : ''}
                         ${violation.location ? `<div style="font-size: 11px; color: #259FDE; margin-top: 3px;">📍 ${violation.location}</div>` : ''}
+                        <div style="font-size: 10px; color: #848484; margin-top: 5px; font-style: italic;">
+                            Long press to delete
+                        </div>
                     `;
+
+                    // Add long-press detection
+                    let pressTimer;
+                    violationElement.addEventListener('touchstart', function(e) {
+                        e.preventDefault();
+                        pressTimer = setTimeout(() => {
+                            showDeleteViolationModal(probationerId, index, violation);
+                        }, 1000);
+                    });
+
+                    violationElement.addEventListener('touchend', function(e) {
+                        clearTimeout(pressTimer);
+                    });
+
+                    violationElement.addEventListener('mousedown', function(e) {
+                        pressTimer = setTimeout(() => {
+                            showDeleteViolationModal(probationerId, index, violation);
+                        }, 1000);
+                    });
+
+                    violationElement.addEventListener('mouseup', function(e) {
+                        clearTimeout(pressTimer);
+                    });
+
+                    violationElement.addEventListener('mouseleave', function(e) {
+                        clearTimeout(pressTimer);
+                    });
+
                     violationsList.appendChild(violationElement);
                 });
             }
@@ -1688,7 +1766,8 @@
                         </div>
                         <div class="announcement-subject-modal">${announcement.subject || 'No subject'}</div>
                         <div class="announcement-details-modal">${announcement.details || 'No details provided'}</div>
-                        <div class="announcement-status ${announcement.acknowledge ? 'acknowledged' : 'pending'}">
+                                                <div class="announcement-status ${announcement.acknowledge ? 'acknowledged' : 'pending'}" 
+                             onclick="toggleAnnouncementStatus('${probationerId}', ${index})">
                             ${announcement.acknowledge ? '✓ Acknowledged' : '✗ Pending'}
                         </div>
                     `;
@@ -1881,7 +1960,8 @@
                                     </div>
                                     <div class="announcement-subject">${mostRecentAnnouncement.subject || 'No subject'}</div>
                                     <div class="announcement-details">${mostRecentAnnouncement.details || 'No details provided'}</div>
-                                    <div class="announcement-status ${mostRecentAnnouncement.acknowledge ? 'acknowledged' : 'pending'}">
+                                                                        <div class="announcement-status ${mostRecentAnnouncement.acknowledge ? 'acknowledged' : 'pending'}" 
+                                         onclick="event.stopPropagation(); toggleAnnouncementStatus('${probationer.id}', ${announcements.length - 1})">
                                         ${mostRecentAnnouncement.acknowledge ? '✓ Acknowledged' : '✗ Pending'}
                                     </div>
                                 </div>` : 
@@ -2280,6 +2360,150 @@
             });
         }
 
+        // ============ NEW FUNCTIONS FOR FEATURES ============
+
+        // Global variables
+        let toggleAnnouncementData = null;
+        let deleteViolationData = null;
+
+        // Toggle announcement status
+        window.toggleAnnouncementStatus = function(probationerId, announcementIndex) {
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (!probationer || !probationer.announcements || !probationer.announcements[announcementIndex]) return;
+            
+            const announcement = probationer.announcements[announcementIndex];
+            const isCurrentlyAcknowledged = announcement.acknowledge;
+            
+            toggleAnnouncementData = {
+                probationerId,
+                announcementIndex,
+                isCurrentlyAcknowledged
+            };
+            
+            const newStatus = isCurrentlyAcknowledged ? 'Pending' : 'Acknowledged';
+            
+            document.getElementById('toggleAnnouncementModalTitle').textContent = `Mark as ${newStatus}`;
+            document.getElementById('toggleAnnouncementQuestion').textContent = `Mark as ${newStatus}?`;
+            document.getElementById('toggleAnnouncementDetails').innerHTML = `
+                <strong>Subject:</strong> ${announcement.subject || 'No subject'}<br>
+                <strong>Time:</strong> ${formatDateTime(announcement.time)}
+            `;
+            
+            document.getElementById('toggleAnnouncementModal').style.display = 'flex';
+        };
+
+        // Confirm toggle announcement
+        async function confirmToggleAnnouncement() {
+            if (!toggleAnnouncementData) return;
+            
+            const { probationerId, announcementIndex, isCurrentlyAcknowledged } = toggleAnnouncementData;
+            const newStatus = !isCurrentlyAcknowledged;
+            
+            const confirmBtn = document.getElementById('confirmToggleAnnouncementBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Updating...';
+            
+            const success = await updateAnnouncementStatus(probationerId, announcementIndex, newStatus);
+            
+            if (success) {
+                showNotification(`Status changed to ${newStatus ? 'Acknowledged' : 'Pending'}!`, 'success');
+                closeToggleAnnouncementModal();
+                
+                if (currentViewingAnnouncementsId === probationerId) {
+                    openAnnouncementsModal(probationerId);
+                }
+            } else {
+                showNotification('Failed to update status.', 'error');
+            }
+            
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm';
+        }
+
+        // Close toggle announcement modal
+        function closeToggleAnnouncementModal() {
+            document.getElementById('toggleAnnouncementModal').style.display = 'none';
+            toggleAnnouncementData = null;
+        }
+
+        // Show delete violation modal
+        function showDeleteViolationModal(probationerId, violationIndex, violation) {
+            deleteViolationData = {
+                probationerId,
+                violationIndex,
+                violation
+            };
+            
+            document.getElementById('deleteViolationDetails').innerHTML = `
+                <strong>Type:</strong> ${violation.type || 'Unknown'}<br>
+                <strong>Time:</strong> ${formatDateTime(violation.time)}<br>
+                ${violation.details ? `<strong>Details:</strong> ${violation.details}<br>` : ''}
+                ${violation.location ? `<strong>Location:</strong> ${violation.location}` : ''}
+            `;
+            
+            document.getElementById('deleteViolationModal').style.display = 'flex';
+        }
+
+        // Delete violation from probationer
+        async function deleteViolationFromProbationer(probationerId, violationIndex) {
+            try {
+                const probationer = probationers.find(p => p.id === probationerId);
+                if (!probationer || !probationer.violations || !probationer.violations[violationIndex]) return false;
+                
+                const updatedViolations = [...probationer.violations];
+                updatedViolations.splice(violationIndex, 1);
+                
+                const updatedProbationerData = {
+                    ...probationer,
+                    violations: updatedViolations,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                const probationerRef = ref(database, `probationers/${probationerId}`);
+                await set(probationerRef, updatedProbationerData);
+                
+                return true;
+            } catch (error) {
+                console.error('Error deleting violation:', error);
+                return false;
+            }
+        }
+
+        // Confirm delete violation
+        async function confirmDeleteViolation() {
+            if (!deleteViolationData) return;
+            
+            const { probationerId, violationIndex } = deleteViolationData;
+            
+            const confirmBtn = document.getElementById('confirmDeleteViolationBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Deleting...';
+            
+            const success = await deleteViolationFromProbationer(probationerId, violationIndex);
+            
+            if (success) {
+                showNotification('Violation deleted!', 'success');
+                closeDeleteViolationModal();
+                
+                if (currentViewingViolationsId === probationerId) {
+                    openViolationsModal(probationerId);
+                }
+            } else {
+                showNotification('Failed to delete.', 'error');
+            }
+            
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Delete';
+        }
+
+        // Close delete violation modal
+        function closeDeleteViolationModal() {
+            document.getElementById('deleteViolationModal').style.display = 'none';
+            deleteViolationData = null;
+        }
+
+        // Call initialization when page loads
+        
         // Call initialization when page loads
         document.addEventListener('DOMContentLoaded', function() {
             initApplication();
