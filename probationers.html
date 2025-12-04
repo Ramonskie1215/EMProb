@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMProb - Probationers Management</title>
+    <link rel="stylesheet" href="probationers.css">
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Probationers...</div>
+    </div>
+
+    <!-- Notification System -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Add/Edit Probationer Modal -->
+    <div class="modal" id="probationerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Add New Probationer</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            
+            <div class="avatar-upload">
+                <div class="avatar-preview" id="avatarPreview">
+                    <span id="avatarInitial">?</span>
+                    <img id="avatarImagePreview" src="" alt="Preview" style="display: none;">
+                </div>
+                <input type="file" id="avatarInput" accept="image/png, image/jpeg, image/jpg" style="display: none;">
+                <div class="upload-hint">Click to upload profile picture (Optional)</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" class="form-input" id="fullName" placeholder="Enter full name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Assigned ID *</label>
+                    <input type="text" class="form-input" id="assignedId" placeholder="Enter probationer ID" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="email" placeholder="Enter email address">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" class="form-input" id="phone" placeholder="Enter phone number">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-input" id="address" placeholder="Enter address">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Date of Birth</label>
+                    <input type="date" class="form-input" id="dob">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Probation Start Date</label>
+                    <input type="date" class="form-input" id="startDate">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Probation End Date</label>
+                    <input type="date" class="form-input" id="endDate">
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="cancelBtn">Cancel</button>
+                <button class="modal-btn primary" id="saveBtn">Save Probationer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Announcement Modal -->
+    <div class="modal" id="announcementModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="announcementModalTitle">Add Announcement</h2>
+                <button class="close-modal" id="closeAnnouncementModal">&times;</button>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Subject *</label>
+                    <input type="text" class="form-input" id="announcementSubject" placeholder="Enter announcement subject" required>
+                </div>
+                
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Details *</label>
+                    <textarea class="form-textarea" id="announcementDetails" placeholder="Enter announcement details" required></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="cancelAnnouncementBtn">Cancel</button>
+                <button class="modal-btn primary" id="saveAnnouncementBtn">Add Announcement</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Confirm Delete</h2>
+                <button class="close-modal" id="closeDeleteModal">&times;</button>
+            </div>
+            
+            <div style="text-align: center; padding: 20px 0;">
+                <div style="font-size: 48px; color: #ff6b6b; margin-bottom: 20px;">⚠️</div>
+                <h3 style="color: #259FDE; margin-bottom: 10px;">Delete Probationer?</h3>
+                <p style="color: #848484; margin-bottom: 10px;">Are you sure you want to delete this probationer?</p>
+                <p style="color: #ff6b6b; font-weight: 500;" id="deleteProbationerName"></p>
+                <p style="color: #848484; font-size: 12px; margin-top: 20px;">This action cannot be undone.</p>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="cancelDeleteBtn">Cancel</button>
+                <button class="modal-btn danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Violations Modal -->
+    <div class="modal" id="violationsModal">
+        <div class="violations-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="violationsModalTitle">Violations History</h2>
+                <button class="close-modal" id="closeViolationsModal">&times;</button>
+            </div>
+            
+            <div class="violation-count" id="violationCountText">0 violations found</div>
+            
+            <div class="violations-list-modal" id="violationsListModal">
+                <!-- Violations will be dynamically added here -->
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="closeViolationsBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcements Modal -->
+    <div class="modal" id="announcementsModal">
+        <div class="announcements-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="announcementsModalTitle">Announcements</h2>
+                <button class="close-modal" id="closeAnnouncementsModal">&times;</button>
+            </div>
+            
+            <div class="announcement-count" id="announcementCountText">0 announcements found</div>
+            
+            <div class="announcements-list-modal" id="announcementsListModal">
+                <!-- Announcements will be dynamically added here -->
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="closeAnnouncementsBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="header" style="display: none;" id="mainHeader">
+        <div class="left-section">
+            <div class="logo-container">
+                <img src="https://iili.io/fnM2iqx.png" alt="EMProb Logo" class="logo">
+            </div>
+            <div class="site-name">EMProb</div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="interface.html" class="nav-btn">Map View</a>
+            <a href="#" class="nav-btn active">Probationers</a>
+            <a href="profile.html" class="nav-btn">Profile</a>
+        </div>
+    </div>
+
+    <div class="main-container" style="display: none;" id="mainContent">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Probationers Management</h1>
+                <p class="page-subtitle">Monitor and manage all probationers under your supervision</p>
+            </div>
+            <button class="add-btn" id="addProbationerBtn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
+                </svg>
+                Add New Probationer
+            </button>
+        </div>
+
+        <div class="probationers-grid" id="probationersGrid">
+            <!-- Probationer cards will be dynamically added here -->
+        </div>
+
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-state-icon">📋</div>
+            <h3>No Probationers Found</h3>
+            <p>You haven't added any probationers yet. Click "Add New Probationer" to get started.</p>
+            <button class="add-btn" id="addFirstProbationerBtn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
+                </svg>
+                Add Your First Probationer
+            </button>
+        </div>
+    </div>
+
+    <div class="error-message" id="errorMessage" style="display: none;">
+        <h3>Authentication Required</h3>
+        <p>Please log in to view probationers.</p>
+        <button class="error-btn" onclick="window.location.href='index.html'">Go to Login</button>
+    </div>
+
+    <script type="module" src="probationers.js"></script>
+</body>
+</html>
