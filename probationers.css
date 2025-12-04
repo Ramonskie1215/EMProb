@@ -711,7 +711,7 @@ body {
     background: rgba(255, 107, 107, 0.1);
 }
 
-/* Violations & Announcements Modal Specific */
+/* Violations Modal Specific Styles */
 .violations-modal-content,
 .announcements-modal-content {
     background: linear-gradient(135deg, #1C1C1C 0%, #2C2C2C 100%);
@@ -761,8 +761,17 @@ body {
     border-left: 4px solid #ff6b6b;
 }
 
+.announcement-item-modal {
+    border-left: 4px solid #ff6b6b;
+}
+
 .announcement-item-modal.acknowledged {
     border-left-color: #2ecc71;
+}
+
+.violation-item-modal:last-child,
+.announcement-item-modal:last-child {
+    margin-bottom: 0;
 }
 
 .violation-header-modal,
@@ -906,9 +915,20 @@ body {
     transform: translateX(0);
 }
 
-.notification.success { border-color: #2ecc71; color: #2ecc71; }
-.notification.error { border-color: #ff6b6b; color: #ff6b6b; }
-.notification.info { border-color: #259FDE; color: #259FDE; }
+.notification.success {
+    border-color: #2ecc71;
+    color: #2ecc71;
+}
+
+.notification.error {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.notification.info {
+    border-color: #259FDE;
+    color: #259FDE;
+}
 
 /* Empty State */
 .empty-state {
@@ -961,29 +981,115 @@ body {
     background: rgba(37, 159, 222, 0.2);
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .header { padding: 8px 15px; height: 60px; }
-    .site-name { font-size: 22px; }
-    .main-container { margin: 20px auto; padding: 0 15px; }
-    .page-header { flex-direction: column; align-items: flex-start; }
-    .add-btn { width: 100%; justify-content: center; }
-    .probationers-grid { grid-template-columns: 1fr; }
-    .device-info { grid-template-columns: 1fr; }
-    .actions-bar { flex-direction: column; }
-    .modal-content, .violations-modal-content, .announcements-modal-content { padding: 20px; width: 95%; }
-    .form-grid { grid-template-columns: 1fr; }
-    .probationer-header { flex-wrap: wrap; }
-    .probationer-avatar { width: 70px; height: 70px; min-width: 70px; min-height: 70px; font-size: 24px; }
-    .avatar-preview { width: 100px; height: 100px; min-width: 100px; min-height: 100px; font-size: 30px; }
+    .header {
+        padding: 8px 15px;
+        height: 60px;
+    }
+    
+    .site-name {
+        font-size: 22px;
+    }
+    
+    .main-container {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .add-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .probationers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .device-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-bar {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        padding: 20px;
+        width: 95%;
+    }
+    
+    .violations-modal-content,
+    .announcements-modal-content {
+        padding: 20px;
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .probationer-header {
+        flex-wrap: wrap;
+    }
+    
+    .probationer-avatar {
+        width: 70px;
+        height: 70px;
+        min-width: 70px;
+        min-height: 70px;
+        font-size: 24px;
+    }
+    
+    .avatar-preview {
+        width: 100px;
+        height: 100px;
+        min-width: 100px;
+        min-height: 100px;
+        font-size: 30px;
+    }
 }
 
 @media (max-width: 480px) {
-    .site-name { font-size: 18px; }
-    .page-title { font-size: 24px; }
-    .probationer-card { padding: 20px; }
-    .modal-buttons { flex-direction: column; }
-    .modal-btn { width: 100%; }
-    .probationer-avatar { width: 60px; height: 60px; min-width: 60px; min-height: 60px; font-size: 20px; }
-    .avatar-preview { width: 80px; height: 80px; min-width: 80px; min-height: 80px; font-size: 24px; }
+    .site-name {
+        font-size: 18px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+    
+    .probationer-card {
+        padding: 20px;
+    }
+    
+    .modal-buttons {
+        flex-direction: column;
+    }
+    
+    .modal-btn {
+        width: 100%;
+    }
+    
+    .probationer-avatar {
+        width: 60px;
+        height: 60px;
+        min-width: 60px;
+        min-height: 60px;
+        font-size: 20px;
+    }
+    
+    .avatar-preview {
+        width: 80px;
+        height: 80px;
+        min-width: 80px;
+        min-height: 80px;
+        font-size: 24px;
+    }
 }
