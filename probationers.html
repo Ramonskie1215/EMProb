@@ -2423,6 +2423,9 @@
             `;
             
             document.getElementById('toggleAnnouncementModal').style.display = 'flex';
+            document.getElementById('closeToggleAnnouncementModal').onclick = closeToggleAnnouncementModal;
+            document.getElementById('cancelToggleAnnouncementBtn').onclick = closeToggleAnnouncementModal;
+            document.getElementById('confirmToggleAnnouncementBtn').onclick = confirmToggleAnnouncement;
         };
 
         // Confirm toggle announcement
@@ -2475,6 +2478,9 @@
             `;
             
             document.getElementById('deleteViolationModal').style.display = 'flex';
+                        document.getElementById('closeDeleteViolationModal').onclick = closeDeleteViolationModal;
+            document.getElementById('cancelDeleteViolationBtn').onclick = closeDeleteViolationModal;
+            document.getElementById('confirmDeleteViolationBtn').onclick = confirmDeleteViolation;
         }
 
         // Delete violation from probationer
