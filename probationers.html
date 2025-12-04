@@ -2357,6 +2357,39 @@
                         closeAddAnnouncementModal();
                     }
                 }
+                        document.getElementById('closeToggleAnnouncementModal').addEventListener('click', closeToggleAnnouncementModal);
+        document.getElementById('cancelToggleAnnouncementBtn').addEventListener('click', closeToggleAnnouncementModal);
+        document.getElementById('confirmToggleAnnouncementBtn').addEventListener('click', confirmToggleAnnouncement);
+        
+        // Delete violation modal
+        document.getElementById('closeDeleteViolationModal').addEventListener('click', closeDeleteViolationModal);
+        document.getElementById('cancelDeleteViolationBtn').addEventListener('click', closeDeleteViolationModal);
+        document.getElementById('confirmDeleteViolationBtn').addEventListener('click', confirmDeleteViolation);
+        
+        // Close new modals when clicking outside
+        document.getElementById('toggleAnnouncementModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeToggleAnnouncementModal();
+            }
+        });
+        
+        document.getElementById('deleteViolationModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteViolationModal();
+            }
+        });
+        
+        // Add new modals to Escape key handler
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('toggleAnnouncementModal').style.display === 'flex') {
+                    closeToggleAnnouncementModal();
+                }
+                if (document.getElementById('deleteViolationModal').style.display === 'flex') {
+                    closeDeleteViolationModal();
+                }
+            }
+        });
             });
         }
 
