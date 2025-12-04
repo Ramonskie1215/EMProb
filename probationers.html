@@ -1756,39 +1756,18 @@
             if (sortedAnnouncements.length === 0) {
                 announcementsList.innerHTML = '<div class="no-announcements">No announcements</div>';
             } else {
-                           // We need to find the original index of each announcement
-                const probationer = probationers.find(p => p.id === probationerId);
-                if (!probationer || !probationer.announcements) return;
-                
-                const originalAnnouncements = probationer.announcements || [];
-                
-                sortedAnnouncements.forEach((announcement, sortedIndex) => {
-                    // Find the original index of this announcement
-                    let originalIndex = -1;
-                    for (let i = 0; i < originalAnnouncements.length; i++) {
-                        if (originalAnnouncements[i].time === announcement.time && 
-                            originalAnnouncements[i].subject === announcement.subject) {
-                            originalIndex = i;
-                            break;
-                        }
-                    }
-                    
-                    // If we couldn't find it, use the sorted index
-                    if (originalIndex === -1) {
-                        originalIndex = sortedIndex;
-                    }
-                    
+                sortedAnnouncements.forEach((announcement, index) => {
                     const announcementElement = document.createElement('div');
                     announcementElement.className = `announcement-item-modal ${announcement.acknowledge ? 'acknowledged' : ''}`;
                     announcementElement.innerHTML = `
                         <div class="announcement-header-modal">
-                            <div class="announcement-id">ANNOUNCEMENT #${sortedAnnouncements.length - sortedIndex}</div>
+                            <div class="announcement-id">ANNOUNCEMENT #${sortedAnnouncements.length - index}</div>
                             <div class="announcement-time-modal">${formatDateTime(announcement.time)}</div>
                         </div>
                         <div class="announcement-subject-modal">${announcement.subject || 'No subject'}</div>
                         <div class="announcement-details-modal">${announcement.details || 'No details provided'}</div>
-                        <div class="announcement-status ${announcement.acknowledge ? 'acknowledged' : 'pending'}" 
-                             onclick="toggleAnnouncementStatus('${probationerId}', ${originalIndex})">
+                                                <div class="announcement-status ${announcement.acknowledge ? 'acknowledged' : 'pending'}" 
+                             onclick="toggleAnnouncementStatus('${probationerId}', ${index})">
                             ${announcement.acknowledge ? '✓ Acknowledged' : '✗ Pending'}
                         </div>
                     `;
@@ -1981,8 +1960,8 @@
                                     </div>
                                     <div class="announcement-subject">${mostRecentAnnouncement.subject || 'No subject'}</div>
                                     <div class="announcement-details">${mostRecentAnnouncement.details || 'No details provided'}</div>
-                                                                       <div class="announcement-status ${mostRecentAnnouncement.acknowledge ? 'acknowledged' : 'pending'}" 
-     onclick="event.stopPropagation(); toggleAnnouncementStatus('${probationer.id}', 0)">
+                                                                        <div class="announcement-status ${mostRecentAnnouncement.acknowledge ? 'acknowledged' : 'pending'}" 
+                                         onclick="event.stopPropagation(); toggleAnnouncementStatus('${probationer.id}', ${announcements.length - 1})">
                                         ${mostRecentAnnouncement.acknowledge ? '✓ Acknowledged' : '✗ Pending'}
                                     </div>
                                 </div>` : 
@@ -2556,7 +2535,6 @@
             deleteViolationData = null;
         }
 
-        // Call initialization when page loads
         
         // Call initialization when page loads
         document.addEventListener('DOMContentLoaded', function() {
