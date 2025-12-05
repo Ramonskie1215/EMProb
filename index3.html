@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Square Clock</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             background: linear-gradient(135deg, #0E3CBD 0%, #1C1C1C 50%, #0E3CBD 100%);
@@ -16,6 +21,7 @@
             color: #FFFFFF;
             overflow: hidden;
         }
+
         .clock-container {
             width: 100vmin;
             height: 100vmin;
@@ -28,249 +34,546 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            box-shadow: inset 0 0 0 2px rgba(37,159,222,0.2), 0 0 50px rgba(0,0,0,0.8);
+            box-shadow: 
+                inset 0 0 0 2px rgba(37, 159, 222, 0.2),
+                0 0 50px rgba(0, 0, 0, 0.8);
         }
 
-        /* BIGGER & BOLDER CLOCK NUMBERS */
+        /* Battery Indicator */
+        .battery-indicator {
+            position: absolute;
+            top: 5vmin;
+            right: 5vmin;
+            display: flex;
+            align-items: center;
+            gap: 1.5vmin;
+            z-index: 100;
+            background: rgba(28, 28, 28, 0.9);
+            padding: 1.5vmin 2.5vmin;
+            border-radius: 2vmin;
+            border: 1px solid rgba(37, 159, 222, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .battery-icon {
+            position: relative;
+            width: 8vmin;
+            height: 4vmin;
+            background: rgba(94, 94, 94, 0.3);
+            border-radius: 0.6vmin;
+            border: 1px solid #5E5E5E;
+            overflow: hidden;
+        }
+
+        .battery-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #259FDE;
+            transition: width 0.5s ease, background 0.5s ease;
+            border-radius: 0.5vmin;
+        }
+
+        .charging-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.6) 50%, 
+                transparent 100%);
+            background-size: 200% 100%;
+            animation: charging 1.5s infinite linear;
+            display: none;
+            border-radius: 0.5vmin;
+        }
+
+        .battery-tip {
+            position: absolute;
+            right: -1.2vmin;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.2vmin;
+            height: 1.8vmin;
+            background: #5E5E5E;
+            border-radius: 0 0.6vmin 0.6vmin 0;
+        }
+
+        .battery-percentage {
+            font-size: 3vmin;
+            font-weight: 600;
+            color: #FFFFFF;
+            font-family: 'Courier New', monospace;
+            min-width: 8vmin;
+            text-align: right;
+        }
+
+        .charging-icon {
+            display: none;
+            width: 3.5vmin;
+            height: 3.5vmin;
+            color: #259FDE;
+            margin-left: 0.5vmin;
+        }
+
+        .charging-icon.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        /* Main Time Display */
+        .main-time {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+            margin-top: -5vmin; /* Compensate for battery indicator */
+        }
+
         .time-digits {
-            font-size: 24vmin;           /* Much bigger */
-            font-weight: 900;             /* Maximum bold */
-            font-family: 'Courier New', 'Segoe UI', monospace;
-            letter-spacing: 1.2vmin;
+            font-size: 20vmin;
+            font-weight: 900;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1vmin;
             color: #FFFFFF;
             text-shadow: 
-                0 0 4vmin rgba(37,159,222,0.9),
-                0 0 8vmin rgba(14,60,189,0.7);
+                0 0 3vmin rgba(37, 159, 222, 0.7),
+                0 0 6vmin rgba(14, 60, 189, 0.5);
             line-height: 1;
             margin-bottom: 1vmin;
         }
+
         .time-colon {
             color: #259FDE;
             animation: blink 1.5s infinite;
-            text-shadow: 0 0 3vmin rgba(37,159,222,1);
-            font-weight: 900;
-            font-size: 24vmin;
+            text-shadow: 0 0 2vmin rgba(37, 159, 222, 0.8);
         }
 
-        /* BATTERY - TOP RIGHT */
-        .battery-indicator {
+        /* Date Display */
+        .date-display {
+            font-size: 4vmin;
+            color: #848484;
+            letter-spacing: 0.5vmin;
+            text-transform: uppercase;
+            margin-top: 3vmin;
+            font-weight: 500;
+        }
+
+        /* Seconds Ring */
+        .seconds-ring {
             position: absolute;
-            top: 8vmin;
-            right: 8vmin;
-            display: flex;
-            align-items: center;
-            gap: 2vmin;
-            font-size: 5vmin;
+            width: 80vmin;
+            height: 80vmin;
+            border-radius: 50%;
+            border: 1.5vmin solid transparent;
+            background: conic-gradient(
+                from 0deg,
+                #259FDE 0%,
+                #0E3CBD 50%,
+                transparent 50%,
+                transparent 100%
+            );
+            mask: radial-gradient(circle at center, transparent 60%, black 61%);
+            -webkit-mask: radial-gradient(circle at center, transparent 60%, black 61%);
+            animation: rotate 60s linear infinite;
+            opacity: 0.4;
+        }
+
+        /* Digital Seconds */
+        .digital-seconds {
+            position: absolute;
+            bottom: 15vmin;
+            font-size: 8vmin;
             font-weight: 700;
             color: #259FDE;
-            text-shadow: 0 0 2vmin rgba(37,159,222,0.8);
-            z-index: 30;
-            backdrop-filter: blur(8px);
-            padding: 2vmin 3.5vmin;
-            border-radius: 3.5vmin;
-            background: rgba(37,159,222,0.2);
-            border: 1.5px solid rgba(37,159,222,0.4);
-        }
-        .battery-icon {
-            width: 9vmin;
-            height: 4.5vmin;
-            border: 1vmin solid #259FDE;
-            border-radius: 1.2vmin;
-            position: relative;
-            box-shadow: 0 0 3vmin rgba(37,159,222,0.7);
-        }
-        .battery-icon::after {
-            content: '';
-            position: absolute;
-            right: -1.8vmin;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 1.5vmin;
-            height: 2.6vmin;
-            background: #259FDE;
-            border-radius: 0 0.8vmin 0.8vmin 0;
-        }
-        .battery-level {
-            height: 100%;
-            width: var(--battery-percent, 100%);
-            background: linear-gradient(90deg, #0E3CBD, #259FDE);
-            border-radius: 0.8vmin;
-            transition: width 1s ease, background 0.8s ease;
-        }
-        .battery-text {
             font-family: 'Courier New', monospace;
-            min-width: 13vmin;
-            text-align: center;
-        }
-        .battery-low {
-            color: #ff3366 !important;
-            animation: pulse-red 1.8s infinite;
-            text-shadow: 0 0 3vmin #ff3366 !important;
-        }
-        @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
-
-        /* REST OF DESIGN */
-        .main-time { position:relative; z-index:10; text-align:center; width:100%; }
-        }
-        .date-display { font-size:4.2vmin; color:#848484; letter-spacing:0.6vmin; text-transform:uppercase; margin-top:3vmin; font-weight:600; }
-        .seconds-ring { position:absolute; width:80vmin; height:80vmin; border-radius:50%; background:conic-gradient(from 0deg,#259FDE 0%,#0E3CBD 50%,transparent 50%); mask:radial-gradient(circle,transparent 60%,black 61%); -webkit-mask:radial-gradient(circle,transparent 60%,black 61%); animation:rotate 60s linear infinite; opacity:0.45; }
-        .digital-seconds { position:absolute; bottom:14vmin; font-size:8.5vmin; font-weight:800; color:#259FDE; font-family:'Courier New',monospace; text-shadow:0 0 3vmin rgba(37,159,222,0.8); }
-        .period-indicator { position:absolute; top:15vmin; font-size:5.5vmin; font-weight:700; color:#FFF; background:rgba(37,159,222,0.25); padding:1.8vmin 5vmin; border-radius:2.5vmin; border:1.5px solid rgba(37,159,222,0.5); backdrop-filter:blur(6px); }
-        .corner { position:absolute; width:10vmin; height:10vmin; border:1.8vmin solid #259FDE; opacity:0.7; }
-        .corner-tl { top:5vmin; left:5vmin; border-right:none; border-bottom:none; }
-        .corner-tr { top:5vmin; right:5vmin; border-left:none; border-bottom:none; }
-        .corner-bl { bottom:5vmin; left:5vmin; border-right:none; border-top:none; }
-        .corner-br { bottom:5vmin; right:5vmin; border-left:none; border-top:none; }
-        .center-dot { position:absolute; width:3.5vmin; height:3.5vmin; background:#259FDE; border-radius:50%; box-shadow:0 0 3vmin rgba(37,159,222,1); z-index:20; }
-        .floating-element { position:absolute; width:3vmin; height:3vmin; background:rgba(37,159,222,0.35); border-radius:50%; animation:float 12s infinite ease-in-out; }
-        .floating-element:nth-child(2){width:2.5vmin;height:2.5vmin;background:rgba(255,255,255,0.25);animation-delay:-3s;top:25%;left:15%}
-        .floating-element:nth-child(3){width:4.5vmin;height:4.5vmin;background:rgba(14,60,189,0.5);animation-delay:-7s;bottom:25%;right:20%}
-        .hour-marker { position:absolute; width:1vmin; height:3.5vmin; background:#5E5E5E; transform-origin:bottom center; border-radius:0.5vmin; }
-
+            text-shadow: 0 0 2vmin rgba(37, 159, 222, 0.6);
         }
 
-        @keyframes blink {0%,100%{opacity:1}50%{opacity:0.3}}
-        @keyframes rotate {from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes float {0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(3vmin,-3vmin) scale(1.2)}80%{transform:translate(-2vmin,2vmin) scale(0.9)}}
+        /* Period Indicator */
+        .period-indicator {
+            position: absolute;
+            top: 15vmin;
+            font-size: 5vmin;
+            font-weight: 600;
+            color: #FFFFFF;
+            background: rgba(37, 159, 222, 0.2);
+            padding: 1.5vmin 4vmin;
+            border-radius: 2vmin;
+            border: 1px solid rgba(37, 159, 222, 0.4);
+            backdrop-filter: blur(5px);
+        }
 
-        @media (max-height:500px){
-            .time-digits, .time-colon { font-size:20vmin; }
-            .battery-indicator { top:6vmin; right:6vmin; font-size:4.5vmin; padding:1.5vmin 3vmin; }
+        /* Corner Accents */
+        .corner {
+            position: absolute;
+            width: 10vmin;
+            height: 10vmin;
+            border: 1.5vmin solid #259FDE;
+            opacity: 0.6;
+        }
+
+        .corner-tl {
+            top: 5vmin;
+            left: 5vmin;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .corner-tr {
+            top: 5vmin;
+            right: 5vmin;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        .corner-bl {
+            bottom: 5vmin;
+            left: 5vmin;
+            border-right: none;
+            border-top: none;
+        }
+
+        .corner-br {
+            bottom: 5vmin;
+            right: 5vmin;
+            border-left: none;
+            border-top: none;
+        }
+
+        /* Center Dot */
+        .center-dot {
+            position: absolute;
+            width: 3vmin;
+            height: 3vmin;
+            background: #259FDE;
+            border-radius: 50%;
+            box-shadow: 0 0 2vmin rgba(37, 159, 222, 0.8);
+            z-index: 20;
+        }
+
+        /* Floating Elements */
+        .floating-element {
+            position: absolute;
+            width: 3vmin;
+            height: 3vmin;
+            background: rgba(37, 159, 222, 0.3);
+            border-radius: 50%;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 2vmin;
+            height: 2vmin;
+            background: rgba(255, 255, 255, 0.2);
+            animation-delay: -2s;
+            top: 30%;
+            left: 20%;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 4vmin;
+            height: 4vmin;
+            background: rgba(14, 60, 189, 0.4);
+            animation-delay: -5s;
+            bottom: 30%;
+            right: 25%;
+        }
+
+        /* Animations */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(2vmin, -2vmin) scale(1.1); }
+            66% { transform: translate(-1vmin, 1vmin) scale(0.9); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        @keyframes charging {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        @keyframes batteryLow {
+            0%, 100% { background-color: #259FDE; }
+            50% { background-color: #DE3725; }
+        }
+
+        /* Responsive Adjustments */
+        @media (max-height: 500px) and (max-width: 500px) {
+            .time-digits {
+                font-size: 18vmin;
+                letter-spacing: 0.8vmin;
+            }
+            
+            .digital-seconds {
+                font-size: 6vmin;
+                bottom: 12vmin;
+            }
+            
+            .period-indicator {
+                font-size: 4vmin;
+                top: 12vmin;
+            }
+            
+            .battery-indicator {
+                top: 3vmin;
+                right: 3vmin;
+                padding: 1vmin 2vmin;
+            }
+            
+            .battery-icon {
+                width: 6vmin;
+                height: 3vmin;
+            }
+            
+            .battery-percentage {
+                font-size: 2.5vmin;
+            }
         }
     </style>
 </head>
 <body>
     <div class="clock-container">
+        <!-- Battery Indicator -->
+        <div class="battery-indicator">
+            <div class="battery-icon">
+                <div class="battery-fill" id="batteryFill"></div>
+                <div class="charging-overlay" id="chargingOverlay"></div>
+                <div class="battery-tip"></div>
+            </div>
+            <div class="battery-percentage" id="batteryPercentage">--%</div>
+            <div class="charging-icon" id="chargingIcon">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.67 2L6.33 8H10V14L13.67 8H10V2H11.67Z"/>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Corner Accents -->
         <div class="corner corner-tl"></div>
         <div class="corner corner-tr"></div>
         <div class="corner corner-bl"></div>
         <div class="corner corner-br"></div>
-
+        
+        <!-- Floating Elements -->
         <div class="floating-element"></div>
         <div class="floating-element"></div>
         <div class="floating-element"></div>
-
+        
+        <!-- Seconds Ring -->
         <div class="seconds-ring" id="secondsRing"></div>
+        
+        <!-- Center Dot -->
         <div class="center-dot"></div>
+        
+        <!-- Period Indicator -->
         <div class="period-indicator" id="period">AM</div>
-
-        <!-- BATTERY TOP RIGHT -->
-        <div class="battery-indicator" id="batteryIndicator">
-            <div class="battery-icon">
-                <div class="battery-level" id="batteryLevel"></div>
-            </div>
-            <div class="battery-text">
-                <span id="batteryPercent">100</span><span id="chargingIcon"></span>%
-            </div>
-        </div>
-
+        
+        <!-- Main Time Display -->
         <div class="main-time">
             <div class="time-digits">
-                <span id="hours">12</span><span class="time-colon">:</span><span id="minutes">00</span>
+                <span id="hours">12</span>
+                <span class="time-colon">:</span>
+                <span id="minutes">00</span>
             </div>
             <div class="date-display" id="date">MONDAY, JANUARY 1</div>
         </div>
-
+        
+        <!-- Digital Seconds -->
         <div class="digital-seconds" id="seconds">00</div>
     </div>
 
     <script>
-        const hoursEl = document.getElementById('hours');
-        const minutesEl = document.getElementById('minutes');
-        const secondsEl = document.getElementById('seconds');
-        const periodEl = document.getElementById('period');
-        const dateEl = document.getElementById('date');
+        // DOM Elements
+        const hoursElement = document.getElementById('hours');
+        const minutesElement = document.getElementById('minutes');
+        const secondsElement = document.getElementById('seconds');
+        const periodElement = document.getElementById('period');
+        const dateElement = document.getElementById('date');
         const secondsRing = document.getElementById('secondsRing');
-        const batteryLevel = document.getElementById('batteryLevel');
-        const batteryPercent = document.getElementById('batteryPercent');
+        
+        // Battery elements
+        const batteryFill = document.getElementById('batteryFill');
+        const batteryPercentage = document.getElementById('batteryPercentage');
+        const chargingOverlay = document.getElementById('chargingOverlay');
         const chargingIcon = document.getElementById('chargingIcon');
-        const batteryIndicator = document.getElementById('batteryIndicator');
-
-        function createHourMarkers() {
-            const container = document.querySelector('.clock-container');
-            for (let i = 0; i < 12; i++) {
-                const marker = document.createElement('div');
-                marker.className = 'hour-marker';
-                const angle = i * 30 * Math.PI / 180;
-                const x = 50 + 35 * Math.sin(angle);
-                const y = 50 - 35 * Math.cos(angle);
-                marker.style.left = `${x}vmin`;
-                marker.style.top = `${y}vmin`;
-                marker.style.transform = `rotate(${i*30}deg)`;
-                container.appendChild(marker);
-            }
-        }
-
+        
+        // Battery simulation (in a real app, use navigator.getBattery())
+        let batteryLevel = 85; // Start at 85%
+        let isCharging = false;
+        let batteryInterval;
+        
         function updateBattery() {
-            if ('getBattery' in navigator) {
-                navigator.getBattery().then(bat => {
-                    function refresh() {
-                        const level = Math.floor(bat.level * 100);
-                        batteryPercent.textContent = level;
-                        batteryLevel.style.setProperty('--battery-percent', level + '%');
-
-                        // Only lightning symbol when charging
-                        chargingIcon.textContent = bat.charging ? ' Lightning' : '';
-
-                        if (level <= 20) {
-                            batteryIndicator.classList.add('battery-low');
-                            batteryLevel.style.background = 'linear-gradient(90deg,#ff3366,#ff6666)';
-                        } else {
-                            batteryIndicator.classList.remove('battery-low');
-                            batteryLevel.style.background = 'linear-gradient(90deg,#0E3CBD,#259FDE)';
-                        }
-                    }
-                    refresh();
-                    bat.addEventListener('levelchange', refresh);
-                    bat.addEventListener('chargingchange', refresh);
-                });
+            // Simulate battery drain/charge
+            if (!isCharging) {
+                // Slowly drain battery when not charging
+                batteryLevel -= 0.05;
+                if (batteryLevel < 0) batteryLevel = 0;
             } else {
-                batteryPercent.textContent = '100';
-                chargingIcon.textContent = '';
+                // Charge when connected
+                batteryLevel += 0.1;
+                if (batteryLevel > 100) batteryLevel = 100;
+            }
+            
+            // Update display
+            const percentage = Math.round(batteryLevel);
+            batteryPercentage.textContent = `${percentage}%`;
+            
+            // Update fill width
+            batteryFill.style.width = `${percentage}%`;
+            
+            // Update colors based on battery level
+            if (percentage > 50) {
+                batteryFill.style.background = '#259FDE';
+            } else if (percentage > 20) {
+                batteryFill.style.background = '#FFA500';
+            } else {
+                batteryFill.style.background = '#DE3725';
+                // Pulse animation for low battery
+                batteryFill.style.animation = 'batteryLow 1s infinite';
+            }
+            
+            // Show/hide charging animation
+            if (isCharging) {
+                chargingOverlay.style.display = 'block';
+                chargingIcon.classList.add('active');
+                // Remove low battery animation when charging
+                batteryFill.style.animation = '';
+            } else {
+                chargingOverlay.style.display = 'none';
+                chargingIcon.classList.remove('active');
+            }
+            
+            // Simulate automatic charging when battery is low
+            if (percentage < 10 && !isCharging && Math.random() > 0.9) {
+                isCharging = true;
+            }
+            
+            // Stop charging when battery is full
+            if (percentage >= 100 && isCharging) {
+                isCharging = false;
             }
         }
-
+        
+        // Toggle charging on battery click
+        document.querySelector('.battery-indicator').addEventListener('click', () => {
+            isCharging = !isCharging;
+            // If manually toggled to charging, ensure we're not at 100%
+            if (isCharging && batteryLevel >= 100) {
+                batteryLevel = 99;
+            }
+        });
+        
+        // Initialize battery
+        updateBattery();
+        batteryInterval = setInterval(updateBattery, 2000); // Update every 2 seconds
+        
+        // Update clock function
         function updateClock() {
             const now = new Date();
-            let h = now.getHours();
-            const m = now.getMinutes();
-            const s = now.getSeconds();
-            const ms = now.getMilliseconds();
-
-            periodEl.textContent = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-
-            hoursEl.textContent = h.toString().padStart(2,'0');
-            minutesEl.textContent = m.toString().padStart(2,'0');
-            secondsEl.textContent = s.toString().padStart(2,'0');
-
-            const deg = (s + ms/1000) * 6;
-            secondsRing.style.background = `conic-gradient(from ${deg}deg, #259FDE 0%, #0E3CBD 50%, transparent 50%, transparent 100%)`;
-
-            const options = { weekday:'long', month:'long', day:'numeric' };
-            dateEl.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
-
-            if (s === 0) {
-                document.querySelector('.main-time').style.animation = 'pulse 0.6s ease';
-                setTimeout(() => document.querySelector('.main-time').style.animation = '', 600);
+            
+            // Get time components
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const milliseconds = now.getMilliseconds();
+            
+            // Determine AM/PM
+            const period = hours >= 12 ? 'PM' : 'AM';
+            
+            // Convert to 12-hour format
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            
+            // Update display
+            hoursElement.textContent = hours.toString().padStart(2, '0');
+            minutesElement.textContent = minutes.toString().padStart(2, '0');
+            secondsElement.textContent = seconds.toString().padStart(2, '0');
+            periodElement.textContent = period;
+            
+            // Update seconds ring
+            const secondsDegrees = (seconds + milliseconds / 1000) * 6;
+            secondsRing.style.background = `conic-gradient(
+                from ${secondsDegrees}deg,
+                #259FDE 0%,
+                #0E3CBD 50%,
+                transparent 50%,
+                transparent 100%
+            )`;
+            
+            // Update date
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
+            
+            // Visual effects
+            if (seconds === 0) {
+                // Pulse effect at minute change
+                const mainTime = document.querySelector('.main-time');
+                mainTime.style.animation = 'pulse 0.5s ease';
+                setTimeout(() => {
+                    mainTime.style.animation = '';
+                }, 500);
             }
-
-            const intensity = Math.sin(s * 0.1) * 0.4 + 0.6;
-            secondsEl.style.color = `rgba(37,159,222,${intensity})`;
-            secondsEl.style.textShadow = `0 0 ${intensity*4}vmin rgba(37,159,222,0.8)`;
+            
+            // Dynamic color for seconds
+            const intensity = Math.sin(seconds * 0.1) * 0.3 + 0.7;
+            secondsElement.style.color = `rgba(37, 159, 222, ${intensity})`;
+            secondsElement.style.textShadow = `0 0 ${intensity * 3}vmin rgba(37, 159, 222, 0.6)`;
         }
-
-        createHourMarkers();
+        
+        // Initialize clock
         updateClock();
-        updateBattery();
-        setInterval(updateClock, 50);
-
-        window.addEventListener('resize', () => {
-            const size = Math.min(window.innerWidth, window.innerHeight) * 0.95;
-            document.querySelector('.clock-container').style.width = size + 'px';
-            document.querySelector('.clock-container').style.height = size + 'px';
+        
+        // Update clock every 50ms for smooth animation
+        const clockInterval = setInterval(updateClock, 50);
+        
+        // Fullscreen toggle on click
+        document.addEventListener('click', (e) => {
+            // Don't toggle fullscreen if clicking battery indicator
+            if (!e.target.closest('.battery-indicator')) {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            }
         });
+        
+        // Handle screen orientation changes
+        window.addEventListener('resize', () => {
+            const container = document.querySelector('.clock-container');
+            const size = Math.min(window.innerWidth, window.innerHeight);
+            container.style.width = `${size}px`;
+            container.style.height = `${size}px`;
+        });
+        
+        // Initial resize
         window.dispatchEvent(new Event('resize'));
+        
+        // Cleanup intervals on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(batteryInterval);
+            clearInterval(clockInterval);
+        });
     </script>
 </body>
 </html>
