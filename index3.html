@@ -280,21 +280,6 @@
             transform: translate(-50%, -50%);
         }
 
-        /* Key Press Indicator */
-        .key-indicator {
-            position: absolute;
-            bottom: 3vmin;
-            left: 3vmin;
-            background: rgba(28, 28, 28, 0.8);
-            padding: 1vmin 2vmin;
-            border-radius: 1vmin;
-            border: 1px solid rgba(37, 159, 222, 0.3);
-            font-size: 2.5vmin;
-            color: #848484;
-            display: none;
-            backdrop-filter: blur(5px);
-        }
-
         /* Animations */
         @keyframes blink {
             0%, 100% { opacity: 1; }
@@ -360,20 +345,11 @@
             .date-display {
                 font-size: 4vmin;
             }
-            
-            .key-indicator {
-                font-size: 2vmin;
-                bottom: 2vmin;
-                left: 2vmin;
-            }
         }
     </style>
 </head>
 <body>
     <div class="clock-container">
-        <!-- Key Press Indicator -->
-        <div class="key-indicator" id="keyIndicator">Press any key...</div>
-        
         <!-- Battery Indicator -->
         <div class="battery-indicator">
             <div class="battery-icon">
@@ -422,51 +398,12 @@
 
     <script>
         // ============================================
-        // KEY PRESS DETECTION LOGIC
+        // MINIMAL KEY PRESS LOGGING
         // ============================================
-        
-        const keyIndicator = document.getElementById('keyIndicator');
-        let keyPressTimeout = null;
-        
         document.addEventListener('keydown', function(event) {
-            const keyPressed = event.key;
-            const keyCode = event.code;
-            
-            // Log to console (visible in DevTools → Console)
-            console.clear(); // Optional: clears previous logs for cleaner view
-            console.log('Key Press Event:', event);
-            console.log(`You pressed: "${keyPressed}" (code: ${keyCode})`);
-            console.log('--- Modifier Keys ---');
-            if (event.ctrlKey) console.log('Ctrl is held');
-            if (event.shiftKey) console.log('Shift is held');
-            if (event.altKey) console.log('Alt/Option is held');
-            if (event.metaKey) console.log('Meta/Command is held');
-            console.log('Location:', event.location);
-            console.log('Repeat:', event.repeat ? 'Yes (held down)' : 'No');
-            console.log('Time:', new Date().toLocaleTimeString());
-            
-            // Show key indicator on screen
-            keyIndicator.style.display = 'block';
-            keyIndicator.textContent = `Key: ${keyPressed} (${keyCode})`;
-            keyIndicator.style.color = '#259FDE';
-            keyIndicator.style.borderColor = 'rgba(37, 159, 222, 0.5)';
-            
-            // Clear previous timeout and set new one
-            if (keyPressTimeout) {
-                clearTimeout(keyPressTimeout);
-            }
-            
-            // Hide indicator after 2 seconds
-            keyPressTimeout = setTimeout(() => {
-                keyIndicator.style.color = '#848484';
-                keyIndicator.style.borderColor = 'rgba(37, 159, 222, 0.3)';
-                keyIndicator.textContent = 'Press any key...';
-            }, 2000);
+            // Only log the key pressed, nothing else
+            console.log(event.key);
         });
-        
-        // Initial console message
-        console.log('%c Key Press Detector Active – Open Console (F12) to see logs! ', 
-                  'background: #28a745; color: white; font-size: 14px; padding: 8px; border-radius: 4px;');
         
         // ============================================
         // BATTERY MONITORING LOGIC
@@ -624,9 +561,6 @@
         // Cleanup intervals on page unload
         window.addEventListener('beforeunload', () => {
             clearInterval(clockInterval);
-            if (keyPressTimeout) {
-                clearTimeout(keyPressTimeout);
-            }
         });
     </script>
 </body>
