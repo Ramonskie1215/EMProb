@@ -31,6 +31,27 @@
             box-shadow: inset 0 0 0 2px rgba(37,159,222,0.2), 0 0 50px rgba(0,0,0,0.8);
         }
 
+        /* BIGGER & BOLDER CLOCK NUMBERS */
+        .time-digits {
+            font-size: 24vmin;           /* Much bigger */
+            font-weight: 900;             /* Maximum bold */
+            font-family: 'Courier New', 'Segoe UI', monospace;
+            letter-spacing: 1.2vmin;
+            color: #FFFFFF;
+            text-shadow: 
+                0 0 4vmin rgba(37,159,222,0.9),
+                0 0 8vmin rgba(14,60,189,0.7);
+            line-height: 1;
+            margin-bottom: 1vmin;
+        }
+        .time-colon {
+            color: #259FDE;
+            animation: blink 1.5s infinite;
+            text-shadow: 0 0 3vmin rgba(37,159,222,1);
+            font-weight: 900;
+            font-size: 24vmin;
+        }
+
         /* BATTERY - TOP RIGHT */
         .battery-indicator {
             position: absolute;
@@ -39,85 +60,82 @@
             display: flex;
             align-items: center;
             gap: 2vmin;
-            font-size: 4.5vmin;
-            font-weight: 600;
+            font-size: 5vmin;
+            font-weight: 700;
             color: #259FDE;
-            text-shadow: 0 0 2vmin rgba(37,159,222,0.6);
+            text-shadow: 0 0 2vmin rgba(37,159,222,0.8);
             z-index: 30;
-            backdrop-filter: blur(6px);
-            padding: 1.5vmin 3vmin;
-            border-radius: 3vmin;
-            background: rgba(37,159,222,0.15);
-            border: 1px solid rgba(37,159,222,0.3);
+            backdrop-filter: blur(8px);
+            padding: 2vmin 3.5vmin;
+            border-radius: 3.5vmin;
+            background: rgba(37,159,222,0.2);
+            border: 1.5px solid rgba(37,159,222,0.4);
         }
         .battery-icon {
-            width: 8vmin;
-            height: 4vmin;
-            border: 0.8vmin solid #259FDE;
-            border-radius: 1vmin;
+            width: 9vmin;
+            height: 4.5vmin;
+            border: 1vmin solid #259FDE;
+            border-radius: 1.2vmin;
             position: relative;
-            box-shadow: 0 0 2vmin rgba(37,159,222,0.5);
+            box-shadow: 0 0 3vmin rgba(37,159,222,0.7);
         }
         .battery-icon::after {
             content: '';
             position: absolute;
-            right: -1.5vmin;
+            right: -1.8vmin;
             top: 50%;
             transform: translateY(-50%);
-            width: 1.2vmin;
-            height: 2.2vmin;
+            width: 1.5vmin;
+            height: 2.6vmin;
             background: #259FDE;
-            border-radius: 0 0.6vmin 0.6vmin 0;
+            border-radius: 0 0.8vmin 0.8vmin 0;
         }
         .battery-level {
             height: 100%;
             width: var(--battery-percent, 100%);
             background: linear-gradient(90deg, #0E3CBD, #259FDE);
-            border-radius: 0.6vmin;
-            transition: width 0.8s ease, background 0.8s;
+            border-radius: 0.8vmin;
+            transition: width 1s ease, background 0.8s ease;
         }
         .battery-text {
             font-family: 'Courier New', monospace;
-            min-width: 11vmin;
+            min-width: 13vmin;
             text-align: center;
         }
         .battery-low {
             color: #ff3366 !important;
-            animation: pulse-red 2s infinite;
-            text-shadow: 0 0 2vmin #ff3366 !important;
+            animation: pulse-red 1.8s infinite;
+            text-shadow: 0 0 3vmin #ff3366 !important;
         }
-        @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.6} }
+        @keyframes pulse-red { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-        /* MAIN DESIGN */
-        .main-time { position:relative; z-index:relative; z-index:10; text-align:center; width:100%; }
-        .time-digits { font-size:20vmin; font-weight:900; font-family:'Courier New',monospace; letter-spacing:1vmin; color:#FFF; text-shadow:0 0 3vmin rgba(37,159,222,0.7),0 0 6vmin rgba(14,60,189,0.5); line-height:1; margin-bottom:1vmin; }
-        .time-colon { color:#259FDE; animation:blink 1.5s infinite; text-shadow:0 0 2vmin rgba(37,159,222,0.8); }
-        .date-display { font-size:4vmin; color:#848484; letter-spacing:0.5vmin; text-transform:uppercase; margin-top:3vmin; font-weight:500; }
-        .seconds-ring { position:absolute; width:80vmin; height:80vmin; border-radius:50%; background:conic-gradient(from 0deg,#259FDE 0%,#0E3CBD 50%,transparent 50%); mask:radial-gradient(circle,transparent 60%,black 61%); -webkit-mask:radial-gradient(circle,transparent 60%,black 61%); animation:rotate 60s linear infinite; opacity:0.4; }
-        .digital-seconds { position:absolute; bottom:15vmin; font-size:8vmin; font-weight:700; color:#259FDE; font-family:'Courier New',monospace; text-shadow:0 0 2vmin rgba(37,159,222,0.6); }
-        .period-indicator { position:absolute; top:15vmin; font-size:5vmin; font-weight:600; color:#FFF; background:rgba(37,159,222,0.2); padding:1.5vmin 4vmin; border-radius:2vmin; border:1px solid rgba(37,159,222,0.4); backdrop-filter:blur(5px); }
-        .corner { position:absolute; width:10vmin; height:10vmin; border:1.5vmin solid #259FDE; opacity:0.6; }
+        /* REST OF DESIGN */
+        .main-time { position:relative; z-index:10; text-align:center; width:100%; }
+        }
+        .date-display { font-size:4.2vmin; color:#848484; letter-spacing:0.6vmin; text-transform:uppercase; margin-top:3vmin; font-weight:600; }
+        .seconds-ring { position:absolute; width:80vmin; height:80vmin; border-radius:50%; background:conic-gradient(from 0deg,#259FDE 0%,#0E3CBD 50%,transparent 50%); mask:radial-gradient(circle,transparent 60%,black 61%); -webkit-mask:radial-gradient(circle,transparent 60%,black 61%); animation:rotate 60s linear infinite; opacity:0.45; }
+        .digital-seconds { position:absolute; bottom:14vmin; font-size:8.5vmin; font-weight:800; color:#259FDE; font-family:'Courier New',monospace; text-shadow:0 0 3vmin rgba(37,159,222,0.8); }
+        .period-indicator { position:absolute; top:15vmin; font-size:5.5vmin; font-weight:700; color:#FFF; background:rgba(37,159,222,0.25); padding:1.8vmin 5vmin; border-radius:2.5vmin; border:1.5px solid rgba(37,159,222,0.5); backdrop-filter:blur(6px); }
+        .corner { position:absolute; width:10vmin; height:10vmin; border:1.8vmin solid #259FDE; opacity:0.7; }
         .corner-tl { top:5vmin; left:5vmin; border-right:none; border-bottom:none; }
         .corner-tr { top:5vmin; right:5vmin; border-left:none; border-bottom:none; }
         .corner-bl { bottom:5vmin; left:5vmin; border-right:none; border-top:none; }
         .corner-br { bottom:5vmin; right:5vmin; border-left:none; border-top:none; }
-        .center-dot { position:absolute; width:3vmin; height:3vmin; background:#259FDE; border-radius:50%; box-shadow:0 0 2vmin rgba(37,159,222,0.8); z-index:20; }
-        .floating-element { position:absolute; width:3vmin; height:3vmin; background:rgba(37,159,222,0.3); border-radius:50%; animation:float 10s infinite ease-in-out; }
-        .floating-element:nth-child(2){width:2vmin;height:2vmin;background:rgba(255,255,255,0.2);animation-delay:-2s;top:30%;left:20%}
-        .floating-element:nth-child(3){width:4vmin;height:4vmin;background:rgba(14,60,189,0.4);animation-delay:-5s;bottom:30%;right:25%}
-        .hour-marker { position:absolute; width:0.8vmin; height:3vmin; background:#5E5E5E; transform-origin:bottom center; border-radius:0.4vmin; }
+        .center-dot { position:absolute; width:3.5vmin; height:3.5vmin; background:#259FDE; border-radius:50%; box-shadow:0 0 3vmin rgba(37,159,222,1); z-index:20; }
+        .floating-element { position:absolute; width:3vmin; height:3vmin; background:rgba(37,159,222,0.35); border-radius:50%; animation:float 12s infinite ease-in-out; }
+        .floating-element:nth-child(2){width:2.5vmin;height:2.5vmin;background:rgba(255,255,255,0.25);animation-delay:-3s;top:25%;left:15%}
+        .floating-element:nth-child(3){width:4.5vmin;height:4.5vmin;background:rgba(14,60,189,0.5);animation-delay:-7s;bottom:25%;right:20%}
+        .hour-marker { position:absolute; width:1vmin; height:3.5vmin; background:#5E5E5E; transform-origin:bottom center; border-radius:0.5vmin; }
+
+        }
 
         @keyframes blink {0%,100%{opacity:1}50%{opacity:0.3}}
         @keyframes rotate {from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes float {0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(2vmin,-2vmin) scale(1.1)}66%{transform:translate(-1vmin,1vmin) scale(0.9)}}
-        @keyframes pulse {0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+        @keyframes float {0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(3vmin,-3vmin) scale(1.2)}80%{transform:translate(-2vmin,2vmin) scale(0.9)}}
 
-        @media (max-height:500px) and (max-width:500px){
-            .time-digits{font-size:18vmin;letter-spacing:0.8vmin}
-            .digital-seconds{font-size:6vmin;bottom:12vmin}
-            .period-indicator{font-size:4vmin;top:12vmin}
-            .battery-indicator{top:6vmin;right:6vmin;font-size:4vmin;padding:1vmin 2vmin}
-            .battery-icon{width:7vmin;height:3.5vmin}
+        @media (max-height:500px){
+            .time-digits, .time-colon { font-size:20vmin; }
+            .battery-indicator { top:6vmin; right:6vmin; font-size:4.5vmin; padding:1.5vmin 3vmin; }
         }
     </style>
 </head>
@@ -141,7 +159,9 @@
             <div class="battery-icon">
                 <div class="battery-level" id="batteryLevel"></div>
             </div>
-            <div class="battery-text" id="batteryText">100%</div>
+            <div class="battery-text">
+                <span id="batteryPercent">100</span><span id="chargingIcon"></span>%
+            </div>
         </div>
 
         <div class="main-time">
@@ -155,7 +175,6 @@
     </div>
 
     <script>
-        // Elements
         const hoursEl = document.getElementById('hours');
         const minutesEl = document.getElementById('minutes');
         const secondsEl = document.getElementById('seconds');
@@ -163,10 +182,10 @@
         const dateEl = document.getElementById('date');
         const secondsRing = document.getElementById('secondsRing');
         const batteryLevel = document.getElementById('batteryLevel');
-        const batteryText = document.getElementById('batteryText');
+        const batteryPercent = document.getElementById('batteryPercent');
+        const chargingIcon = document.getElementById('chargingIcon');
         const batteryIndicator = document.getElementById('batteryIndicator');
 
-        // Create 12 hour markers
         function createHourMarkers() {
             const container = document.querySelector('.clock-container');
             for (let i = 0; i < 12; i++) {
@@ -182,18 +201,20 @@
             }
         }
 
-        // Live battery status
         function updateBattery() {
             if ('getBattery' in navigator) {
                 navigator.getBattery().then(bat => {
                     function refresh() {
                         const level = Math.floor(bat.level * 100);
+                        batteryPercent.textContent = level;
                         batteryLevel.style.setProperty('--battery-percent', level + '%');
-                        batteryText.textContent = bat.charging ? level + '% Charging' : level + '%';
+
+                        // Only lightning symbol when charging
+                        chargingIcon.textContent = bat.charging ? ' Lightning' : '';
 
                         if (level <= 20) {
                             batteryIndicator.classList.add('battery-low');
-                            batteryLevel.style.background = 'linear-gradient(90deg,#ff3366,#ff9999)';
+                            batteryLevel.style.background = 'linear-gradient(90deg,#ff3366,#ff6666)';
                         } else {
                             batteryIndicator.classList.remove('battery-low');
                             batteryLevel.style.background = 'linear-gradient(90deg,#0E3CBD,#259FDE)';
@@ -204,11 +225,11 @@
                     bat.addEventListener('chargingchange', refresh);
                 });
             } else {
-                batteryText.textContent = '100%';
+                batteryPercent.textContent = '100';
+                chargingIcon.textContent = '';
             }
         }
 
-        // Clock update
         function updateClock() {
             const now = new Date();
             let h = now.getHours();
@@ -230,22 +251,20 @@
             dateEl.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
 
             if (s === 0) {
-                document.querySelector('.main-time').style.animation = 'pulse 0.5s ease';
-                setTimeout(() => document.querySelector('.main-time').style.animation = '', 500);
+                document.querySelector('.main-time').style.animation = 'pulse 0.6s ease';
+                setTimeout(() => document.querySelector('.main-time').style.animation = '', 600);
             }
 
-            const intensity = Math.sin(s * 0.1) * 0.3 + 0.7;
+            const intensity = Math.sin(s * 0.1) * 0.4 + 0.6;
             secondsEl.style.color = `rgba(37,159,222,${intensity})`;
-            secondsEl.style.textShadow = `0 0 ${intensity*3}vmin rgba(37,159,222,0.6)`;
+            secondsEl.style.textShadow = `0 0 ${intensity*4}vmin rgba(37,159,222,0.8)`;
         }
 
-        // Initialize
         createHourMarkers();
         updateClock();
         updateBattery();
         setInterval(updateClock, 50);
 
-        // Keep perfect square on resize
         window.addEventListener('resize', () => {
             const size = Math.min(window.innerWidth, window.innerHeight) * 0.95;
             document.querySelector('.clock-container').style.width = size + 'px';
