@@ -39,11 +39,11 @@
                 0 0 50px rgba(0, 0, 0, 0.8);
         }
 
-        /* Battery Indicator - Larger and Bolder */
+        /* Battery Indicator - Top right corner */
         .battery-indicator {
             position: absolute;
-            top: 4vmin;
-            right: 4vmin;
+            top: 5vmin;
+            right: 5vmin;
             display: flex;
             align-items: center;
             gap: 2vmin;
@@ -127,70 +127,70 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* Main Time Display - MUCH LARGER */
-        .main-time {
+        /* Main Clock Layout - Following reference image alignment */
+        .clock-content {
             position: relative;
-            z-index: 10;
-            text-align: center;
             width: 100%;
-            margin-top: -8vmin;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
-        .time-digits {
-            font-size: 28vmin;
+        /* Main Time Display - CENTERED like reference image */
+        .time-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 3vmin;
+        }
+
+        .time-digit {
+            font-size: 32vmin;
             font-weight: 1000;
             font-family: 'Courier New', monospace;
-            letter-spacing: 2vmin;
             color: #FFFFFF;
             text-shadow: 
                 0 0 5vmin rgba(37, 159, 222, 0.8),
                 0 0 10vmin rgba(14, 60, 189, 0.6),
                 0 0 20vmin rgba(37, 159, 222, 0.4);
-            line-height: 0.9;
-            margin-bottom: 2vmin;
+            line-height: 1;
+            height: 32vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hours, .minutes {
+            width: 40vmin;
+            text-align: center;
         }
 
         .time-colon {
+            font-size: 20vmin;
             color: #259FDE;
             animation: blink 1.5s infinite;
             text-shadow: 0 0 3vmin rgba(37, 159, 222, 1);
+            height: 32vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2vmin;
         }
 
-        /* Date Display */
-        .date-display {
-            font-size: 5vmin;
-            color: #848484;
-            letter-spacing: 0.8vmin;
-            text-transform: uppercase;
-            margin-top: 4vmin;
-            font-weight: 600;
-        }
-
-        /* Seconds Ring */
-        .seconds-ring {
+        /* Seconds Display - Bottom center */
+        .seconds-display {
             position: absolute;
-            width: 85vmin;
-            height: 85vmin;
-            border-radius: 50%;
-            border: 2vmin solid transparent;
-            background: conic-gradient(
-                from 0deg,
-                #259FDE 0%,
-                #0E3CBD 50%,
-                transparent 50%,
-                transparent 100%
-            );
-            mask: radial-gradient(circle at center, transparent 60%, black 61%);
-            -webkit-mask: radial-gradient(circle at center, transparent 60%, black 61%);
-            animation: rotate 60s linear infinite;
-            opacity: 0.4;
+            bottom: 10vmin;
+            left: 0;
+            right: 0;
+            text-align: center;
         }
 
-        /* Digital Seconds - Larger */
-        .digital-seconds {
-            position: absolute;
-            bottom: 12vmin;
-            font-size: 10vmin;
+        .seconds {
+            font-size: 12vmin;
             font-weight: 900;
             color: #259FDE;
             font-family: 'Courier New', monospace;
@@ -198,22 +198,38 @@
             letter-spacing: 1vmin;
         }
 
-        /* Period Indicator - Larger */
+        /* Date Display - Below time like reference image */
+        .date-display {
+            font-size: 6vmin;
+            color: #848484;
+            letter-spacing: 0.5vmin;
+            text-transform: uppercase;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 2vmin;
+            width: 100%;
+            padding: 0 5vmin;
+        }
+
+        /* Period Indicator - Top center */
         .period-indicator {
             position: absolute;
             top: 15vmin;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 7vmin;
             font-weight: 800;
             color: #FFFFFF;
             background: rgba(37, 159, 222, 0.3);
-            padding: 2vmin 6vmin;
+            padding: 1.5vmin 5vmin;
             border-radius: 3vmin;
             border: 2px solid rgba(37, 159, 222, 0.6);
             backdrop-filter: blur(5px);
             text-shadow: 0 0 2vmin rgba(37, 159, 222, 0.5);
+            text-align: center;
         }
 
-        /* Corner Accents - Larger */
+        /* Corner Accents */
         .corner {
             position: absolute;
             width: 12vmin;
@@ -250,7 +266,7 @@
             border-top: none;
         }
 
-        /* Center Dot - Larger */
+        /* Center Dot */
         .center-dot {
             position: absolute;
             width: 4vmin;
@@ -259,51 +275,15 @@
             border-radius: 50%;
             box-shadow: 0 0 3vmin rgba(37, 159, 222, 1);
             z-index: 20;
-        }
-
-        /* Floating Elements */
-        .floating-element {
-            position: absolute;
-            width: 4vmin;
-            height: 4vmin;
-            background: rgba(37, 159, 222, 0.3);
-            border-radius: 50%;
-            animation: float 10s infinite ease-in-out;
-        }
-
-        .floating-element:nth-child(2) {
-            width: 3vmin;
-            height: 3vmin;
-            background: rgba(255, 255, 255, 0.2);
-            animation-delay: -2s;
-            top: 30%;
-            left: 20%;
-        }
-
-        .floating-element:nth-child(3) {
-            width: 5vmin;
-            height: 5vmin;
-            background: rgba(14, 60, 189, 0.4);
-            animation-delay: -5s;
-            bottom: 30%;
-            right: 25%;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
         }
 
         /* Animations */
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(3vmin, -3vmin) scale(1.1); }
-            66% { transform: translate(-2vmin, 2vmin) scale(0.9); }
         }
 
         @keyframes pulse {
@@ -323,14 +303,23 @@
 
         /* Responsive Adjustments */
         @media (max-height: 500px) and (max-width: 500px) {
-            .time-digits {
-                font-size: 22vmin;
-                letter-spacing: 1.5vmin;
+            .time-digit {
+                font-size: 24vmin;
+                height: 24vmin;
             }
             
-            .digital-seconds {
+            .time-colon {
+                font-size: 15vmin;
+                height: 24vmin;
+            }
+            
+            .hours, .minutes {
+                width: 30vmin;
+            }
+            
+            .seconds {
                 font-size: 8vmin;
-                bottom: 10vmin;
+                bottom: 8vmin;
             }
             
             .period-indicator {
@@ -361,7 +350,7 @@
 </head>
 <body>
     <div class="clock-container">
-        <!-- Battery Indicator - LARGER -->
+        <!-- Battery Indicator -->
         <div class="battery-indicator">
             <div class="battery-icon">
                 <div class="battery-fill" id="batteryFill"></div>
@@ -382,32 +371,29 @@
         <div class="corner corner-bl"></div>
         <div class="corner corner-br"></div>
         
-        <!-- Floating Elements -->
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-        <div class="floating-element"></div>
-        
-        <!-- Seconds Ring -->
-        <div class="seconds-ring" id="secondsRing"></div>
-        
         <!-- Center Dot -->
         <div class="center-dot"></div>
         
-        <!-- Period Indicator - LARGER -->
+        <!-- Period Indicator -->
         <div class="period-indicator" id="period">AM</div>
         
-        <!-- Main Time Display - MUCH LARGER -->
-        <div class="main-time">
-            <div class="time-digits">
-                <span id="hours">12</span>
-                <span class="time-colon">:</span>
-                <span id="minutes">00</span>
+        <!-- Main Clock Content -->
+        <div class="clock-content">
+            <!-- Main Time Display -->
+            <div class="time-display">
+                <div class="hours time-digit" id="hours">08</div>
+                <div class="time-colon">:</div>
+                <div class="minutes time-digit" id="minutes">05</div>
             </div>
-            <div class="date-display" id="date">MONDAY, JANUARY 1</div>
+            
+            <!-- Date Display -->
+            <div class="date-display" id="date">SATURDAY 5 DECEMBER</div>
         </div>
         
-        <!-- Digital Seconds - LARGER -->
-        <div class="digital-seconds" id="seconds">00</div>
+        <!-- Seconds Display -->
+        <div class="seconds-display">
+            <div class="seconds" id="seconds">42</div>
+        </div>
     </div>
 
     <script>
@@ -417,7 +403,6 @@
         const secondsElement = document.getElementById('seconds');
         const periodElement = document.getElementById('period');
         const dateElement = document.getElementById('date');
-        const secondsRing = document.getElementById('secondsRing');
         
         // Battery elements
         const batteryFill = document.getElementById('batteryFill');
@@ -502,7 +487,6 @@
             let hours = now.getHours();
             const minutes = now.getMinutes();
             const seconds = now.getSeconds();
-            const milliseconds = now.getMilliseconds();
             
             // Determine AM/PM
             const period = hours >= 12 ? 'PM' : 'AM';
@@ -511,37 +495,19 @@
             hours = hours % 12;
             hours = hours ? hours : 12;
             
-            // Update display
+            // Update display - using reference image format
             hoursElement.textContent = hours.toString().padStart(2, '0');
             minutesElement.textContent = minutes.toString().padStart(2, '0');
             secondsElement.textContent = seconds.toString().padStart(2, '0');
             periodElement.textContent = period;
             
-            // Update seconds ring
-            const secondsDegrees = (seconds + milliseconds / 1000) * 6;
-            secondsRing.style.background = `conic-gradient(
-                from ${secondsDegrees}deg,
-                #259FDE 0%,
-                #0E3CBD 50%,
-                transparent 50%,
-                transparent 100%
-            )`;
+            // Update date like reference image (SATURDAY 5 DECEMBER format)
+            const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('en-US', dateOptions);
+            // Format: SATURDAY 5 DECEMBER
+            dateElement.textContent = dateString.toUpperCase();
             
-            // Update date
-            const options = { weekday: 'long', month: 'long', day: 'numeric' };
-            dateElement.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
-            
-            // Visual effects
-            if (seconds === 0) {
-                // Pulse effect at minute change
-                const mainTime = document.querySelector('.main-time');
-                mainTime.style.animation = 'pulse 0.5s ease';
-                setTimeout(() => {
-                    mainTime.style.animation = '';
-                }, 500);
-            }
-            
-            // Dynamic color for seconds
+            // Visual effects - subtle glow on seconds
             const intensity = Math.sin(seconds * 0.1) * 0.3 + 0.7;
             secondsElement.style.color = `rgba(37, 159, 222, ${intensity})`;
             secondsElement.style.textShadow = `0 0 ${intensity * 4}vmin rgba(37, 159, 222, 0.8)`;
@@ -563,8 +529,8 @@
         // Initialize clock
         updateClock();
         
-        // Update clock every 50ms for smooth animation
-        const clockInterval = setInterval(updateClock, 50);
+        // Update clock every second
+        const clockInterval = setInterval(updateClock, 1000);
         
         // Handle screen orientation changes
         window.addEventListener('resize', () => {
