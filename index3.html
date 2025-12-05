@@ -2,58 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Key Press Detector with Alert and UI</title>
+    <title>Key Press Detector with Console Log</title>
     <style>
-        /* Simple styling for the output */
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
         #output {
             margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #007bff;
-            min-height: 50px;
-            font-family: monospace;
+            padding: 15px;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            min-height: 120px;
+            font-family: 'Courier New', monospace;
+            background-color: #f8fff9;
             white-space: pre-wrap;
-            background-color: #f8f9fa;
+            font-size: 16px;
+        }
+        h2 {
+            color: #28a745;
         }
     </style>
 </head>
 <body>
-
-    <h2>⌨️ Key Press Detection</h2>
-    <p>Click anywhere and start typing. An **alert** will appear first, and the details will be written below once you close the alert.</p>
-
-    <div id="output">Press a key...</div>
+    <h2>⌨️ Key Press Detection (No Alert)</h2>
+    <p>Click anywhere on the page and start typing. All key presses will be logged to the <strong>browser console</strong> and shown below in real-time.</p>
+    <div id="output">Press any key to begin...</div>
 
     <script>
-        // Get the output element
         const outputDiv = document.getElementById('output');
 
-        // Add the 'keydown' event listener to the entire document
         document.addEventListener('keydown', function(event) {
-            
-            // 1. Get the value of the key pressed
             const keyPressed = event.key;
 
-            // 2. Trigger the blocking alert dialog
-            alert(`You pressed the key: "${keyPressed}"`);
+            // Log to console (visible in DevTools → Console)
+            console.clear(); // Optional: clears previous logs for cleaner view
+            console.log('Key Press Event:', event);
+            console.log(`You pressed: "${keyPressed}" (code: ${event.code})`);
+            if (event.ctrlKey) console.log('Ctrl is held');
+            if (event.shiftKey) console.log('Shift is held');
+            if (event.altKey) console.log('Alt/Option is held');
+            if (event.metaKey) console.log('Meta/Command is held');
 
-            // 3. Update the UI display element (This runs *after* the alert is closed)
+            // Update the on-screen display instantly (no blocking)
             outputDiv.innerHTML = `
-                **Last Key Pressed (via Alert):** ${keyPressed}
-                
-                ---
-                
-                **Full Event Data:**
-                Key: ${event.key}
-                Code (Physical): ${event.code}
-                Ctrl Held: ${event.ctrlKey}
-                Shift Held: ${event.shiftKey}
-                Alt Held: ${event.altKey}
-            `;
-            
-            // Log the key press to the browser console (for reference)
-            console.log(`Key pressed: ${keyPressed}`, event);
-        });
-    </script>
+<strong>Last Key Pressed:</strong> <span style="color:#d63939;">${keyPressed}</span>
 
+---
+<strong>Full Details:</strong>
+Key (logical):     ${event.key}
+Code (physical):   ${event.code}
+Location:          ${event.location}
+Ctrl:              ${event.ctrlKey}
+Shift:             ${event.shiftKey}
+Alt:               ${event.altKey}
+Meta (⌘/Win):      ${event.metaKey}
+Repeat:            ${event.repeat ? 'Yes (held down)' : 'No'}
+Time:              ${new Date().toLocaleTimeString()}
+            `.trim();
+        });
+
+        // Optional: Show a message when page loads
+        console.log('%c Key Press Detector Active – Open Console (F12) to see logs! ', 
+                  'background: #28a745; color: white; font-size: 14px; padding: 8px; border-radius: 4px;');
+    </script>
 </body>
 </html>
