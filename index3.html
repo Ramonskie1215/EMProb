@@ -53,6 +53,14 @@
             border-radius: 2vmin;
             border: 1px solid rgba(37, 159, 222, 0.4);
             backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        .battery-indicator:hover {
+            transform: scale(1.05);
+            background: rgba(28, 28, 28, 0.95);
+            border-color: rgba(37, 159, 222, 0.6);
         }
 
         .battery-icon {
@@ -130,7 +138,7 @@
             z-index: 10;
             text-align: center;
             width: 100%;
-            margin-top: -5vmin; /* Compensate for battery indicator */
+            margin-top: -5vmin;
         }
 
         .time-digits {
@@ -315,6 +323,18 @@
             50% { background-color: #DE3725; }
         }
 
+        /* Status Message */
+        .status-message {
+            position: absolute;
+            bottom: 8vmin;
+            font-size: 2.5vmin;
+            color: #848484;
+            text-align: center;
+            width: 100%;
+            padding: 0 5vmin;
+            opacity: 0.8;
+        }
+
         /* Responsive Adjustments */
         @media (max-height: 500px) and (max-width: 500px) {
             .time-digits {
@@ -346,13 +366,18 @@
             .battery-percentage {
                 font-size: 2.5vmin;
             }
+            
+            .status-message {
+                font-size: 2vmin;
+                bottom: 6vmin;
+            }
         }
     </style>
 </head>
 <body>
     <div class="clock-container">
         <!-- Battery Indicator -->
-        <div class="battery-indicator">
+        <div class="battery-indicator" id="batteryIndicator">
             <div class="battery-icon">
                 <div class="battery-fill" id="batteryFill"></div>
                 <div class="charging-overlay" id="chargingOverlay"></div>
@@ -398,6 +423,9 @@
         
         <!-- Digital Seconds -->
         <div class="digital-seconds" id="seconds">00</div>
+        
+        <!-- Status Message -->
+        <div class="status-message" id="statusMessage">Click battery to refresh status</div>
     </div>
 
     <script>
@@ -408,45 +436,61 @@
         const periodElement = document.getElementById('period');
         const dateElement = document.getElementById('date');
         const secondsRing = document.getElementById('secondsRing');
+        const statusMessage = document.getElementById('statusMessage');
         
         // Battery elements
         const batteryFill = document.getElementById('batteryFill');
         const batteryPercentage = document.getElementById('batteryPercentage');
         const chargingOverlay = document.getElementById('chargingOverlay');
         const chargingIcon = document.getElementById('chargingIcon');
+        const batteryIndicator = document.getElementById('batteryIndicator');
         
-        // Battery simulation (in a real app, use navigator.getBattery())
-        let batteryLevel = 85; // Start at 85%
-        let isCharging = false;
-        let batteryInterval;
+        // Battery status variables
+        let battery = null;
+        let isBatterySupported = false;
         
-        function updateBattery() {
-            // Simulate battery drain/charge
-            if (!isCharging) {
-                // Slowly drain battery when not charging
-                batteryLevel -= 0.05;
-                if (batteryLevel < 0) batteryLevel = 0;
+        // Initialize battery monitoring
+        function initBattery() {
+            if ('getBattery' in navigator) {
+                isBatterySupported = true;
+                navigator.getBattery().then(batt => {
+                    battery = batt;
+                    updateBatteryDisplay();
+                    
+                    // Add event listeners for battery changes
+                    battery.addEventListener('levelchange', updateBatteryDisplay);
+                    battery.addEventListener('chargingchange', updateBatteryDisplay);
+                    battery.addEventListener('chargingtimechange', updateBatteryDisplay);
+                    battery.addEventListener('dischargingtimechange', updateBatteryDisplay);
+                }).catch(error => {
+                    console.error('Error accessing battery API:', error);
+                    showBatteryError();
+                });
             } else {
-                // Charge when connected
-                batteryLevel += 0.1;
-                if (batteryLevel > 100) batteryLevel = 100;
+                showBatteryError();
             }
+        }
+        
+        // Update battery display with real data
+        function updateBatteryDisplay() {
+            if (!battery) return;
+            
+            const percentage = Math.round(battery.level * 100);
+            const isCharging = battery.charging;
             
             // Update display
-            const percentage = Math.round(batteryLevel);
             batteryPercentage.textContent = `${percentage}%`;
-            
-            // Update fill width
             batteryFill.style.width = `${percentage}%`;
             
             // Update colors based on battery level
             if (percentage > 50) {
                 batteryFill.style.background = '#259FDE';
+                batteryFill.style.animation = '';
             } else if (percentage > 20) {
                 batteryFill.style.background = '#FFA500';
+                batteryFill.style.animation = '';
             } else {
                 batteryFill.style.background = '#DE3725';
-                // Pulse animation for low battery
                 batteryFill.style.animation = 'batteryLow 1s infinite';
             }
             
@@ -454,36 +498,50 @@
             if (isCharging) {
                 chargingOverlay.style.display = 'block';
                 chargingIcon.classList.add('active');
-                // Remove low battery animation when charging
                 batteryFill.style.animation = '';
+                statusMessage.textContent = `Charging... ${battery.chargingTime !== Infinity ? `${Math.round(battery.chargingTime/60)} min to full` : 'Calculating...'}`;
             } else {
                 chargingOverlay.style.display = 'none';
                 chargingIcon.classList.remove('active');
-            }
-            
-            // Simulate automatic charging when battery is low
-            if (percentage < 10 && !isCharging && Math.random() > 0.9) {
-                isCharging = true;
-            }
-            
-            // Stop charging when battery is full
-            if (percentage >= 100 && isCharging) {
-                isCharging = false;
+                if (percentage < 20) {
+                    statusMessage.textContent = `Low battery! ${battery.dischargingTime !== Infinity ? `${Math.round(battery.dischargingTime/60)} min remaining` : 'Connect charger'}`;
+                } else {
+                    statusMessage.textContent = `${battery.dischargingTime !== Infinity ? `${Math.round(battery.dischargingTime/60)} min remaining` : 'Battery stable'}`;
+                }
             }
         }
         
-        // Toggle charging on battery click
-        document.querySelector('.battery-indicator').addEventListener('click', () => {
-            isCharging = !isCharging;
-            // If manually toggled to charging, ensure we're not at 100%
-            if (isCharging && batteryLevel >= 100) {
-                batteryLevel = 99;
-            }
-        });
+        // Show battery error state
+        function showBatteryError() {
+            batteryPercentage.textContent = 'N/A';
+            batteryFill.style.width = '100%';
+            batteryFill.style.background = '#5E5E5E';
+            statusMessage.textContent = 'Battery API not supported';
+            isBatterySupported = false;
+        }
         
-        // Initialize battery
-        updateBattery();
-        batteryInterval = setInterval(updateBattery, 2000); // Update every 2 seconds
+        // Refresh battery status manually
+        function refreshBatteryStatus() {
+            if (isBatterySupported && battery) {
+                updateBatteryDisplay();
+                statusMessage.textContent = 'Battery status refreshed';
+                setTimeout(() => {
+                    if (battery.charging) {
+                        statusMessage.textContent = `Charging... ${battery.chargingTime !== Infinity ? `${Math.round(battery.chargingTime/60)} min to full` : 'Calculating...'}`;
+                    } else {
+                        statusMessage.textContent = `${battery.dischargingTime !== Infinity ? `${Math.round(battery.dischargingTime/60)} min remaining` : 'Battery stable'}`;
+                    }
+                }, 2000);
+            } else {
+                statusMessage.textContent = 'Battery API not available';
+            }
+        }
+        
+        // Battery indicator click handler
+        batteryIndicator.addEventListener('click', refreshBatteryStatus);
+        
+        // Initialize battery monitoring
+        initBattery();
         
         // Update clock function
         function updateClock() {
@@ -544,20 +602,6 @@
         // Update clock every 50ms for smooth animation
         const clockInterval = setInterval(updateClock, 50);
         
-        // Fullscreen toggle on click
-        document.addEventListener('click', (e) => {
-            // Don't toggle fullscreen if clicking battery indicator
-            if (!e.target.closest('.battery-indicator')) {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(err => {
-                        console.log(`Error attempting to enable fullscreen: ${err.message}`);
-                    });
-                } else {
-                    document.exitFullscreen();
-                }
-            }
-        });
-        
         // Handle screen orientation changes
         window.addEventListener('resize', () => {
             const container = document.querySelector('.clock-container');
@@ -571,9 +615,15 @@
         
         // Cleanup intervals on page unload
         window.addEventListener('beforeunload', () => {
-            clearInterval(batteryInterval);
             clearInterval(clockInterval);
         });
+        
+        // Show initial status message
+        setTimeout(() => {
+            if (isBatterySupported) {
+                statusMessage.textContent = 'Click battery to refresh status';
+            }
+        }, 3000);
     </script>
 </body>
 </html>
