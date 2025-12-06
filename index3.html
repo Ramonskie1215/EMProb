@@ -489,7 +489,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         // Firebase configuration from your settings
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
@@ -571,8 +571,6 @@
             }
 
             // Send uptime data to Firebase
-// Send uptime data to Firebase (preserves probationer)
-// Send uptime data to Firebase (MERGES, preserves probationer)
 // Send uptime data to Firebase (preserves probationer)
 async sendUptime() {
     if (!this.isConnected) {
@@ -922,9 +920,6 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
-
-
-
 
 
 
