@@ -280,29 +280,25 @@
             transform: translate(-50%, -50%);
         }
 
-/* Move ID completely OUTSIDE and BELOW the clock box */
+/* FORCE ID OUTSIDE AND BELOW THE CLOCK BOX */
 #idDisplay {
-    position: fixed !important;        /* or absolute if you prefer */
-    bottom: 8vh !important;            /* distance from bottom of screen */
+    position: fixed !important;
+    bottom: 5vh !important;           /* adjust 4vh – 8vh if you want higher/lower */
     left: 50% !important;
     transform: translateX(-50%) !important;
-    font-size: 5vmin !important;
-    font-weight: 900 !important;
+    
+    font-size: 4.5vmin !important;
     font-family: 'Courier New', monospace !important;
+    font-weight: 900 !important;
     color: #259FDE !important;
-    background: rgba(10, 10, 30, 0.9) !important;
-    padding: 2vmin 6vmin !important;
-    border-radius: 3vmin !important;
-    border: 3px solid #259FDE !important;
-    box-shadow: 
-        0 0 30px rgba(37, 159, 222, 0.8),
-        0 8px 20px rgba(0, 0, 0, 0.6) !important;
-    backdrop-filter: blur(12px) !important;
-    z-index: 9999 !important;
-    text-shadow: 0 0 20px #0E3CBD !important;
-    letter-spacing: 0.8vmin !important;
-    white-space: nowrap !important;
-    animation: float 6s ease-in-out infinite !important;
+    
+    background: rgba(20, 20, 40, 0.95) !important;
+    padding: 1.8vmin 5vmin !important;
+    border-radius: 2vmin !important;
+    border: 2px solid #259FDE !important;
+    
+    z-index: 99999 !important;
+    pointer-events: none !important;   /* so it doesn't block touches */
 }
 
 /* Optional: subtle floating animation so it feels alive */
@@ -405,8 +401,7 @@
 <body>
     <div class="clock-container">
         <!-- ID Display -->
-        <div class="id-display" id="idDisplay">ID: ------</div>
-        
+
         <!-- Status Indicator -->
         <div class="status-indicator" id="statusIndicator">Connected</div>
         
@@ -822,8 +817,10 @@
         // Start everything when page loads
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
+    <div id="idDisplay">ID: ------</div>
 </body>
 </html>
+
 
 
 
