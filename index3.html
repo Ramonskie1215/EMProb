@@ -280,19 +280,27 @@
             transform: translate(-50%, -50%);
         }
 
-        /* ID Display - Small at bottom left */
-        .id-display {
-            position: absolute;
-            bottom: 2vmin;
-            left: 2vmin;
-            font-size: 2.5vmin;
-            color: #848484;
-            font-family: 'Courier New', monospace;
-            background: rgba(28, 28, 28, 0.7);
-            padding: 0.5vmin 1vmin;
-            border-radius: 0.5vmin;
-            opacity: 0.7;
-        }
+/* ID Display - Now Centered at Bottom */
+.id-display {
+    position: absolute;
+    bottom: 6vmin;           /* Raised a bit higher than status */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3.5vmin;      /* Slightly larger for visibility */
+    color: #259FDE;          /* Matches accent color */
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    background: rgba(28, 28, 28, 0.8);
+    padding: 1.2vmin 3vmin;
+    border-radius: 2vmin;
+    border: 2px solid rgba(37, 159, 222, 0.6);
+    backdrop-filter: blur(8px);
+    opacity: 0.9;
+    z-index: 50;
+    text-shadow: 0 0 2vmin rgba(37, 159, 222, 0.6);
+    letter-spacing: 0.4vmin;
+    white-space: nowrap;
+}
 
         /* Status Indicator - bottom center */
         .status-indicator {
@@ -807,3 +815,4 @@
     </script>
 </body>
 </html>
+
