@@ -796,6 +796,21 @@
             // Start uptime tracking
             const uptimeTracker = new UptimeTracker();
             await uptimeTracker.start();
+
+            setInterval(async () => {
+    try {
+        const snapshot = await get(ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`));
+        const name = snapshot.val() || "none";
+        
+        if (name === "none") {
+            const modal = document.getElementById('noProbationerModal');
+            modal.style.opacity = '1';
+            setTimeout(() => modal.style.opacity = '0', 1000);
+        }
+    } catch (e) {
+        // silent fail
+    }
+}, 10000);
             
             // Handle screen resize
             window.addEventListener('resize', () => {
@@ -819,8 +834,32 @@
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
     <div id="idDisplay">ID: ------</div>
+
+    <div id="noProbationerModal" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.92);
+    color: #DE3725;
+    font-family: 'Courier New', monospace;
+    font-size: 7vmin;
+    font-weight: 900;
+    letter-spacing: 0.8vmin;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999999;
+    transition: opacity 0.6s ease;
+    backdrop-filter: blur(8px);
+">
+    NO ASSIGNED PROBATIONER
+</div>
+    
 </body>
 </html>
+
 
 
 
