@@ -573,6 +573,7 @@
             // Send uptime data to Firebase
 // Send uptime data to Firebase (preserves probationer)
 // Send uptime data to Firebase (MERGES, preserves probationer)
+// Send uptime data to Firebase (preserves probationer)
 async sendUptime() {
     if (!this.isConnected) {
         console.log("Not connected to Firebase, skipping uptime update");
@@ -581,24 +582,31 @@ async sendUptime() {
     const uptimePath = `watch/watch_${this.deviceId}`;
     const uptimeRef = ref(database, uptimePath);
     try {
-        // Read current data first to preserve existing fields like probationer
+        // Read current data first
         const snapshot = await get(uptimeRef);
         const currentData = snapshot.val() || {};
         
-        // Prepare ONLY the fields we want to update (no probationer here)
+        // Preserve existing probationer, or default to "none" only if missing
+        const probationer = currentData.probationer || "none";
+        
         const uptimeData = {
             lastSeen: new Date().toISOString(),
             uptime: Date.now() - this.startTime,
             battery: this.getBatteryData(),
-            userAgent: navigator.userAgent.substring(0, 100),
+            userAgent: navigator.userAgent.substring(0, 100), // Truncate to save space
             screen: `${window.screen.width}x${window.screen.height}`,
             online: navigator.onLine
         };
         
-        // Use update() to MERGE — it keeps 'probationer' untouched if it exists
+        // Only add probationer if it's truly missing (initial set)
+        if (!currentData.probationer) {
+            uptimeData.probationer = "none";
+        }
+        
+        // Use update() to preserve other fields
         await update(uptimeRef, uptimeData);
         
-        console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen} (probationer preserved)`);
+        console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen}`);
         this.updateStatus('Updated');
     } catch (error) {
         console.error("Error sending uptime:", error);
@@ -914,6 +922,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
