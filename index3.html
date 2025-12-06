@@ -453,6 +453,29 @@
     </div>
 
 
+    <div id="idDisplay">ID: ------</div>
+
+    <div id="noProbationerModal" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.92);
+    color: #DE3725;
+    font-family: 'Courier New', monospace;
+    font-size: 7vmin;
+    font-weight: 900;
+    letter-spacing: 0.8vmin;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999999;
+    transition: opacity 0.6s ease;
+    backdrop-filter: blur(8px);
+">
+    NO ASSIGNED PROBATIONER
+</div>
     
     
     <!--  Firebase SDK -->
@@ -857,6 +880,7 @@ setInterval(checkProbationerAndShowModal, 10000);
     </script>
 </body>
 </html>
+
 
 
 
