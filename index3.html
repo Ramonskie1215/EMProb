@@ -798,20 +798,6 @@
             const uptimeTracker = new UptimeTracker();
             await uptimeTracker.start();
 
-            setInterval(async () => {
-    try {
-        const snapshot = await get(ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`));
-        const name = snapshot.val() || "none";
-        
-        if (name === "none") {
-            const modal = document.getElementById('noProbationerModal');
-            modal.style.opacity = '1';
-            setTimeout(() => modal.style.opacity = '0', 1000);
-        }
-    } catch (e) {
-        // silent fail
-    }
-}, 10000);
             
             // Handle screen resize
             window.addEventListener('resize', () => {
@@ -860,6 +846,7 @@
     
 </body>
 </html>
+
 
 
 
