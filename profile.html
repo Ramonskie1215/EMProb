@@ -454,6 +454,47 @@
             color: #259FDE;
         }
 
+        /* Edit Profile Modal Specific Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #259FDE;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #5E5E5E;
+            border-radius: 8px;
+            font-size: 14px;
+            background: rgba(28, 28, 28, 0.8);
+            color: #FFFFFF;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #259FDE;
+            box-shadow: 0 0 0 2px rgba(37, 159, 222, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: #848484;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #848484;
+            margin-top: 5px;
+            display: block;
+        }
+
         .loading-screen {
             position: fixed;
             top: 0;
@@ -665,6 +706,47 @@
         </div>
     </div>
 
+    <!-- Edit Profile Modal -->
+    <div class="modal" id="editProfileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Profile</h2>
+                <button class="close-modal" id="closeEditModal">&times;</button>
+            </div>
+            
+            <div id="editProfileForm">
+                <div class="form-group">
+                    <label class="form-label" for="editFullName">Full Name</label>
+                    <input type="text" id="editFullName" class="form-input" placeholder="Enter your full name">
+                    <span class="form-hint">This will be displayed on your profile</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="editAddress">Address</label>
+                    <input type="text" id="editAddress" class="form-input" placeholder="Enter your address">
+                    <span class="form-hint">Your current address</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="editPhone">Phone Number</label>
+                    <input type="tel" id="editPhone" class="form-input" placeholder="Enter your phone number">
+                    <span class="form-hint">Format: +63 912 345 6789</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="editEmail">Email Address</label>
+                    <input type="email" id="editEmail" class="form-input" placeholder="Enter your email address" disabled>
+                    <span class="form-hint">Email cannot be changed</span>
+                </div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="cancelEditBtn">Cancel</button>
+                <button class="modal-btn primary" id="saveEditBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <div class="header" style="display: none;" id="mainHeader">
         <div class="left-section">
             <div class="logo-container">
@@ -871,6 +953,21 @@
             }
         }
 
+        // Update profile data in Firebase
+        async function updateProfileData(username, updatedData) {
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                await set(userRef, {
+                    ...currentUserData,
+                    ...updatedData
+                });
+                return true;
+            } catch (error) {
+                console.error('Error updating profile data:', error);
+                return false;
+            }
+        }
+
         // Update profile UI
         function updateProfileUI(userData) {
             currentUserData = userData;
@@ -902,6 +999,12 @@
             document.getElementById('infoFullName').textContent = userData.fullName || 'Not provided';
             document.getElementById('infoAddress').textContent = userData.address || 'Not provided';
             document.getElementById('infoPhone').textContent = userData.phone || 'Not provided';
+            
+            // Update edit form fields
+            document.getElementById('editFullName').value = userData.fullName || '';
+            document.getElementById('editAddress').value = userData.address || '';
+            document.getElementById('editPhone').value = userData.phone || '';
+            document.getElementById('editEmail').value = userData.email || '';
         }
 
         // Handle file selection
@@ -991,7 +1094,7 @@
                     currentUserData.profilePicture = base64Image;
                     
                     // Close modal
-                    closeModal();
+                    closeUploadModal();
                     
                     // Show success message
                     showNotification('Profile picture updated successfully!', 'success');
@@ -1007,17 +1110,91 @@
             }
         }
 
+        // Save profile changes
+        async function saveProfileChanges() {
+            const fullName = document.getElementById('editFullName').value.trim();
+            const address = document.getElementById('editAddress').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            
+            // Basic validation
+            if (phone && !/^[\d\s\+\-\(\)]+$/.test(phone)) {
+                showNotification('Please enter a valid phone number', 'error');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('saveEditBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            try {
+                // Get current username
+                const username = localStorage.getItem('emprobUsername');
+                
+                // Prepare updated data
+                const updatedData = {
+                    fullName: fullName || null,
+                    address: address || null,
+                    phone: phone || null
+                };
+                
+                // Update Firebase
+                const success = await updateProfileData(username, updatedData);
+                
+                if (success) {
+                    // Update current user data
+                    currentUserData.fullName = fullName || null;
+                    currentUserData.address = address || null;
+                    currentUserData.phone = phone || null;
+                    
+                    // Update UI
+                    updateProfileUI(currentUserData);
+                    
+                    // Close modal
+                    closeEditModal();
+                    
+                    // Show success message
+                    showNotification('Profile updated successfully!', 'success');
+                } else {
+                    throw new Error('Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showNotification('Failed to update profile. Please try again.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Changes';
+            }
+        }
+
         // Modal functions
-        function openModal() {
+        function openUploadModal() {
             const modal = document.getElementById('uploadModal');
             modal.style.display = 'flex';
             resetFileSelection();
         }
 
-        function closeModal() {
+        function closeUploadModal() {
             const modal = document.getElementById('uploadModal');
             modal.style.display = 'none';
             resetFileSelection();
+        }
+
+        function openEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            modal.style.display = 'flex';
+            
+            // Fill form with current data
+            if (currentUserData) {
+                document.getElementById('editFullName').value = currentUserData.fullName || '';
+                document.getElementById('editAddress').value = currentUserData.address || '';
+                document.getElementById('editPhone').value = currentUserData.phone || '';
+                document.getElementById('editEmail').value = currentUserData.email || '';
+            }
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('editProfileModal');
+            modal.style.display = 'none';
         }
 
         // Initialize the application
@@ -1076,20 +1253,21 @@
                 }
             });
             
-            // Edit profile
-            document.getElementById('editProfileBtn').addEventListener('click', function() {
-                alert('Edit profile functionality coming soon!');
-            });
+            // Edit profile button
+            document.getElementById('editProfileBtn').addEventListener('click', openEditModal);
             
             // Change avatar button
-            document.getElementById('changeAvatarBtn').addEventListener('click', openModal);
+            document.getElementById('changeAvatarBtn').addEventListener('click', openUploadModal);
             
-            // Modal close button
-            document.getElementById('closeModal').addEventListener('click', closeModal);
-            document.getElementById('cancelBtn').addEventListener('click', closeModal);
-            
-            // Save button
+            // Upload modal buttons
+            document.getElementById('closeModal').addEventListener('click', closeUploadModal);
+            document.getElementById('cancelBtn').addEventListener('click', closeUploadModal);
             document.getElementById('saveBtn').addEventListener('click', uploadProfilePicture);
+            
+            // Edit modal buttons
+            document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+            document.getElementById('saveEditBtn').addEventListener('click', saveProfileChanges);
             
             // File input change
             document.getElementById('fileInput').addEventListener('change', function(e) {
@@ -1098,7 +1276,7 @@
                 }
             });
             
-            // Click on upload area - FIXED HERE
+            // Click on upload area
             const uploadArea = document.getElementById('uploadArea');
             uploadArea.addEventListener('click', function() {
                 document.getElementById('fileInput').click();
@@ -1145,17 +1323,32 @@
                 }
             }
             
-            // Close modal when clicking outside
+            // Close modals when clicking outside
             document.getElementById('uploadModal').addEventListener('click', function(e) {
                 if (e.target === this) {
-                    closeModal();
+                    closeUploadModal();
                 }
             });
             
-            // Also allow Escape key to close modal
+            document.getElementById('editProfileModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEditModal();
+                }
+            });
+            
+            // Also allow Escape key to close modals
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
-                    closeModal();
+                    closeUploadModal();
+                    closeEditModal();
+                }
+            });
+            
+            // Enter key in edit modal saves changes
+            document.getElementById('editProfileForm').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    saveProfileChanges();
                 }
             });
         }
