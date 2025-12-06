@@ -280,25 +280,27 @@
             transform: translate(-50%, -50%);
         }
 
-/* FORCE ID OUTSIDE AND BELOW THE CLOCK BOX */
 #idDisplay {
     position: fixed !important;
-    bottom: 0vh !important;           /* adjust 4vh – 8vh if you want higher/lower */
+    bottom: 0vh !important;           /* tiny gap from screen bottom (0vh = glued to edge) */
     left: 50% !important;
     transform: translateX(-50%) !important;
-    
-    font-size: 4.5vmin !important;
+
     font-family: 'Courier New', monospace !important;
+    font-size: 4.5vmin !important;
     font-weight: 900 !important;
     color: #259FDE !important;
-    
-    background: rgba(20, 20, 40, 0.95) !important;
-    padding: 1.8vmin 5vmin !important;
-    border-radius: 2vmin !important;
-    border: 2px solid #259FDE !important;
-    
+    letter-spacing: 0.6vmin !important;
+    text-shadow: 
+        0 0 15px #0E3CBD,
+        0 0 30px #259FDE !important;
+
+    background: none !important;      /* no card */
+    border: none !important;          /* no border */
+    padding: 0 !important;            /* no padding removed */
+    margin: 0 !important;
     z-index: 99999 !important;
-    pointer-events: none !important;   /* so it doesn't block touches */
+    pointer-events: none !important;  /* doesn’t block taps */
 }
 /* Optional: subtle floating animation so it feels alive */
 @keyframes float {
@@ -878,6 +880,7 @@ setInterval(checkProbationerAndShowModal, 10000);
     </script>
 </body>
 </html>
+
 
 
 
