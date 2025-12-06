@@ -490,7 +490,6 @@
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
         import { get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-        import { get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         // Firebase configuration from your settings
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
@@ -613,6 +612,7 @@ async sendUptime() {
         this.updateStatus('Update failed');
     }
 }
+
             // Get battery data if available
             getBatteryData() {
                 try {
@@ -920,8 +920,6 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
-
-
 
 
 
