@@ -280,26 +280,31 @@
             transform: translate(-50%, -50%);
         }
 
-/* ID Display - Now Centered at Bottom */
-.id-display {
-    position: absolute;
-    bottom: 6vmin;           /* Raised a bit higher than status */
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 3.5vmin;      /* Slightly larger for visibility */
-    color: #259FDE;          /* Matches accent color */
-    font-family: 'Courier New', monospace;
-    font-weight: 800;
-    background: rgba(28, 28, 28, 0.8);
-    padding: 1.2vmin 3vmin;
-    border-radius: 2vmin;
-    border: 2px solid rgba(37, 159, 222, 0.6);
-    backdrop-filter: blur(8px);
-    opacity: 0.9;
-    z-index: 50;
-    text-shadow: 0 0 2vmin rgba(37, 159, 222, 0.6);
-    letter-spacing: 0.4vmin;
-    white-space: nowrap;
+/* ID Display — CENTERED at the bottom (forced override) */
+#idDisplay {
+    position: absolute !important;
+    bottom: 7vmin !important;           /* distance from bottom */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 4vmin !important;
+    font-weight: 900 !important;
+    font-family: 'Courier New', monospace !important;
+    color: #259FDE !important;
+    background: rgba(28, 28, 28, 0.9) !important;
+    padding: 1.5vmin 4vmin !important;
+    border-radius: 3vmin !important;
+    border: 2px solid #259FDE !important;
+    box-shadow: 0 0 20px rgba(37, 159, 222, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    z-index: 100 !important;
+    text-shadow: 0 0 15px #0E3CBD !important;
+    letter-spacing: 0.5vmin !important;
+    white-space: nowrap !important;
+}
+
+/* Optional: push the status text a little lower so they don’t overlap */
+#statusIndicator {
+    bottom: 1.8vmin !important;
 }
 
         /* Status Indicator - bottom center */
@@ -815,4 +820,5 @@
     </script>
 </body>
 </html>
+
 
