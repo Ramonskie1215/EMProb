@@ -558,7 +558,8 @@
                         battery: this.getBatteryData(),
                         userAgent: navigator.userAgent.substring(0, 100), // Truncate to save space
                         screen: `${window.screen.width}x${window.screen.height}`,
-                        online: navigator.onLine
+                        online: navigator.onLine,
+                        probationer: "none"
                     };
 
                     await set(uptimeRef, uptimeData);
@@ -859,6 +860,7 @@
     
 </body>
 </html>
+
 
 
 
