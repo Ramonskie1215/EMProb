@@ -460,7 +460,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
         // Firebase configuration from your settings
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
@@ -794,41 +794,24 @@
             // Initialize battery
             initBattery();
             
-async function checkProbationerAndShowModal() {
-    if (!uptimeTracker.isConnected || !uptimeTracker.deviceId) {
-        console.log("Skipping modal check: not connected or no device ID");
-        return;
-    }
-    
+            // Start uptime tracking
+            const uptimeTracker = new UptimeTracker();
+            await uptimeTracker.start();
+
+            setInterval(async () => {
     try {
-        const probationerRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
-        const snapshot = await get(probationerRef);
-        const probationer = snapshot.val() || "none";
+        const snapshot = await get(ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`));
+        const name = snapshot.val() || "none";
         
-        console.log(`Probationer check: ${probationer}`);  // For debugging
-        
-        if (probationer === "none") {
+        if (name === "none") {
             const modal = document.getElementById('noProbationerModal');
-            if (modal) {
-                // Fade in
-                modal.style.opacity = '1';
-                
-                // Fade out after 1 second
-                setTimeout(() => {
-                    modal.style.opacity = '0';
-                }, 1000);
-            }
+            modal.style.opacity = '1';
+            setTimeout(() => modal.style.opacity = '0', 1000);
         }
-    } catch (error) {
-        console.error("Error checking probationer:", error);
+    } catch (e) {
+        // silent fail
     }
-}
-
-// Start immediate check on load
-checkProbationerAndShowModal();
-
-// Then check every 10 seconds
-setInterval(checkProbationerAndShowModal, 10000);
+}, 10000);
             
             // Handle screen resize
             window.addEventListener('resize', () => {
@@ -853,32 +836,30 @@ setInterval(checkProbationerAndShowModal, 10000);
     </script>
     <div id="idDisplay">ID: ------</div>
 
-<!-- No Probationer Modal -->
-<div id="noProbationerModal" style="
+    <div id="noProbationerModal" style="
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.95);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.92);
     color: #DE3725;
     font-family: 'Courier New', monospace;
-    font-size: 8vmin;
+    font-size: 7vmin;
     font-weight: 900;
-    letter-spacing: 1vmin;
+    letter-spacing: 0.8vmin;
     text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
+    pointer-events: none;
     z-index: 999999;
-    transition: opacity 0.5s ease;
-    backdrop-filter: blur(10px);
+    transition: opacity 0.6s ease;
+    backdrop-filter: blur(8px);
 ">
     NO ASSIGNED PROBATIONER
 </div>
     
 </body>
 </html>
-
-
 
 
 
