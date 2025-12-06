@@ -5,65 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mailjet - Send Hello Email</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 40px; background: #f0f2f5; }
-    .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
-    h1 { color: #1a73e8; }
-    button { padding: 15px 30px; font-size: 18px; background: #1a73e8; color: white; border: none; border-radius: 8px; cursor: pointer; margin-top: 20px; }
-    button:hover { background: #1557b0; }
-    #result { margin-top: 25px; padding: 15px; border-radius: 8px; font-weight: bold; }
-    .success { background: #d4edda; color: #155724; }
-    .error { background: #f8d7da; color: #721c24; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; margin:0; display:flex; align-items:center; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; }
+    h1 { color: #1a73e8; margin-bottom: 10px; }
+    p { color: #555; font-size: 18px; }
+    button { padding: 16px 36px; font-size: 18px; background: #1a73e8; color: white; border: none; border-radius: 50px; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+    button:hover { background: #0d47a1; transform: scale(1.05); }
+    #result { margin-top: 25px; padding: 15px; border-radius: 10px; font-weight: bold; min-height: 50px; }
+    .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .loading { color: #666; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Mailjet Test Email</h1>
-  <p>Click the button below to send a "Hello" email to:</p>
-  <p style="font-size:18px;font-weight:bold;">ramonraymundo121500@gmail.com</p>
+  <h1>Send Test Email</h1>
+  <p>Click below to send a "Hello" email to:</p>
+  <p style="font-size:22px; font-weight:bold; color:#1a73e8;">
+    ramonraymundo121500@gmail.com
+  </p>
 
   <button onclick="sendEmail()">Send Hello Email Now</button>
-  <div id="result"></div>
+  <div id="result" class="loading">Ready — click the button above!</div>
 </div>
 
 <script>
 async function sendEmail() {
   const resultDiv = document.getElementById("result");
   resultDiv.textContent = "Sending email...";
-  resultDiv.className = "";
-
-  const payload = {
-    Messages: [
-      {
-        From: {
-          Email: "emprobofficial@gmail.com",
-          Name: "EmpRob Official"
-        },
-        To: [
-          {
-            Email: "ramonraymundo121500@gmail.com",
-            Name: "Ramon"
-          }
-        ],
-        Subject: "Hello from Mailjet!",
-        TextPart: "Hello Ramon!\n\nThis is a test email sent using Mailjet Send API v3.1.\n\nHave a great day!",
-        HTMLPart: `<h3>Hello Ramon! 👋</h3>
-                   <p>This is a test email sent using <strong>Mailjet Send API v3.1</strong>.</p>
-                   <p>Everything is working perfectly!</p>
-                   <br>
-                   <p>Best regards,<br><strong>EmpRob Official</strong></p>`
-      }
-    ]
-  };
+  resultDiv.className = "loading";
 
   try {
-    const response = await fetch("https://api.mailjet.com/v3.1/send", {
+    const response = await fetch("/api/send-hello", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Basic " + btoa("d73a62a14f56b6a98208d2c1695d9a11:684a80e6027349d5e7170895ecc1824d")
-      },
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/json" }
     });
 
     const data = await response.json();
@@ -72,11 +48,11 @@ async function sendEmail() {
       resultDiv.textContent = "Email sent successfully! Check your inbox (and spam folder just in case).";
       resultDiv.className = "success";
     } else {
-      resultDiv.textContent = "Failed: " + (data.ErrorMessage || JSON.stringify(data));
+      resultDiv.textContent = "Failed: " + (data.error?.ErrorMessage || data.error || JSON.stringify(data));
       resultDiv.className = "error";
     }
   } catch (err) {
-    resultDiv.textContent = "Network Error: " + err.message;
+    resultDiv.textContent = "Network error: " + err.message;
     resultDiv.className = "error";
   }
 }
