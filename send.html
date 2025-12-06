@@ -1,32 +1,50 @@
-// api/send.js   ← put this file in your Vercel project under /api folder
-export default async function handler(req, res) {
-  const { to } = req.body; // optional: you can send the recipient from frontend
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Send Mailjet Email – No CORS!</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f8f9fa; }
+    input, button { padding: 12px; font-size: 16px; margin: 10px 0; width: 100%; }
+    button { background: #0d6efd; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #0b5ed7; }
+    pre { background: white; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Send Mailjet Email (Works on Vercel!)</h1>
+  <p>Enter recipient email (or leave default):</p>
+  <input type="email" id="to" placeholder="passenger@mailjet.com" value="passenger@mailjet.com" />
+  <button onclick="sendEmail()">Send Email Now</button>
 
-  const auth = Buffer.from(
-    "d73a62a14f56b6a98208d2c1695d9a11:ba143bbda64176717971c2cba75ec100"
-  ).toString("base64");
+  <h3>Result:</h3>
+  <pre id="result">Click the button to send...</pre>
 
-  const mailjetRes = await fetch("https://api.mailjet.com/v3/send", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: "Basic " + auth,
-    },
-    body: JSON.stringify({
-      FromEmail: "pilot@mailjet.com",
-      FromName: "Mailjet Pilot",
-      Subject: "Your email flight plan!",
-      "Text-part":
-        "Dear passenger, welcome to Mailjet! May the delivery force be with you!",
-      "Html-part":
-        "<h3>Dear passenger, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!<br>May the delivery force be with you!</h3>",
-      Recipients: [{ Email: to || "passenger@mailjet.com" }],
-    }),
-  });
+  <script>
+  async function sendEmail() {
+    const to = document.getElementById("to").value.trim();
+    const resultEl = document.getElementById("result");
+    resultEl.textContent = "Sending...";
 
-  const data = await mailjetRes.json();
-  res.status(mailjetRes.ok ? 200 : 400).json(data);
-}
+    try {
+      const res = await fetch("/api/send", {  // ← works on Vercel, Netlify, etc.
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: to || "passenger@mailjet.com" })
+      });
 
-// Required for Vercel
-export const config = { api: { bodyParser: true };
+      const data = await res.json();
+
+      if (res.ok) {
+        resultEl.textContent = "SUCCESS! Email sent!\n\n" + JSON.stringify(data, null, 2);
+      } else {
+        resultEl.textContent = "FAILED:\n" + JSON.stringify(data, null, 2);
+      }
+    } catch (err) {
+      resultEl.textContent = "Network error: " + err.message;
+    }
+  }
+  </script>
+</body>
+</html>
