@@ -351,45 +351,19 @@
         .color-6 { background: #0E3CBD; }
 
         @media (max-width: 480px) {
-            .container {
-                padding: 30px 20px;
-            }
-            
-            .logo {
-                width: 100px;
-                height: 100px;
-            }
-            
-            .site-name {
-                font-size: 28px;
-            }
-            
-            .form {
-                gap: 12px;
-            }
-            
-            input {
-                padding: 12px;
-                font-size: 14px;
-            }
-            
-            .modal {
-                padding: 30px 20px;
-            }
-            
-            .modal-actions {
-                flex-direction: column;
-            }
-            
-            .modal-btn {
-                width: 100%;
-            }
+            .container { padding: 30px 20px; }
+            .logo { width: 100px; height: 100px; }
+            .site-name { font-size: 28px; }
+            .form { gap: 12px; }
+            input { padding: 12px; font-size: 14px; }
+            .modal { padding: 30px 20px; }
+            .modal-actions { flex-direction: column; }
+            .modal-btn { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header with Logo and Site Name -->
         <div class="header">
             <div class="logo-container">
                 <img src="https://iili.io/fnM2iqx.png" 
@@ -405,7 +379,6 @@
         </div>
 
         <div class="form-container">
-            <!-- Login Form (Now Default) -->
             <form id="loginForm" class="form active">
                 <h2>Welcome Back</h2>
                 <div class="input-group">
@@ -422,7 +395,6 @@
                 </button>
             </form>
 
-            <!-- Registration Form with Additional Fields -->
             <form id="registerForm" class="form">
                 <h2>Create Account</h2>
                 <div class="input-group">
@@ -452,7 +424,6 @@
             </form>
         </div>
         
-        <!-- Color palette display -->
         <div class="color-palette">
             <div class="color-box color-1" title="Darkest Grey/Black: #1C1C1C"></div>
             <div class="color-box color-2" title="Medium-Dark Grey: #5E5E5E"></div>
@@ -467,7 +438,7 @@
     <div class="modal-overlay" id="confirmationModal">
         <div class="modal">
             <div class="modal-header">
-                <div class="modal-icon">✉️</div>
+                <div class="modal-icon">Email</div>
                 <h3 class="modal-title">Check Your Email</h3>
             </div>
             
@@ -496,14 +467,37 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+    <!-- EmailJS Sending Logic (Separate & Clean) -->
+    <script>
+        (function() {
+            emailjs.init('tHKZ6zQi1nyxPr4hA'); // Your EmailJS Public Key
+
+            window.sendVerificationEmail = function(toEmail, confirmationLink) {
+                const templateParams = {
+                    to_email: toEmail,
+                    confirmation_link: confirmationLink
+                };
+
+                emailjs.send('default_service', 'template_ec6jkkf', templateParams)
+                    .then(() => {
+                        console.log('Verification email sent successfully to:', toEmail);
+                    }, (error) => {
+                        console.error('EmailJS Error:', error);
+                        alert('Failed to send verification email. Check console.');
+                    });
+            };
+        })();
+    </script>
+
+    <!-- Firebase + Main App Logic -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
             authDomain: "probationlocator.firebaseapp.com",
@@ -514,35 +508,22 @@
             appId: "1:323066331183:web:61f35b70cb07c0618106da"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
 
-        // Check if user is already logged in
         function checkLoginStatus() {
             const username = localStorage.getItem('emprobUsername');
             if (username) {
-                // User is logged in, redirect to interface.html
                 window.location.href = '/interface.html';
             }
         }
-
-        // Check login status when page loads
         checkLoginStatus();
 
-        // Authenticate anonymously
         signInAnonymously(auth)
-            .then(() => {
-                console.log("Anonymous authentication successful");
-            })
-            .catch((error) => {
-                console.error("Anonymous authentication failed:", error);
-                showMessage('registerMessage', 'Authentication error. Please refresh the page.', 'error');
-                showMessage('loginMessage', 'Authentication error. Please refresh the page.', 'error');
-            });
+            .then(() => console.log("Anonymous auth success"))
+            .catch(err => console.error("Auth error:", err));
 
-        // Registration form handler
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -553,95 +534,63 @@
             const address = document.getElementById('regAddress').value.trim();
             const phone = document.getElementById('regPhone').value.trim();
             
-            // Validate required fields
             if (!username || !email || !password || !fullName || !phone) {
                 showMessage('registerMessage', 'Please fill in all required fields (*)', 'error');
                 return;
             }
-
             if (password.length < 6) {
                 showMessage('registerMessage', 'Password must be at least 6 characters', 'error');
                 return;
             }
-
-            // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showMessage('registerMessage', 'Please enter a valid email address', 'error');
                 return;
             }
-
-            // Phone validation (basic)
             const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
             if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
-                showMessage('registerMessage', 'Please enter a valid phone number (minimum 10 digits)', 'error');
+                showMessage('registerMessage', 'Please enter a valid phone number (min 10 digits)', 'error');
                 return;
             }
 
             await createRegistrationToken(username, email, password, fullName, address, phone);
         });
 
-        // Login form handler
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value;
-            
             if (!username || !password) {
                 showMessage('loginMessage', 'Please fill in all fields', 'error');
                 return;
             }
-
             await loginUser(username, password);
         });
 
         async function checkUsernameExists(username) {
-            try {
-                const userRef = ref(database, 'credentials/' + username);
-                const snapshot = await get(userRef);
-                return snapshot.exists();
-            } catch (error) {
-                console.error('Error checking username:', error);
-                return false;
-            }
+            const userRef = ref(database, 'credentials/' + username);
+            const snapshot = await get(userRef);
+            return snapshot.exists();
         }
 
         async function checkEmailExists(email) {
-            try {
-                // Query the database to check if email already exists
-                const usersRef = ref(database, 'credentials');
-                const snapshot = await get(usersRef);
-                
-                if (snapshot.exists()) {
-                    const users = snapshot.val();
-                    // Check each user's email
-                    for (const userId in users) {
-                        if (users[userId].email === email) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            } catch (error) {
-                console.error('Error checking email:', error);
-                return false;
+            const usersRef = ref(database, 'credentials');
+            const snapshot = await get(usersRef);
+            if (!snapshot.exists()) return false;
+            const users = snapshot.val();
+            for (const id in users) {
+                if (users[id].email === email) return true;
             }
+            return false;
         }
 
         async function checkTokenExists(token) {
-            try {
-                const tokenRef = ref(database, 'registertoken/' + token);
-                const snapshot = await get(tokenRef);
-                return snapshot.exists();
-            } catch (error) {
-                console.error('Error checking token:', error);
-                return false;
-            }
+            const tokenRef = ref(database, 'registertoken/' + token);
+            const snapshot = await get(tokenRef);
+            return snapshot.exists();
         }
 
         function generateToken() {
-            // Generate a random 32-character token
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
             let token = '';
             for (let i = 0; i < 32; i++) {
@@ -655,83 +604,75 @@
             disableForm('registerForm', true);
 
             try {
-                console.log('Checking username...');
-                // Check if username already exists in credentials
-                const usernameExists = await checkUsernameExists(username);
-                if (usernameExists) {
-                    showMessage('registerMessage', 'Username already exists. Please choose a different username.', 'error');
+                if (await checkUsernameExists(username)) {
+                    showMessage('registerMessage', 'Username already exists. Choose another.', 'error');
                     return;
                 }
-                console.log('Username check passed');
-
-                console.log('Checking email...');
-                // Check if email already exists in credentials
-                const emailExists = await checkEmailExists(email);
-                if (emailExists) {
-                    showMessage('registerMessage', 'Email already registered. Please use a different email or login.', 'error');
+                if (await checkEmailExists(email)) {
+                    showMessage('registerMessage', 'Email already registered.', 'error');
                     return;
                 }
-                console.log('Email check passed');
 
-                // Generate unique token
                 let token;
-                let tokenExists;
                 do {
                     token = generateToken();
-                    tokenExists = await checkTokenExists(token);
-                } while (tokenExists);
+                } while (await checkTokenExists(token));
 
-                console.log('Generated token:', token);
-
-                // Create registration token (valid for 24 hours)
-                const expirationTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours from now
-                
-                const tokenRef = ref(database, 'registertoken/' + token);
-                await set(tokenRef, {
-                    username: username,
-                    email: email,
-                    password: password,
-                    fullName: fullName,
-                    address: address,
-                    phone: phone,
+                const expirationTime = Date.now() + (24 * 60 * 60 * 1000);
+                await set(ref(database, 'registertoken/' + token), {
+                    username, email, password, fullName, address, phone,
                     createdAt: new Date().toISOString(),
                     expiresAt: expirationTime,
                     verified: false
                 });
 
-                console.log('Registration token created successfully');
-                
-                // Create verification URL
                 const verificationUrl = `https://em-prob.vercel.app/confirmtoken.html?token=${token}`;
-                
-                // Show confirmation modal
+
+                // SEND EMAIL USING EMAILJS
+                if (typeof sendVerificationEmail === 'function') {
+                    sendVerificationEmail(email, verificationUrl);
+                }
+
                 showConfirmationModal(email, verificationUrl, token);
-                
-                // Reset form
                 document.getElementById('registerForm').reset();
 
             } catch (error) {
-                console.error('Registration token creation error:', error);
-                showMessage('registerMessage', `Registration failed: ${error.message}. Please try again.`, 'error');
+                console.error('Error:', error);
+                showMessage('registerMessage', 'Registration failed. Try again.', 'error');
             } finally {
                 showSpinner('registerSpinner', false);
                 disableForm('registerForm', false);
             }
         }
 
+        async function loginUser(username, password) {
+            showSpinner('loginSpinner', true);
+            disableForm('loginForm', true);
+
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                const snapshot = await get(userRef);
+                if (!snapshot.exists() || snapshot.val().password !== password) {
+                    showMessage('loginMessage', 'Invalid username or password', 'error');
+                    return;
+                }
+
+                await set(ref(database, 'credentials/' + username + '/lastLogin'), new Date().toISOString());
+                localStorage.setItem('emprobUsername', username);
+                showMessage('loginMessage', 'Login successful! Redirecting...', 'success');
+                setTimeout(() => window.location.href = '/interface.html', 1500);
+            } catch (error) {
+                showMessage('loginMessage', 'Login failed.', 'error');
+            } finally {
+                showSpinner('loginSpinner', false);
+                disableForm('loginForm', false);
+            }
+        }
+
         function showConfirmationModal(email, verificationUrl, token) {
-            // Set the email in the modal
             document.getElementById('sentEmail').textContent = email;
-            
-            // Show the modal
             document.getElementById('confirmationModal').classList.add('active');
-            
-            // For testing purposes, log the verification URL
             console.log('Verification URL:', verificationUrl);
-            console.log('Token:', token);
-            
-            // For testing, you can also show an alert with the URL
-            // alert(`For testing: Visit this URL to verify your email:\n\n${verificationUrl}\n\nToken: ${token}`);
         }
 
         function closeModal() {
@@ -743,53 +684,10 @@
             switchToLogin();
         }
 
-        async function loginUser(username, password) {
-            showSpinner('loginSpinner', true);
-            disableForm('loginForm', true);
-
-            try {
-                const userRef = ref(database, 'credentials/' + username);
-                const snapshot = await get(userRef);
-                
-                if (!snapshot.exists()) {
-                    showMessage('loginMessage', 'Invalid username or password', 'error');
-                    return;
-                }
-
-                const userData = snapshot.val();
-                
-                if (userData.password === password) {
-                    // Update last login time
-                    await set(ref(database, 'credentials/' + username + '/lastLogin'), new Date().toISOString());
-                    
-                    // Store username in localStorage
-                    localStorage.setItem('emprobUsername', username);
-                    
-                    showMessage('loginMessage', 'Login successful! Redirecting...', 'success');
-                    document.getElementById('loginForm').reset();
-                    
-                    // Redirect to interface.html after successful login
-                    setTimeout(() => {
-                        window.location.href = '/interface.html';
-                    }, 1500);
-                } else {
-                    showMessage('loginMessage', 'Invalid username or password', 'error');
-                }
-
-            } catch (error) {
-                console.error('Login error:', error);
-                showMessage('loginMessage', 'Login failed. Please try again.', 'error');
-            } finally {
-                showSpinner('loginSpinner', false);
-                disableForm('loginForm', false);
-            }
-        }
-
         function switchToLogin() {
             document.getElementById('registerForm').classList.remove('active');
             document.getElementById('loginForm').classList.add('active');
             hideAllMessages();
-            // Clear registration form
             document.getElementById('registerForm').reset();
         }
 
@@ -797,49 +695,31 @@
             document.getElementById('loginForm').classList.remove('active');
             document.getElementById('registerForm').classList.add('active');
             hideAllMessages();
-            // Clear login form
             document.getElementById('loginForm').reset();
         }
 
-        function showSpinner(spinnerId, show) {
-            document.getElementById(spinnerId).style.display = show ? 'block' : 'none';
+        function showSpinner(id, show) {
+            document.getElementById(id).style.display = show ? 'block' : 'none';
         }
 
         function disableForm(formId, disable) {
             const form = document.getElementById(formId);
-            const inputs = form.querySelectorAll('input, button');
-            inputs.forEach(input => {
-                input.disabled = disable;
-            });
-            if (disable) {
-                form.classList.add('loading');
-            } else {
-                form.classList.remove('loading');
-            }
+            form.querySelectorAll('input, button').forEach(el => el.disabled = disable);
+            form.classList.toggle('loading', disable);
         }
 
-        function showMessage(elementId, message, type) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = `message ${type}`;
-            element.style.display = 'block';
-            
-            // Auto-hide success messages after 5 seconds
-            if (type === 'success') {
-                setTimeout(() => {
-                    element.style.display = 'none';
-                }, 5000);
-            }
+        function showMessage(id, text, type) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+            if (type === 'success') setTimeout(() => el.style.display = 'none', 5000);
         }
 
         function hideAllMessages() {
-            const messages = document.querySelectorAll('.message');
-            messages.forEach(message => {
-                message.style.display = 'none';
-            });
+            document.querySelectorAll('.message').forEach(m => m.style.display = 'none');
         }
 
-        // Make functions available globally for onclick handlers
         window.switchToLogin = switchToLogin;
         window.switchToRegister = switchToRegister;
         window.closeModal = closeModal;
