@@ -827,7 +827,10 @@
         console.error("Error checking probationer:", error);
     }
 }
-            
+            checkProbationerAndShowModal();
+
+// Then check every 10 seconds
+setInterval(checkProbationerAndShowModal, 10000);
             // Handle screen resize
             window.addEventListener('resize', () => {
                 const container = document.querySelector('.clock-container');
@@ -875,6 +878,7 @@
     
 </body>
 </html>
+
 
 
 
