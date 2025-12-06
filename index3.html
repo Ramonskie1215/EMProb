@@ -280,6 +280,32 @@
             transform: translate(-50%, -50%);
         }
 
+        /* ID Display - Small at bottom left */
+        .id-display {
+            position: absolute;
+            bottom: 2vmin;
+            left: 2vmin;
+            font-size: 2.5vmin;
+            color: #848484;
+            font-family: 'Courier New', monospace;
+            background: rgba(28, 28, 28, 0.7);
+            padding: 0.5vmin 1vmin;
+            border-radius: 0.5vmin;
+            opacity: 0.7;
+        }
+
+        /* Status Indicator - bottom center */
+        .status-indicator {
+            position: absolute;
+            bottom: 2vmin;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2vmin;
+            color: #5E5E5E;
+            text-align: center;
+            opacity: 0.6;
+        }
+
         /* Animations */
         @keyframes blink {
             0%, 100% { opacity: 1; }
@@ -345,11 +371,28 @@
             .date-display {
                 font-size: 4vmin;
             }
+            
+            .id-display {
+                font-size: 2vmin;
+                bottom: 1vmin;
+                left: 1vmin;
+            }
+            
+            .status-indicator {
+                font-size: 1.8vmin;
+                bottom: 1vmin;
+            }
         }
     </style>
 </head>
 <body>
     <div class="clock-container">
+        <!-- ID Display -->
+        <div class="id-display" id="idDisplay">ID: ------</div>
+        
+        <!-- Status Indicator -->
+        <div class="status-indicator" id="statusIndicator">Connected</div>
+        
         <!-- Battery Indicator -->
         <div class="battery-indicator">
             <div class="battery-icon">
@@ -396,7 +439,217 @@
         </div>
     </div>
 
-    <script>
+    <!-- Import Firebase SDK -->
+    <script type="module">
+        // ============================================
+        // FIREBASE CONFIGURATION
+        // ============================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        // Firebase configuration from your settings
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
+            authDomain: "probationlocator.firebaseapp.com",
+            databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
+            projectId: "probationlocator",
+            storageBucket: "probationlocator.firebasestorage.app",
+            messagingSenderId: "323066331183",
+            appId: "1:323066331183:web:61f35b70cb07c0618106da"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // ============================================
+        // SHORT ID GENERATOR (6 alphanumeric characters)
+        // ============================================
+        class ShortIdGenerator {
+            static generate() {
+                // Generate a 6-character alphanumeric ID
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                let result = '';
+                for (let i = 0; i < 6; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
+
+            static getDeviceId() {
+                let deviceId = localStorage.getItem('deviceShortId');
+                if (!deviceId) {
+                    deviceId = this.generate();
+                    localStorage.setItem('deviceShortId', deviceId);
+                }
+                return deviceId;
+            }
+        }
+
+        // ============================================
+        // UPTIME TRACKING
+        // ============================================
+        class UptimeTracker {
+            constructor() {
+                this.deviceId = null;
+                this.uptimeInterval = null;
+                this.startTime = Date.now();
+                this.isConnected = false;
+            }
+
+            // Get short device ID (6 characters)
+            getDeviceId() {
+                return ShortIdGenerator.getDeviceId();
+            }
+
+            // Display the ID on screen
+            displayId() {
+                const idElement = document.getElementById('idDisplay');
+                if (idElement) {
+                    idElement.textContent = `ID: ${this.deviceId}`;
+                }
+            }
+
+            // Authenticate with Firebase
+            async authenticate() {
+                try {
+                    await signInAnonymously(auth);
+                    this.isConnected = true;
+                    console.log("Firebase anonymous authentication successful");
+                    this.updateStatus('Connected');
+                    return true;
+                } catch (error) {
+                    console.error("Firebase authentication failed:", error);
+                    this.isConnected = false;
+                    this.updateStatus('Connection failed');
+                    return false;
+                }
+            }
+
+            // Send uptime data to Firebase
+            async sendUptime() {
+                if (!this.isConnected) {
+                    console.log("Not connected to Firebase, skipping uptime update");
+                    return;
+                }
+
+                const uptimePath = `watch/watch_${this.deviceId}`;
+                const uptimeRef = ref(database, uptimePath);
+
+                try {
+                    const uptimeData = {
+                        lastSeen: new Date().toISOString(),
+                        uptime: Date.now() - this.startTime,
+                        battery: this.getBatteryData(),
+                        userAgent: navigator.userAgent.substring(0, 100), // Truncate to save space
+                        screen: `${window.screen.width}x${window.screen.height}`,
+                        online: navigator.onLine
+                    };
+
+                    await set(uptimeRef, uptimeData);
+                    console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen}`);
+                    this.updateStatus('Updated');
+                } catch (error) {
+                    console.error("Error sending uptime:", error);
+                    this.isConnected = false;
+                    this.updateStatus('Update failed');
+                }
+            }
+
+            // Get battery data if available
+            getBatteryData() {
+                try {
+                    if (battery && 'level' in battery && 'charging' in battery) {
+                        return {
+                            p: Math.round(battery.level * 100), // p = percentage
+                            c: battery.charging // c = charging
+                        };
+                    }
+                } catch (e) {
+                    // Battery API not available or error
+                }
+                return { p: 0, c: false };
+            }
+
+            // Start uptime tracking
+            async start() {
+                // Get and display device ID
+                this.deviceId = this.getDeviceId();
+                this.displayId();
+                console.log("Device Short ID:", this.deviceId);
+
+                // Authenticate with Firebase
+                const authSuccess = await this.authenticate();
+                
+                // If authentication failed, retry every 30 seconds
+                if (!authSuccess) {
+                    setInterval(async () => {
+                        if (!this.isConnected) {
+                            await this.authenticate();
+                        }
+                    }, 30000);
+                }
+
+                // Send initial uptime
+                await this.sendUptime();
+
+                // Set up regular uptime updates every 10 seconds
+                this.uptimeInterval = setInterval(() => {
+                    this.sendUptime();
+                }, 10000);
+
+                // Send uptime when page becomes visible
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        this.sendUptime();
+                    }
+                });
+
+                // Send uptime when coming back online
+                window.addEventListener('online', () => {
+                    this.sendUptime();
+                });
+
+                // Send final uptime on page unload
+                window.addEventListener('beforeunload', () => {
+                    this.stop();
+                    // Try to send final update (may not always work due to page unloading)
+                    navigator.sendBeacon && this.sendUptime().catch(() => {});
+                });
+            }
+
+            // Stop uptime tracking
+            stop() {
+                if (this.uptimeInterval) {
+                    clearInterval(this.uptimeInterval);
+                    this.uptimeInterval = null;
+                }
+            }
+
+            // Update status indicator
+            updateStatus(message) {
+                const indicator = document.getElementById('statusIndicator');
+                if (indicator) {
+                    indicator.textContent = message;
+                    
+                    // Flash the indicator briefly
+                    indicator.style.opacity = '1';
+                    indicator.style.color = message === 'Connected' ? '#259FDE' : 
+                                           message === 'Updated' ? '#259FDE' : 
+                                           message === 'Connection failed' ? '#DE3725' : 
+                                           message === 'Update failed' ? '#DE3725' : 
+                                           '#5E5E5E';
+                    
+                    setTimeout(() => {
+                        indicator.style.opacity = '0.6';
+                        indicator.style.color = '#5E5E5E';
+                    }, 1000);
+                }
+            }
+        }
+
         // ============================================
         // MINIMAL KEY PRESS LOGGING
         // ============================================
@@ -404,22 +657,17 @@
             // Only log the key pressed, nothing else
             console.log(event.key);
         });
-        
+
         // ============================================
-        // BATTERY MONITORING LOGIC
+        // BATTERY MONITORING
         // ============================================
-        
-        // Battery elements
         const batteryFill = document.getElementById('batteryFill');
         const batteryPercentage = document.getElementById('batteryPercentage');
         const chargingOverlay = document.getElementById('chargingOverlay');
         const chargingIcon = document.getElementById('chargingIcon');
-        
-        // Battery status variables
         let battery = null;
         let isBatterySupported = false;
-        
-        // Initialize battery monitoring
+
         function initBattery() {
             if ('getBattery' in navigator) {
                 isBatterySupported = true;
@@ -427,7 +675,6 @@
                     battery = batt;
                     updateBatteryDisplay();
                     
-                    // Add event listeners for battery changes
                     battery.addEventListener('levelchange', updateBatteryDisplay);
                     battery.addEventListener('chargingchange', updateBatteryDisplay);
                 }).catch(error => {
@@ -438,19 +685,16 @@
                 showBatteryError();
             }
         }
-        
-        // Update battery display with real data
+
         function updateBatteryDisplay() {
             if (!battery) return;
             
             const percentage = Math.round(battery.level * 100);
             const isCharging = battery.charging;
             
-            // Update display
             batteryPercentage.textContent = `${percentage}%`;
             batteryFill.style.width = `${percentage}%`;
             
-            // Update colors based on battery level
             if (percentage > 50) {
                 batteryFill.style.background = '#259FDE';
                 batteryFill.style.animation = '';
@@ -462,7 +706,6 @@
                 batteryFill.style.animation = 'batteryLow 1s infinite';
             }
             
-            // Show/hide charging animation
             if (isCharging) {
                 chargingOverlay.style.display = 'block';
                 chargingIcon.classList.add('active');
@@ -472,62 +715,47 @@
                 chargingIcon.classList.remove('active');
             }
         }
-        
-        // Show battery error state
+
         function showBatteryError() {
             batteryPercentage.textContent = 'N/A';
             batteryFill.style.width = '100%';
             batteryFill.style.background = '#5E5E5E';
             isBatterySupported = false;
         }
-        
-        // Initialize battery monitoring
-        initBattery();
-        
+
         // ============================================
         // CLOCK LOGIC
         // ============================================
-        
-        // DOM Elements
         const hoursElement = document.getElementById('hours');
         const minutesElement = document.getElementById('minutes');
         const secondsElement = document.getElementById('seconds');
         const periodElement = document.getElementById('period');
         const dateElement = document.getElementById('date');
-        
-        // Update clock function
+
         function updateClock() {
             const now = new Date();
             
-            // Get time components
             let hours = now.getHours();
             const minutes = now.getMinutes();
             const seconds = now.getSeconds();
-            
-            // Determine AM/PM
             const period = hours >= 12 ? 'PM' : 'AM';
             
-            // Convert to 12-hour format
             hours = hours % 12;
             hours = hours ? hours : 12;
             
-            // Update display
             hoursElement.textContent = hours.toString().padStart(2, '0');
             minutesElement.textContent = minutes.toString().padStart(2, '0');
             secondsElement.textContent = seconds.toString().padStart(2, '0');
             periodElement.textContent = period;
             
-            // Update date
             const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
             const dateString = now.toLocaleDateString('en-US', dateOptions);
             dateElement.textContent = dateString.toUpperCase();
             
-            // Visual effects
             const intensity = Math.sin(seconds * 0.1) * 0.3 + 0.7;
             secondsElement.style.color = `rgba(37, 159, 222, ${intensity})`;
             secondsElement.style.textShadow = `0 0 ${intensity * 4}vmin rgba(37, 159, 222, 0.8)`;
             
-            // Make time digits glow more at even seconds
             if (seconds % 2 === 0) {
                 hoursElement.style.textShadow = minutesElement.style.textShadow = 
                     `0 0 6vmin rgba(37, 159, 222, 0.9),
@@ -540,28 +768,42 @@
                      0 0 20vmin rgba(37, 159, 222, 0.4)`;
             }
         }
-        
-        // Initialize clock
-        updateClock();
-        
-        // Update clock every second
-        const clockInterval = setInterval(updateClock, 1000);
-        
-        // Handle screen orientation changes
-        window.addEventListener('resize', () => {
-            const container = document.querySelector('.clock-container');
-            const size = Math.min(window.innerWidth, window.innerHeight);
-            container.style.width = `${size}px`;
-            container.style.height = `${size}px`;
-        });
-        
-        // Initial resize
-        window.dispatchEvent(new Event('resize'));
-        
-        // Cleanup intervals on page unload
-        window.addEventListener('beforeunload', () => {
-            clearInterval(clockInterval);
-        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        async function initialize() {
+            // Start clock
+            updateClock();
+            const clockInterval = setInterval(updateClock, 1000);
+            
+            // Initialize battery
+            initBattery();
+            
+            // Start uptime tracking
+            const uptimeTracker = new UptimeTracker();
+            await uptimeTracker.start();
+            
+            // Handle screen resize
+            window.addEventListener('resize', () => {
+                const container = document.querySelector('.clock-container');
+                const size = Math.min(window.innerWidth, window.innerHeight);
+                container.style.width = `${size}px`;
+                container.style.height = `${size}px`;
+            });
+            
+            // Initial resize
+            window.dispatchEvent(new Event('resize'));
+            
+            // Cleanup
+            window.addEventListener('beforeunload', () => {
+                clearInterval(clockInterval);
+                uptimeTracker.stop();
+            });
+        }
+
+        // Start everything when page loads
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
