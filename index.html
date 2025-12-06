@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMProb - Secure Access</title>
+    
+    <!-- Add EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
     <style>
+        /* ... keep all your existing CSS styles ... */
         * {
             margin: 0;
             padding: 0;
@@ -496,15 +501,15 @@
         </div>
     </div>
 
-    <!-- Load EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    
-    <!-- Load Firebase SDK and Email Service -->
+    <!-- Firebase SDK -->
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+        
+        // Import EmailJS service
+        import { initEmailJS, sendVerificationEmail } from './emailjs-service.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -521,6 +526,9 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
+
+        // Initialize EmailJS
+        initEmailJS();
 
         // Check if user is already logged in
         function checkLoginStatus() {
@@ -653,10 +661,6 @@
             return token;
         }
 
-        function getCurrentYear() {
-            return new Date().getFullYear().toString();
-        }
-
         async function createRegistrationToken(username, email, password, fullName, address, phone) {
             showSpinner('registerSpinner', true);
             disableForm('registerForm', true);
@@ -710,24 +714,21 @@
                 
                 // Create verification URL
                 const verificationUrl = `https://em-prob.vercel.app/confirmtoken.html?token=${token}`;
-                const currentYear = getCurrentYear();
-                
-                console.log('Sending verification email...');
                 
                 // Send verification email using EmailJS
-                const emailResult = await sendVerificationEmailWithEmailJS(email, verificationUrl, currentYear);
+                console.log('Sending verification email to:', email);
+                const emailResult = await sendVerificationEmail(email, verificationUrl);
                 
-                if (emailResult.success) {
-                    console.log('Email sent successfully');
-                    // Show confirmation modal
-                    showConfirmationModal(email, verificationUrl, token);
-                    
-                    // Reset form
-                    document.getElementById('registerForm').reset();
-                } else {
-                    console.error('Failed to send email:', emailResult.error);
-                    showMessage('registerMessage', 'Registration successful but failed to send verification email. Please contact support.', 'error');
+                if (!emailResult.success) {
+                    console.warn('Email sending failed, but registration token was created');
+                    // Continue with registration even if email fails, but log it
                 }
+                
+                // Show confirmation modal
+                showConfirmationModal(email, verificationUrl, token);
+                
+                // Reset form
+                document.getElementById('registerForm').reset();
 
             } catch (error) {
                 console.error('Registration token creation error:', error);
@@ -735,56 +736,6 @@
             } finally {
                 showSpinner('registerSpinner', false);
                 disableForm('registerForm', false);
-            }
-        }
-
-        async function sendVerificationEmailWithEmailJS(email, verificationLink, year) {
-            try {
-                // Wait for EmailJS to be loaded
-                if (typeof emailjs === 'undefined') {
-                    throw new Error('EmailJS is not loaded');
-                }
-                
-                // Initialize EmailJS with your public key
-                emailjs.init('tHKZ6zQi1nyxPr4hA');
-                
-                // Prepare template parameters
-                const templateParams = {
-                    confirmation_link: verificationLink,
-                    year: year,
-                    email: email
-                };
-                
-                console.log('Sending email with params:', templateParams);
-                
-                // Send email using EmailJS
-                const response = await emailjs.send(
-                    'default_service',
-                    'template_ec6jkkf',
-                    templateParams
-                );
-                
-                console.log('EmailJS response:', response);
-                
-                return {
-                    success: true,
-                    message: 'Email sent successfully',
-                    response: response
-                };
-                
-            } catch (error) {
-                console.error('EmailJS error:', error);
-                
-                // For testing purposes, we'll return success even if email fails
-                // In production, you might want to handle this differently
-                console.log('For testing: Email would have been sent to:', email);
-                console.log('Verification link:', verificationLink);
-                
-                return {
-                    success: true, // Return true for testing
-                    message: 'Email simulation successful (testing mode)',
-                    error: error
-                };
             }
         }
 
