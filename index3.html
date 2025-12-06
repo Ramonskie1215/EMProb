@@ -860,6 +860,31 @@
 
 // Then check every 10 seconds
 setInterval(checkProbationerAndShowModal, 10000);
+
+            // Show probationer name below date if not "none"
+async function updateProbationerDisplay() {
+    if (!uptimeTracker.deviceId) return;
+
+    try {
+        const snap = await get(ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`));
+        let name = snap.val();
+
+        // If field doesn't exist yet, treat as "none"
+        if (name === null || name === undefined || name === "none" || name === "") {
+            document.getElementById('probationerDisplay').style.opacity = '0';
+        } else {
+            document.getElementById('probationerName').textContent = name;
+            document.getElementById('probationerDisplay').style.opacity = '1';
+        }
+    } catch (e) {
+        document.getElementById('probationerDisplay').style.opacity = '0';
+    }
+}
+
+// Run on load + every 12 seconds (slightly offset from other checks)
+updateProbationerDisplay();
+setInterval(updateProbationerDisplay, 12000);
+            
             // Handle screen resize
             window.addEventListener('resize', () => {
                 const container = document.querySelector('.clock-container');
@@ -883,6 +908,7 @@ setInterval(checkProbationerAndShowModal, 10000);
     </script>
 </body>
 </html>
+
 
 
 
