@@ -9,43 +9,34 @@ export default async function handler(req, res) {
   ).toString("base64");
 
   const payload = {
-    FromEmail: "pilot@mailjet.com",
-    FromName: "Mailjet Pilot",
+    FromEmail: "emprobofficial@gmail.com",       // ← your real sender
+    FromName: "EMProb Official",                  // change name if you want
     Subject: "Your email flight plan!",
     "Text-part": "Dear passenger, welcome to Mailjet! May the delivery force be with you!",
     "Html-part": `<h3>Dear passenger, welcome to <a href="https://www.mailjet.com/">Mailjet</a>!<br>May the delivery force be with you!</h3>`,
     Recipients: [
       {
-        Email: req.body.to || "passenger@mailjet.com", // you can change recipient from frontend
+        Email: req.body.to || "ramonraymundo121500@gmail.com",
       },
     ],
   };
 
-  try {
-    const mailjetResponse = await fetch("https://api.mailjet.com/v3/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Basic " + auth,
-      },
-      body: JSON.stringify(payload),
-    });
+  const mailjetResponse = await fetch("https://api.mailjet.com/v3/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Basic " + auth,
+    },
+    body: JSON.stringify(payload),
+  });
 
-    const data = await mailjetResponse.json();
+  const data = await mailjetResponse.json();
 
-    if (mailjetResponse.ok) {
-      res.status(200).json({ success: true, data });
-    } else {
-      res.status(mailjetResponse.status).json({ success: false, error: data });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+  if (mailjetResponse.ok) {
+    res.status(200).json({ success: true, data });
+  } else {
+    res.status(mailjetResponse.status).json({ success: false, error: data });
   }
 }
 
-// Needed for Vercel
-export const config = {
-  api: {
-    bodyParser: true,
-  },
-};
+export const config = { api: { bodyParser: true } };
