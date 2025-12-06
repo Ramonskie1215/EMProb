@@ -1169,6 +1169,11 @@
                     <label class="form-label">Probation End Date</label>
                     <input type="date" class="form-input" id="endDate">
                 </div>
+                                
+                <div class="form-group">
+                    <label class="form-label">Officer In Charge</label>
+                    <input type="text" class="form-input" id="officerInCharge" placeholder="Enter officer name">
+                </div>
             </div>
             
             <div class="modal-buttons">
@@ -1897,6 +1902,9 @@
                         <div class="probationer-info">
                             <h3>${probationer.fullName || 'Unknown'}</h3>
                             <p>ID: ${probationer.assignedId || 'N/A'}</p>
+                             <p style="font-size: 12px; color: #259FDE; margin-top: 2px;">
+                                Officer: ${probationer.officerInCharge || 'Not Assigned'}
+                            </p>
                         </div>
                     </div>
                     
@@ -2047,7 +2055,7 @@
                 document.getElementById('dob').value = probationer.dob || '';
                 document.getElementById('startDate').value = probationer.startDate || '';
                 document.getElementById('endDate').value = probationer.endDate || '';
-                
+                document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
                 // Set avatar preview
                 const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
                 document.getElementById('avatarInitial').textContent = initial;
@@ -2119,7 +2127,8 @@
                 address: document.getElementById('address').value.trim(),
                 dob: document.getElementById('dob').value,
                 startDate: document.getElementById('startDate').value,
-                endDate: document.getElementById('endDate').value,
+                endDate: document.getElementById('endDate').value, 
+                officerInCharge: document.getElementById('officerInCharge').value.trim() || 'Not Assigned',
                 updatedAt: new Date().toISOString()
             };
             
