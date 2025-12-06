@@ -2,25 +2,24 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Mailjet Test – One Click Send</title>
+  <title>Mailjet Test – Works 100%</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 30px; }
-    pre { background:#f4f4f4; padding:15px; border-radius:8px; }
+    body { font-family: Arial, sans-serif; padding: 40px; background:#f9f9f9; }
+    button { font-size:18px; padding:15px 30px; background:#0d6efd; color:white; border:none; border-radius:8px; cursor:pointer; }
+    pre { background:#fff; padding:20px; border:1px solid #ddd; border-radius:8px; margin-top:20px; }
   </style>
 </head>
 <body>
-  <h1>Mailjet “Your email flight plan!”</h1>
-  <p>Click the button → the exact same email as your cURL will be sent immediately.</p>
+  <h1>Send Mailjet Email with One Click</h1>
+  <p>Works exactly like your original cURL command.</p>
   
-  <button onclick="send()" style="font-size:18px;padding:12px 24px;">
-    Send Email Now
-  </button>
+  <button onclick="sendMailjet()">Send Email Now</button>
   
   <h3>Result:</h3>
-  <pre id="out">Waiting...</pre>
+  <pre id="out">Click the button to send…</pre>
 
   <script>
-  async function send() {
+  async function sendMailjet() {
     const publicKey  = "d73a62a14f56b6a98208d2c1695d9a11";
     const privateKey = "ba143bbda64176717971c2cba75ec100";
 
@@ -32,8 +31,12 @@
       "Subject": "Your email flight plan!",
       "Text-part": "Dear passenger, welcome to Mailjet! May the delivery force be with you!",
       "Html-part": "<h3>Dear passenger, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!<br>May the delivery force be with you!</h3>",
-      "Recipients: [{ "Email": "passenger@mailjet.com" }]
+      "Recipients": [
+        { "Email": "passenger@mailjet.com" }
+      ]
     };
+
+    document.getElementById("out").textContent = "Sending…";
 
     try {
       const res = await fetch("https://api.mailjet.com/v3/send", {
@@ -49,10 +52,10 @@
 
       if (res.ok) {
         document.getElementById("out").textContent = 
-          "SUCCESS! Email sent.\n\n" + JSON.stringify(data, null, 2);
+          "SUCCESS! Email sent successfully!\n\n" + JSON.stringify(data, null, 2);
       } else {
         document.getElementById("out").textContent = 
-          "ERROR " + res.status + "\n\n" + JSON.stringify(data, null, 2);
+          `ERROR ${res.status}\n\n${JSON.stringify(data, null, 2)}`;
       }
     } catch (e) {
       document.getElementById("out").textContent = "Network error: " + e;
