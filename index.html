@@ -4,12 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMProb - Secure Access</title>
-    
-    <!-- Add EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    
     <style>
-        /* ... keep all your existing CSS styles ... */
         * {
             margin: 0;
             padding: 0;
@@ -422,7 +417,7 @@
                 <button type="submit" class="submit-btn">Login</button>
                 <div class="spinner" id="loginSpinner"></div>
                 <div class="message" id="loginMessage"></div>
-                <button type="button" class="switch-btn" onclick="switchToLogin()">
+                <button type="button" class="switch-btn" onclick="switchToRegister()">
                     Don't have an account? Register
                 </button>
             </form>
@@ -507,9 +502,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        
-        // Import EmailJS service
-        import { initEmailJS, sendVerificationEmail } from './emailjs-service.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -526,9 +518,6 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
-
-        // Initialize EmailJS
-        initEmailJS();
 
         // Check if user is already logged in
         function checkLoginStatus() {
@@ -715,15 +704,6 @@
                 // Create verification URL
                 const verificationUrl = `https://em-prob.vercel.app/confirmtoken.html?token=${token}`;
                 
-                // Send verification email using EmailJS
-                console.log('Sending verification email to:', email);
-                const emailResult = await sendVerificationEmail(email, verificationUrl);
-                
-                if (!emailResult.success) {
-                    console.warn('Email sending failed, but registration token was created');
-                    // Continue with registration even if email fails, but log it
-                }
-                
                 // Show confirmation modal
                 showConfirmationModal(email, verificationUrl, token);
                 
@@ -749,6 +729,9 @@
             // For testing purposes, log the verification URL
             console.log('Verification URL:', verificationUrl);
             console.log('Token:', token);
+            
+            // For testing, you can also show an alert with the URL
+            // alert(`For testing: Visit this URL to verify your email:\n\n${verificationUrl}\n\nToken: ${token}`);
         }
 
         function closeModal() {
