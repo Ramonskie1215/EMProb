@@ -280,27 +280,25 @@
             transform: translate(-50%, -50%);
         }
 
+/* FORCE ID OUTSIDE AND BELOW THE CLOCK BOX */
 #idDisplay {
-    position: fixed !ant;
-    bottom: 0vh !ant;           /* tiny gap from screen bottom (0vh = glued to edge) */
-    left: 50% !ant;
-    transform: translateX(-50%) !ant;
-
-    font-family: 'Courier New', monospace !ant;
-    font-size: 4.5vmin !ant;
-    font-weight: 900 !ant;
-    color: #259FDE !ant;
-    letter-spacing: 0.6vmin !ant;
-    text-shadow: 
-        0 0 15px #0E3CBD,
-        0 0 30px #259FDE !ant;
-
-    background: none !ant;      /* no card */
-    border: none !ant;          /* no border */
-    padding: 0 !ant;            /* no padding removed */
-    margin: 0 !ant;
-    z-index: 99999 !ant;
-    pointer-events: none !ant;  /* doesn’t block taps */
+    position: fixed !important;
+    bottom: 0vh !important;           /* adjust 4vh – 8vh if you want higher/lower */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    
+    font-size: 4.5vmin !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: 900 !important;
+    color: #259FDE !important;
+    
+    background: rgba(20, 20, 40, 0.95) !important;
+    padding: 1.8vmin 5vmin !important;
+    border-radius: 2vmin !important;
+    border: 2px solid #259FDE !important;
+    
+    z-index: 99999 !important;
+    pointer-events: none !important;   /* so it doesn't block touches */
 }
 /* Optional: subtle floating animation so it feels alive */
 @keyframes float {
@@ -880,6 +878,7 @@ setInterval(checkProbationerAndShowModal, 10000);
     </script>
 </body>
 </html>
+
 
 
 
