@@ -489,7 +489,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         // Firebase configuration from your settings
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
@@ -572,6 +572,7 @@
 
             // Send uptime data to Firebase
 // Send uptime data to Firebase (preserves probationer)
+// Send uptime data to Firebase (MERGES, preserves probationer)
 async sendUptime() {
     if (!this.isConnected) {
         console.log("Not connected to Firebase, skipping uptime update");
@@ -580,31 +581,24 @@ async sendUptime() {
     const uptimePath = `watch/watch_${this.deviceId}`;
     const uptimeRef = ref(database, uptimePath);
     try {
-        // Read current data first
+        // Read current data first to preserve existing fields like probationer
         const snapshot = await get(uptimeRef);
         const currentData = snapshot.val() || {};
         
-        // Preserve existing probationer, or default to "none" only if missing
-        const probationer = currentData.probationer || "none";
-        
+        // Prepare ONLY the fields we want to update (no probationer here)
         const uptimeData = {
             lastSeen: new Date().toISOString(),
             uptime: Date.now() - this.startTime,
             battery: this.getBatteryData(),
-            userAgent: navigator.userAgent.substring(0, 100), // Truncate to save space
+            userAgent: navigator.userAgent.substring(0, 100),
             screen: `${window.screen.width}x${window.screen.height}`,
             online: navigator.onLine
         };
         
-        // Only add probationer if it's truly missing (initial set)
-        if (!currentData.probationer) {
-            uptimeData.probationer = "none";
-        }
-        
-        // Use update() to preserve other fields
+        // Use update() to MERGE — it keeps 'probationer' untouched if it exists
         await update(uptimeRef, uptimeData);
         
-        console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen}`);
+        console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen} (probationer preserved)`);
         this.updateStatus('Updated');
     } catch (error) {
         console.error("Error sending uptime:", error);
@@ -920,6 +914,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
