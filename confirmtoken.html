@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMProb - Email Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            padding: 20px;
+        }
+
+        .container {
+            background: #1C1C1C;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid #259FDE;
+            text-align: center;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border: 2px solid #259FDE;
+        }
+
+        .site-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: #FFFFFF;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #FFFFFF;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .message {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success {
+            background: rgba(37, 159, 222, 0.2);
+            color: #FFFFFF;
+            border: 1px solid #259FDE;
+        }
+
+        .error {
+            background: rgba(222, 37, 37, 0.2);
+            color: #FFFFFF;
+            border: 1px solid #DE2525;
+        }
+
+        .loading {
+            background: rgba(37, 159, 222, 0.2);
+            color: #FFFFFF;
+            border: 1px solid #259FDE;
+        }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .user-info p {
+            margin: 5px 0;
+            color: #848484;
+        }
+
+        .user-info strong {
+            color: #FFFFFF;
+        }
+
+        button {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 159, 222, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .redirect-btn {
+            background: transparent;
+            color: #259FDE;
+            border: 2px solid #259FDE;
+            margin-top: 10px;
+        }
+
+        .redirect-btn:hover {
+            background: #259FDE;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="https://iili.io/fnM2iqx.png" 
+                 alt="EMProb Logo" 
+                 class="logo"
+                 onerror="this.style.display='none';">
+            <div class="site-name">EMProb</div>
+        </div>
+
+        <h1>Email Verification</h1>
+        
+        <div id="loadingMessage" class="message loading">
+            Verifying your email token...
+        </div>
+        
+        <div id="successMessage" class="message success" style="display: none;">
+            <h3>✓ Email Verified Successfully!</h3>
+            <p>Your account has been created. You can now login.</p>
+            <div id="userInfo" class="user-info" style="display: none;"></div>
+            <button onclick="window.location.href='/'">Go to Login</button>
+        </div>
+        
+        <div id="errorMessage" class="message error" style="display: none;">
+            <h3>✗ Verification Failed</h3>
+            <p id="errorText"></p>
+            <button class="redirect-btn" onclick="window.location.href='/'">Go to Registration</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getDatabase, ref, get, set, remove } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
+            authDomain: "probationlocator.firebaseapp.com",
+            databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
+            projectId: "probationlocator",
+            storageBucket: "probationlocator.firebasestorage.app",
+            messagingSenderId: "323066331183",
+            appId: "1:323066331183:web:61f35b70cb07c0618106da"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // Authenticate anonymously
+        signInAnonymously(auth)
+            .then(() => {
+                console.log("Anonymous authentication successful");
+                if (token) {
+                    verifyToken(token);
+                } else {
+                    showError('No verification token found in URL');
+                }
+            })
+            .catch((error) => {
+                console.error("Anonymous authentication failed:", error);
+                showError('Authentication error. Please try again.');
+            });
+
+        async function verifyToken(token) {
+            try {
+                // Get token data
+                const tokenRef = ref(database, 'registertoken/' + token);
+                const snapshot = await get(tokenRef);
+                
+                if (!snapshot.exists()) {
+                    showError('Invalid or expired verification token');
+                    return;
+                }
+
+                const tokenData = snapshot.val();
+                
+                // Check if token is expired
+                if (Date.now() > tokenData.expiresAt) {
+                    // Remove expired token
+                    await remove(tokenRef);
+                    showError('Verification token has expired. Please register again.');
+                    return;
+                }
+
+                // Check if token is already verified
+                if (tokenData.verified) {
+                    showError('This token has already been used');
+                    return;
+                }
+
+                // Check if username already exists in credentials
+                const userRef = ref(database, 'credentials/' + tokenData.username);
+                const userSnapshot = await get(userRef);
+                
+                if (userSnapshot.exists()) {
+                    showError('Username already exists. Please register with a different username.');
+                    return;
+                }
+
+                // Check if email already exists
+                const emailExists = await checkEmailExists(tokenData.email);
+                if (emailExists) {
+                    showError('Email already registered. Please use a different email.');
+                    return;
+                }
+
+                // Create user account in credentials
+                await set(userRef, {
+                    username: tokenData.username,
+                    email: tokenData.email,
+                    password: tokenData.password,
+                    fullName: tokenData.fullName,
+                    address: tokenData.address,
+                    phone: tokenData.phone,
+                    createdAt: new Date().toISOString(),
+                    lastLogin: null,
+                    emailVerified: true
+                });
+
+                // Mark token as verified
+                await set(ref(database, 'registertoken/' + token + '/verified'), true);
+
+                // Show success message with user info
+                showSuccess(tokenData);
+
+                // Optional: Remove token after successful verification (or keep for audit)
+                // await remove(tokenRef);
+
+            } catch (error) {
+                console.error('Token verification error:', error);
+                showError(`Verification failed: ${error.message}`);
+            }
+        }
+
+        async function checkEmailExists(email) {
+            try {
+                const usersRef = ref(database, 'credentials');
+                const snapshot = await get(usersRef);
+                
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    for (const userId in users) {
+                        if (users[userId].email === email) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking email:', error);
+                return false;
+            }
+        }
+
+        function showSuccess(userData) {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'block';
+            
+            // Display user information
+            const userInfoHTML = `
+                <p><strong>Username:</strong> ${userData.username}</p>
+                <p><strong>Email:</strong> ${userData.email}</p>
+                <p><strong>Full Name:</strong> ${userData.fullName}</p>
+                <p><strong>Phone:</strong> ${userData.phone}</p>
+                <p><strong>Address:</strong> ${userData.address}</p>
+            `;
+            document.getElementById('userInfo').innerHTML = userInfoHTML;
+        }
+
+        function showError(message) {
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorText').textContent = message;
+        }
+    </script>
+</body>
+</html>
