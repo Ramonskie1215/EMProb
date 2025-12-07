@@ -490,6 +490,7 @@
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
         import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        // Firebase configuration from your settings
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
             authDomain: "probationlocator.firebaseapp.com",
@@ -570,8 +571,7 @@
             }
 
             // Send uptime data to Firebase
-
-                async sendUptime() {
+    async sendUptime() {
         if (!this.isConnected) {
             console.log("Not connected to Firebase, skipping uptime update");
             return;
@@ -616,36 +616,7 @@
             this.updateStatus('Update failed');
         }
     }
-      /*      async sendUptime() {
-                if (!this.isConnected) {
-                    console.log("Not connected to Firebase, skipping uptime update");
-                    return;
-                }
 
-                const uptimePath = `watch/watch_${this.deviceId}`;
-                const uptimeRef = ref(database, uptimePath);
-
-                try {
-                    const uptimeData = {
-                        lastSeen: new Date().toISOString(),
-                        uptime: Date.now() - this.startTime,
-                        battery: this.getBatteryData(),
-                        userAgent: navigator.userAgent.substring(0, 100), // Truncate to save space
-                        screen: `${window.screen.width}x${window.screen.height}`,
-                        online: navigator.onLine,
-                        probationer: "none"
-                    };
-
-                    await set(uptimeRef, uptimeData);
-                    console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen}`);
-                    this.updateStatus('Updated');
-                } catch (error) {
-                    console.error("Error sending uptime:", error);
-                    this.isConnected = false;
-                    this.updateStatus('Update failed');
-                }
-            }
-*/
             // Get battery data if available
             getBatteryData() {
                 try {
