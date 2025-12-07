@@ -477,39 +477,6 @@
     NO ASSIGNED PROBATIONER
 </div>
     
-    <!-- Announcement Modal -->
-<div id="announcementModal" style="
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.97);
-    color: #DE3725;
-    font-family: 'Courier New', monospace;
-    font-size: 6vmin;
-    font-weight: 900;
-    letter-spacing: 0.5vmin;
-    text-align: center;
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 999999;
-    padding: 10vmin;
-    backdrop-filter: blur(10px);
-    transition: opacity 0.6s ease;
-">
-    <div style="margin-bottom: 4vmin; color: #259FDE; font-size: 5vmin;">
-        NEW ANNOUNCEMENT
-    </div>
-    <div id="announcementSubject" style="font-size: 8vmin; color: #FFFFFF; margin: 3vmin 0;">
-        SUBJECT
-    </div>
-    <div id="announcementDetails" style="font-size: 5.5vmin; color: #AAAAAA; max-width: 90%; line-height: 1.4;">
-        Details will appear here...
-    </div>
-    <div style="margin-top: 6vmin; font-size: 4.5vmin; color: #666;">
-        Press <span style="color: #259FDE;">F1</span> to acknowledge
-    </div>
-</div>
     
     <!--  Firebase SDK -->
     <script type="module">
@@ -966,122 +933,11 @@ setInterval(updateProbationerDisplay, 2000);
             });
         }
 
-        // ============================================
-// ANNOUNCEMENT SYSTEM (F1 to Acknowledge)
-// ============================================
-
-const announcementModal = document.getElementById('announcementModal');
-const announcementSubject = document.getElementById('announcementSubject');
-const announcementDetails = document.getElementById('announcementDetails');
-
-let currentProbationerKey = null;
-let pendingAnnouncements = [];
-
-// Show modal with announcement
-function showAnnouncement(announcement) {
-    announcementSubject.textContent = announcement.subject.toUpperCase();
-    announcementDetails.textContent = announcement.details;
-    announcementModal.style.display = 'flex';
-    setTimeout(() => announcementModal.style.opacity = '1', 50);
-}
-
-// Hide modal
-function hideAnnouncementModal() {
-    announcementModal.style.opacity = '0';
-    setTimeout(() => {
-        announcementModal.style.display = 'none';
-    }, 600);
-}
-
-// Check for unacknowledged announcements
-async function checkForAnnouncements() {
-    if (!uptimeTracker.deviceId) return;
-
-    try {
-        // Get assigned probationer ID (e.g., "123445")
-        const watchRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
-        const watchSnap = await get(watchRef);
-        const assignedId = (watchSnap.val() || "").toString().trim();
-
-        if (!assignedId || assignedId === "none") return;
-
-        // Build full probationer key: probationer_123445
-        currentProbationerKey = `probationer_${assignedId}`;
-
-        const announcementsRef = ref(database, `probationers/${currentProbationerKey}/announcements`);
-        const snap = await get(announcementsRef);
-        const announcements = snap.val();
-
-        if (!announcements || !Array.isArray(announcements)) return;
-
-        // Find all unacknowledged (from newest to oldest)
-        pendingAnnouncements = announcements
-            .map((ann, index) => ({ ...ann, index }))
-            .filter(ann => ann.acknowledge === false)
-            .reverse(); // newest first
-
-        if (pendingAnnouncements.length > 0) {
-            showAnnouncement(pendingAnnouncements[0]);
-        } else {
-            hideAnnouncementModal();
-        }
-
-    } catch (error) {
-        console.error("Error checking announcements:", error);
-    }
-}
-
-// Acknowledge current announcement
-async function acknowledgeCurrentAnnouncement() {
-    if (pendingAnnouncements.length === 0 || !currentProbationerKey) return;
-
-    const current = pendingAnnouncements[0];
-    const index = current.index;
-
-    try {
-        const ackRef = ref(database, `probationers/${currentProbationerKey}/announcements/${index}/acknowledge`);
-        await set(ackRef, true);
-
-        console.log(`Acknowledged announcement #${index}: ${current.subject}`);
-
-        // Remove from pending and show next
-        pendingAnnouncements.shift();
-
-        if (pendingAnnouncements.length > 0) {
-            showAnnouncement(pendingAnnouncements[0]);
-        } else {
-            hideAnnouncementModal();
-        }
-    } catch (error) {
-        console.error("Failed to acknowledge announcement:", error);
-    }
-}
-
-// Listen for F1 key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'F1' && announcementModal.style.display === 'flex') {
-        e.preventDefault();
-        acknowledgeCurrentAnnouncement();
-    }
-});
-
-// Poll every 5 seconds (or on load + when probationer changes)
-setInterval(checkForAnnouncements, 5000);
-checkForAnnouncements(); // Initial check
-
-// Re-check when probationer name updates (optional extra trigger)
-const originalUpdateProbationerDisplay = updateProbationerDisplay;
-updateProbationerDisplay = async function() {
-    await originalUpdateProbationerDisplay();
-    setTimeout(checkForAnnouncements, 1000); // slight delay to ensure assignment is loaded
-};
         // Start everything when page loads
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
-
-
 
 
 
