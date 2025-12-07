@@ -869,23 +869,45 @@
 // Then check every 10 seconds
 setInterval(checkProbationerAndShowModal, 10000);
 
-            // Show probationer name below date if not "none"
 async function updateProbationerDisplay() {
     if (!uptimeTracker.deviceId) return;
 
-    try {
-        const snap = await get(ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`));
-        let name = snap.val();
+    const displayContainer = document.getElementById('probationerDisplay');
+    const nameElement      = document.getElementById('probationerName');
 
-        // If field doesn't exist yet, treat as "none"
-        if (name === null || name === undefined || name === "none" || name === "") {
-            document.getElementById('probationerDisplay').style.opacity = '0';
-        } else {
-            document.getElementById('probationerName').textContent = name;
-            document.getElementById('probationerDisplay').style.opacity = '1';
+    try {
+        // 1. Get the short probationer ID assigned to this watch
+        const watchRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
+        const watchSnap = await get(watchRef);
+        const shortId = (watchSnap.val() || "").toString().trim();
+
+        // No assignment → hide
+        if (!shortId || shortId === "none" || shortId === "") {
+            nameElement.textContent = "NONE";
+            displayContainer.style.opacity = '0';
+            return;
         }
-    } catch (e) {
-        document.getElementById('probationerDisplay').style.opacity = '0';
+
+        // 2. Build the full probationer key: probationer_XYZ789
+        const fullProbationerKey = `probationer_${shortId}`;
+
+        // 3. Fetch the real name
+        const nameRef = ref(database, `probationers/${fullProbationerKey}/fullName`);
+        const nameSnap = await get(nameRef);
+        const fullName = nameSnap.val();
+
+        if (fullName && typeof fullName === "string" && fullName.trim() !== "") {
+            nameElement.textContent = fullName.trim().toUpperCase();
+            displayContainer.style.opacity = '1';        // fade in
+        } else {
+            nameElement.textContent = "NO NAME";
+            displayContainer.style.opacity = '1';
+        }
+
+    } catch (error) {
+        console.error("Error loading probationer name:", error);
+        nameElement.textContent = "ERROR";
+        displayContainer.style.opacity = '1';
     }
 }
 
@@ -916,6 +938,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
