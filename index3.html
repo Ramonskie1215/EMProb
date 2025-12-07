@@ -489,7 +489,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-        import { get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         // Firebase configuration from your settings
         const firebaseConfig = {
             apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
@@ -571,35 +571,51 @@
             }
 
             // Send uptime data to Firebase
-            async sendUptime() {
-                if (!this.isConnected) {
-                    console.log("Not connected to Firebase, skipping uptime update");
-                    return;
-                }
+    async sendUptime() {
+        if (!this.isConnected) {
+            console.log("Not connected to Firebase, skipping uptime update");
+            return;
+        }
+        const uptimePath = `watch/watch_${this.deviceId}`;
+        const uptimeRef = ref(database, uptimePath);
+        try {
+            // Step 1: Read current data from Firebase
+            const snapshot = await get(uptimeRef);
+            const currentData = snapshot.val() || {};
 
-                const uptimePath = `watch/watch_${this.deviceId}`;
-                const uptimeRef = ref(database, uptimePath);
+            // Step 2: Decide what to do with probationer
+            let probationerValue = currentData.probationer;
 
-                try {
-                    const uptimeData = {
-                        lastSeen: new Date().toISOString(),
-                        uptime: Date.now() - this.startTime,
-                        battery: this.getBatteryData(),
-                        userAgent: navigator.userAgent.substring(0, 100), // Truncate to save space
-                        screen: `${window.screen.width}x${window.screen.height}`,
-                        online: navigator.onLine,
-                        probationer: "none"
-                    };
-
-                    await set(uptimeRef, uptimeData);
-                    console.log(`Uptime updated for ID: ${this.deviceId} at ${uptimeData.lastSeen}`);
-                    this.updateStatus('Updated');
-                } catch (error) {
-                    console.error("Error sending uptime:", error);
-                    this.isConnected = false;
-                    this.updateStatus('Update failed');
-                }
+            // If the key is completely missing → set to "none"
+            if (probationerValue === undefined || probationerValue === null) {
+                probationerValue = "none";
             }
+            // If it exists and is NOT "none" → keep it exactly as is (e.g. "Ramon")
+            // If it is "none" → we will keep "none"
+            // → So we NEVER overwrite a real name!
+
+            // Step 3: Data we actually want to update (uptime, battery, etc.)
+            const uptimeData = {
+                lastSeen: new Date().toISOString CharlsonISOString(),
+                uptime: Date.now() - this.startTime,
+                battery: this.getBatteryData(),
+                userAgent: navigator.userAgent.substring(0, 100),
+                screen: `${window.screen.width}x${window.screen.height}`,
+                online: navigator.onLine,
+                probationer: probationerValue  // only adds "none" when missing
+            };
+
+            // Step 4: Use update() so we never delete other fields
+            await update(uptimeRef, uptimeData);
+
+            console.log(`Uptime updated for ID: ${this.deviceId} | Probationer: ${probationerValue}`);
+            this.updateStatus('Updated');
+        } catch (error) {
+            console.error("Error sending uptime:", error);
+            this.isConnected = false;
+            this.updateStatus('Update failed');
+        }
+    }
 
             // Get battery data if available
             getBatteryData() {
@@ -908,6 +924,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
