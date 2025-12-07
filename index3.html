@@ -585,14 +585,6 @@ async function acknowledgeCurrent() {
     }
 }
 
-// Key listener – F1 to acknowledge
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'F1' && announcementModal.style.display === 'flex') {
-        e.preventDefault();
-        acknowledgeCurrent();
-    }
-});
-
 // MAIN CHECK – runs max once at a time, never blocks
 async function checkForAnnouncements() {
     if (isCheckingAnnouncements || !uptimeTracker?.deviceId) return;
@@ -1095,6 +1087,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
