@@ -1566,10 +1566,38 @@
             }
         }
 
-        // Save probationer to Firebase under /probationers path
+                // Save probationer to Firebase under /probationers path
         async function saveProbationer(probationerData) {
             try {
-                const id = editingId || `probationer_${Date.now()}`;
+                // Use assigned ID as the Firebase ID, or existing ID if editing
+                let id;
+                if (editingId) {
+                    // If editing, keep the same ID
+                    id = editingId;
+                } else {
+                    // For new probationers, use the assigned ID
+                    // Clean it up: remove spaces, make lowercase, replace special chars
+                    const cleanId = probationerData.assignedId
+                        .trim()
+                        .toLowerCase()
+                        .replace(/\s+/g, '_')  // Replace spaces with underscores
+                        .replace(/[^a-z0-9_]/g, ''); // Remove special characters
+                    
+                    if (!cleanId) {
+                        throw new Error('Assigned ID is required and cannot be empty');
+                    }
+                    
+                    id = cleanId;
+                    
+                    // Check if this ID already exists
+                    const existingRef = ref(database, `probationers/${id}`);
+                    const snapshot = await get(existingRef);
+                    
+                    if (snapshot.exists()) {
+                        showNotification('This ID already exists. Please use a different ID.', 'error');
+                        return false;
+                    }
+                }
                 
                 // Add metadata
                 probationerData.createdAt = new Date().toISOString();
@@ -1593,6 +1621,13 @@
                 return true;
             } catch (error) {
                 console.error('Error saving probationer:', error);
+                
+                if (error.message.includes('Assigned ID is required')) {
+                    showNotification('Assigned ID is required', 'error');
+                } else {
+                    showNotification('Failed to save probationer. Please try again.', 'error');
+                }
+                
                 return false;
             }
         }
