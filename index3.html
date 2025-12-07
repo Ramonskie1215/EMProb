@@ -947,6 +947,116 @@ async function updateProbationerDisplay() {
 // Run on load + every 12 seconds (slightly offset from other checks)
 updateProbationerDisplay();
 setInterval(updateProbationerDisplay, 2000);
+
+            // ============================================
+// ANNOUNCEMENT SYSTEM (F1 to Acknowledge)
+// ============================================
+
+const announcementModal = document.getElementById('announcementModal');
+const announcementSubject = document.getElementById('announcementSubject');
+const announcementDetails = document.getElementById('announcementDetails');
+
+let currentProbationerKey = null;
+let pendingAnnouncements = [];
+
+// Show modal with announcement
+function showAnnouncement(announcement) {
+    announcementSubject.textContent = announcement.subject.toUpperCase();
+    announcementDetails.textContent = announcement.details;
+    announcementModal.style.display = 'flex';
+    setTimeout(() => announcementModal.style.opacity = '1', 50);
+}
+
+// Hide modal
+function hideAnnouncementModal() {
+    announcementModal.style.opacity = '0';
+    setTimeout(() => {
+        announcementModal.style.display = 'none';
+    }, 600);
+}
+
+// Check for unacknowledged announcements
+async function checkForAnnouncements() {
+    if (!uptimeTracker.deviceId) return;
+
+    try {
+        // Get assigned probationer ID (e.g., "123445")
+        const watchRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
+        const watchSnap = await get(watchRef);
+        const assignedId = (watchSnap.val() || "").toString().trim();
+
+        if (!assignedId || assignedId === "none") return;
+
+        // Build full probationer key: probationer_123445
+        currentProbationerKey = `probationer_${assignedId}`;
+
+        const announcementsRef = ref(database, `probationers/${currentProbationerKey}/announcements`);
+        const snap = await get(announcementsRef);
+        const announcements = snap.val();
+
+        if (!announcements || !Array.isArray(announcements)) return;
+
+        // Find all unacknowledged (from newest to oldest)
+        pendingAnnouncements = announcements
+            .map((ann, index) => ({ ...ann, index }))
+            .filter(ann => ann.acknowledge === false)
+            .reverse(); // newest first
+
+        if (pendingAnnouncements.length > 0) {
+            showAnnouncement(pendingAnnouncements[0]);
+        } else {
+            hideAnnouncementModal();
+        }
+
+    } catch (error) {
+        console.error("Error checking announcements:", error);
+    }
+}
+
+// Acknowledge current announcement
+async function acknowledgeCurrentAnnouncement() {
+    if (pendingAnnouncements.length === 0 || !currentProbationerKey) return;
+
+    const current = pendingAnnouncements[0];
+    const index = current.index;
+
+    try {
+        const ackRef = ref(database, `probationers/${currentProbationerKey}/announcements/${index}/acknowledge`);
+        await set(ackRef, true);
+
+        console.log(`Acknowledged announcement #${index}: ${current.subject}`);
+
+        // Remove from pending and show next
+        pendingAnnouncements.shift();
+
+        if (pendingAnnouncements.length > 0) {
+            showAnnouncement(pendingAnnouncements[0]);
+        } else {
+            hideAnnouncementModal();
+        }
+    } catch (error) {
+        console.error("Failed to acknowledge announcement:", error);
+    }
+}
+
+// Listen for F1 key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'F1' && announcementModal.style.display === 'flex') {
+        e.preventDefault();
+        acknowledgeCurrentAnnouncement();
+    }
+});
+
+// Poll every 5 seconds (or on load + when probationer changes)
+setInterval(checkForAnnouncements, 5000);
+checkForAnnouncements(); // Initial check
+
+// Re-check when probationer name updates (optional extra trigger)
+const originalUpdateProbationerDisplay = updateProbationerDisplay;
+updateProbationerDisplay = async function() {
+    await originalUpdateProbationerDisplay();
+    setTimeout(checkForAnnouncements, 1000); // slight delay to ensure assignment is loaded
+};
             
             // Handle screen resize
             window.addEventListener('resize', () => {
@@ -971,6 +1081,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
