@@ -2084,6 +2084,8 @@
                 document.getElementById('modalTitle').textContent = 'Edit Probationer';
                 document.getElementById('fullName').value = probationer.fullName || '';
                 document.getElementById('assignedId').value = probationer.assignedId || '';
+                document.getElementById('assignedId').disabled = true;
+                document.getElementById('assignedId').title = 'ID cannot be changed after creation';
                 document.getElementById('email').value = probationer.email || '';
                 document.getElementById('phone').value = probationer.phone || '';
                 document.getElementById('address').value = probationer.address || '';
@@ -2101,6 +2103,8 @@
                     document.getElementById('avatarInitial').style.display = 'none';
                 }
             } else {
+                document.getElementById('assignedId').disabled = false;
+                document.getElementById('assignedId').title = '';
                 resetModalForm();
             }
         }
