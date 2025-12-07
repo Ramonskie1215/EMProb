@@ -1587,7 +1587,7 @@
                         throw new Error('Assigned ID is required and cannot be empty');
                     }
                     
-                    id = cleanId;
+                    id = `probationer_${cleanId}`;
                     
                     // Check if this ID already exists
                     const existingRef = ref(database, `probationers/${id}`);
