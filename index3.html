@@ -539,109 +539,6 @@
 // ANNOUNCEMENT SYSTEM – FIXED & NON-BLOCKING
 // ============================================
 
-const announcementModal = document.getElementById('announcementModal');
-const announcementSubject = document.getElementById('announcementSubject');
-const announcementDetails = document.getElementById('announcementDetails');
-
-let isCheckingAnnouncements = false;  // ← prevents overlap
-let currentProbationerKey = null;
-let pendingAnnouncements = [];
-
-// Show modal
-function showAnnouncement(ann) {
-    announcementSubject.textContent = (ann.subject || "NO SUBJECT").toUpperCase();
-    announcementDetails.textContent = ann.details || "No details.";
-    announcementModal.style.display = 'flex';
-    announcementModal.style.opacity = '1';
-}
-
-// Hide modal
-function hideAnnouncementModal() {
-    announcementModal.style.opacity = '0';
-    setTimeout(() => announcementModal.style.display = 'none', 600);
-}
-
-// Acknowledge current announcement
-async function acknowledgeCurrent() {
-    if (pendingAnnouncements.length === 0 || !currentProbationerKey) return;
-
-    const ann = pendingAnnouncements[0];
-    const index = ann.index;
-
-    try {
-        const ackRef = ref(database, `probationers/${currentProbationerKey}/announcements/${index}/acknowledge`);
-        await set(ackRef, true);  // fire-and-forget style (won't block UI)
-        console.log("Acknowledged:", ann.subject);
-
-        pendingAnnouncements.shift();
-
-        if (pendingAnnouncements.length > 0) {
-            showAnnouncement(pendingAnnouncements[0]);
-        } else {
-            hideAnnouncementModal();
-        }
-    } catch (e) {
-        console.error("Ack failed:", e);
-    }
-}
-
-// MAIN CHECK – runs max once at a time, never blocks
-async function checkForAnnouncements() {
-    if (isCheckingAnnouncements || !uptimeTracker?.deviceId) return;
-    isCheckingAnnouncements = true;
-
-    try {
-        const watchRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
-        const snap = await get(watchRef);
-        const assignedId = (snap.val() || "").toString().trim();
-
-        if (!assignedId || assignedId === "none") {
-            isCheckingAnnouncements = false;
-            return;
-        }
-
-        currentProbationerKey = `probationer_${assignedId}`;
-
-        const annRef = ref(database, `probationers/${currentProbationerKey}/announcements`);
-        const annSnap = await get(annRef);
-        const list = annSnap.val();
-
-        if (!Array.isArray(list)) {
-            isCheckingAnnouncements = false;
-            return;
-        }
-
-        // Collect unacknowledged (newest first)
-        pendingAnnouncements = list
-            .map((item, idx) => ({ ...item, index: idx }))
-            .filter(item => item.acknowledge !== true)
-            .reverse();
-
-        if (pendingAnnouncements.length > 0 && announcementModal.style.display !== 'flex') {
-            showAnnouncement(pendingAnnouncements[0]);
-        }
-
-    } catch (err) {
-        console.error("Announcement check error:", err);
-    } finally {
-        isCheckingAnnouncements = false;  // always unlock
-    }
-}
-
-// Run every 6 seconds – smooth & safe
-setInterval(() => {
-    checkForAnnouncements().catch(() => {});  // never throws into global
-}, 6000);
-
-// Also check right after probationer is assigned
-const oldUpdate = updateProbationerDisplay;
-updateProbationerDisplay = async function() {
-    await oldUpdate();
-    setTimeout(checkForAnnouncements, 1500);
-};
-
-// Initial check
-checkForAnnouncements();
 
 // Re-check when probationer name updates (optional extra trigger)
 const originalUpdateProbationerDisplay = updateProbationerDisplay;
@@ -1087,6 +984,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
