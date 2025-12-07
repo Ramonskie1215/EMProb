@@ -577,36 +577,34 @@
         const uptimePath = `watch/watch_${this.deviceId}`;
         const uptimeRef = ref(database, uptimePath);
         try {
-            // Step 1: Read current data from Firebase
+            // 1. Read current data from Firebase
             const snapshot = await get(uptimeRef);
             const currentData = snapshot.val() || {};
 
-            // Step 2: Decide what to do with probationer
+            // 2. Decide probationer value
             let probationerValue = currentData.probationer;
 
-            // If the key is completely missing → set to "none"
+            // Only create the key if it doesn't exist at all
             if (probationerValue === undefined || probationerValue === null) {
                 probationerValue = "none";
             }
-            // If it exists and is NOT "none" → keep it exactly as is (e.g. "Ramon")
-            // If it is "none" → we will keep "none"
-            // → So we NEVER overwrite a real name!
+            // If it's already "Ramon", "Maria", etc. → we keep it exactly as is
 
-            // Step 3: Data we actually want to update (uptime, battery, etc.)
+            // 3. Data we send this cycle
             const uptimeData = {
-                lastSeen: new Date().toISOString CharlsonISOString(),
+                lastSeen: new Date().toISOString(),           // ← THIS WAS BROKEN BEFORE, NOW FIXED
                 uptime: Date.now() - this.startTime,
                 battery: this.getBatteryData(),
                 userAgent: navigator.userAgent.substring(0, 100),
                 screen: `${window.screen.width}x${window.screen.height}`,
                 online: navigator.onLine,
-                probationer: probationerValue  // only adds "none" when missing
+                probationer: probationerValue                 // only writes "none" when key is missing
             };
 
-            // Step 4: Use update() so we never delete other fields
+            // 4. Merge (never overwrites existing probationer name)
             await update(uptimeRef, uptimeData);
 
-            console.log(`Uptime updated for ID: ${this.deviceId} | Probationer: ${probationerValue}`);
+            console.log(`Uptime updated – Probationer: ${probationerValue}`);
             this.updateStatus('Updated');
         } catch (error) {
             console.error("Error sending uptime:", error);
@@ -614,7 +612,6 @@
             this.updateStatus('Update failed');
         }
     }
-
             // Get battery data if available
             getBatteryData() {
                 try {
@@ -922,6 +919,7 @@ setInterval(updateProbationerDisplay, 2000);
     </script>
 </body>
 </html>
+
 
 
 
