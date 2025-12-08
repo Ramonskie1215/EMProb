@@ -1043,6 +1043,7 @@ function showAnnouncement(announcement) {
     document.getElementById('announcementTime').textContent = formattedTime;
 
     announcementModal.style.display = 'flex';
+    setTimeout(() => announcementModal.style.opacity = '1', 50);
 }
 
 // Hide modal
@@ -1159,6 +1160,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
