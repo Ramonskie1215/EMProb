@@ -1026,10 +1026,23 @@ let pendingAnnouncements = [];
 
 // Show modal with announcement
 function showAnnouncement(announcement) {
-    announcementSubject.textContent = announcement.subject.toUpperCase();
-    announcementDetails.textContent = announcement.details;
+    announcementSubject.textContent = (announcement.subject || "NO SUBJECT").toUpperCase();
+    announcementDetails.textContent = announcement.details || "No details provided.";
+
+    // Format time beautifully
+    const date = new Date(announcement.time);
+    const formattedTime = date.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    }).toUpperCase();
+
+    document.getElementById('announcementTime').textContent = formattedTime;
+
     announcementModal.style.display = 'flex';
-    setTimeout(() => announcementModal.style.opacity = '1', 50);
 }
 
 // Hide modal
@@ -1146,6 +1159,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
