@@ -57,44 +57,122 @@
             background-clip: text;
         }
 
-        .nav-buttons {
-            display: flex;
-            gap: 15px;
-        }
 
-        .nav-btn {
-            background: rgba(37, 159, 222, 0.08);
-            color: #259FDE;
-            border: 2px solid #259FDE;
-            padding: 10px 24px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            box-shadow: 0 2px 8px rgba(37, 159, 222, 0.1);
-        }
+    /* User Profile Styles */
+.user-profile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+}
 
-        .nav-btn:hover {
-            background: rgba(37, 159, 222, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(37, 159, 222, 0.2);
-        }
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(37, 159, 222, 0.08);
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(37, 159, 222, 0.3);
+    transition: all 0.3s ease;
+}
 
-        .nav-btn.active {
-            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
-            color: white;
-            border-color: #0E3CBD;
-        }
+.user-info:hover {
+    background: rgba(37, 159, 222, 0.15);
+    transform: translateY(-2px);
+}
 
-        .main-container {
-            max-width: 1400px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+    overflow: hidden;
+    border: 2px solid rgba(37, 159, 222, 0.3);
+    box-shadow: 0 2px 8px rgba(37, 159, 222, 0.2);
+}
 
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: 700;
+    font-size: 16px;
+    color: #2C3E50;
+}
+
+.email {
+    font-size: 13px;
+    color: #7F8C8D;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #259FDE;
+    border-radius: 12px;
+    padding: 10px 0;
+    margin-top: 10px;
+    min-width: 220px;
+    box-shadow: 0 5px 20px rgba(37, 159, 222, 0.15);
+    z-index: 1000;
+    display: none;
+    backdrop-filter: blur(10px);
+}
+
+.profile-dropdown.active {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #2C3E50;
+    font-weight: 500;
+}
+
+.dropdown-item:hover {
+    background: linear-gradient(135deg, rgba(37, 159, 222, 0.1) 0%, rgba(14, 60, 189, 0.1) 100%);
+    color: #259FDE;
+}
+
+.dropdown-item.active {
+    background: linear-gradient(135deg, rgba(37, 159, 222, 0.15) 0%, rgba(14, 60, 189, 0.15) 100%);
+    color: #259FDE;
+    font-weight: 600;
+}
+
+.dropdown-item.logout {
+    color: #E74C3C;
+    border-top: 1px solid #ECF0F1;
+    margin-top: 5px;
+    padding-top: 15px;
+}
+
+.dropdown-item.logout:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
         .page-header {
             display: flex;
             justify-content: space-between;
@@ -1431,11 +1509,50 @@
             <div class="site-name">EMProb</div>
         </div>
         
-        <div class="nav-buttons">
-            <a href="interface.html" class="nav-btn">Map View</a>
-            <a href="#" class="nav-btn active">Probationers</a>
-            <a href="profile.html" class="nav-btn">Profile</a>
+        <!-- Replace the entire .nav-buttons div with this user profile section -->
+<div class="user-profile" id="userProfile">
+    <div class="user-info">
+        <div class="user-avatar" id="userAvatar">
+            <!-- Profile picture will be inserted here by JavaScript -->
         </div>
+        <div class="user-details">
+            <div class="username" id="usernameDisplay">John Doe</div>
+            <div class="email" id="emailDisplay">john.doe@example.com</div>
+        </div>
+    </div>
+    <div class="profile-dropdown" id="profileDropdown">
+        <div class="dropdown-item" onclick="location.href='profile.html'">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
+            </svg>
+            My Profile
+        </div>
+        <div class="dropdown-item" onclick="location.href='settings.html'">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
+            </svg>
+            Settings
+        </div>
+        <div class="dropdown-item active">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM6 2h4v2H6V2zm0 4h4v2H6V6zm0 4h4v2H6v-2zm6 4H6v-2h6v2zm0-4H10V8h2v2zm0-4H10V4h2v2z"/>
+            </svg>
+            Probationers
+        </div>
+        <div class="dropdown-item" onclick="location.href='interface.html'">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M0 0v16h16V0H0zm15 15H1V1h14v14zM2 2h12v12H2V2zm4 2H4v8h2V4zm2 0h2v8H8V4zm4 0h2v8h-2V4z"/>
+            </svg>
+            Map View
+        </div>
+        <div class="dropdown-item logout" id="logoutBtn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+            </svg>
+            Logout
+        </div>
+    </div>
+</div>
     </div>
 
     <div class="main-container" style="display: none;" id="mainContent">
@@ -1528,6 +1645,96 @@
                 notification.classList.remove('show');
             }, duration);
         }
+
+        // ============ USER PROFILE FUNCTIONS ============
+
+// Get user data from Firebase
+async function getUserData(username) {
+    try {
+        const userRef = ref(database, 'credentials/' + username);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+            return snapshot.val();
+        } else {
+            console.error('User data not found in Firebase');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching user data:', error);
+        return null;
+    }
+}
+
+// Initialize user profile
+async function initializeUserProfile() {
+    const username = localStorage.getItem('emprobUsername');
+    if (!username) return;
+    
+    try {
+        const userData = await getUserData(username);
+        if (userData) {
+            // Update UI with user data
+            document.getElementById('usernameDisplay').textContent = userData.username;
+            document.getElementById('emailDisplay').textContent = userData.email;
+            
+            // Update user avatar with profile picture from Firebase
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (userData.profilePicture && userData.profilePicture.trim() !== '') {
+                // Create an img element for the base64 profile picture
+                const profileImg = document.createElement('img');
+                profileImg.src = userData.profilePicture;
+                profileImg.alt = userData.username + "'s profile picture";
+                profileImg.style.width = '100%';
+                profileImg.style.height = '100%';
+                profileImg.style.objectFit = 'cover';
+                
+                // Clear any existing content and add the image
+                userAvatar.innerHTML = '';
+                userAvatar.appendChild(profileImg);
+            } else {
+                // If no profile picture, show initials as fallback
+                userAvatar.textContent = userData.username.charAt(0).toUpperCase();
+                userAvatar.style.display = 'flex';
+                userAvatar.style.alignItems = 'center';
+                userAvatar.style.justifyContent = 'center';
+                userAvatar.style.fontWeight = 'bold';
+                userAvatar.style.fontSize = '18px';
+                userAvatar.style.background = 'linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%)';
+            }
+        }
+    } catch (error) {
+        console.error('Error initializing user profile:', error);
+    }
+}
+
+// Setup profile dropdown event listeners
+function setupProfileDropdownListeners() {
+    // Profile dropdown functionality
+    const userProfile = document.getElementById('userProfile');
+    const profileDropdown = document.getElementById('profileDropdown');
+    
+    if (userProfile && profileDropdown) {
+        userProfile.addEventListener('click', function(e) {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+            profileDropdown.classList.remove('active');
+        });
+        
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('emprobUsername');
+                window.location.href = 'index.html';
+            }
+        });
+    }
+}
 
         // Format date for display
         function formatDate(dateString) {
@@ -2392,33 +2599,41 @@
             deleteBtn.textContent = 'Delete';
         }
 
-        // Initialize the application
-        async function initApplication() {
-            const username = checkAuth();
-            
-            if (!username) {
-                return;
-            }
+// Initialize the application
+async function initApplication() {
+    const username = checkAuth();
+    
+    if (!username) {
+        return;
+    }
 
-            try {
-                // Authenticate anonymously with Firebase
-                await signInAnonymously(auth);
-                console.log("Anonymous authentication successful");
+    try {
+        // Authenticate anonymously with Firebase
+        await signInAnonymously(auth);
+        console.log("Anonymous authentication successful");
 
-                // Load probationers from /probationers path
-                await loadProbationers();
-                
-            } catch (error) {
-                console.error("Initialization error:", error);
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('errorMessage').innerHTML = `
-                    <h3>Error Loading Probationers</h3>
-                    <p>Please try again later.</p>
-                    <button class="error-btn" onclick="window.location.href='index.html'">Go to Login</button>
-                `;
-            }
-        }
+        // Initialize user profile
+        await initializeUserProfile();
+        
+        // Load probationers from /probationers path
+        await loadProbationers();
+        
+        // Show the main interface
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('mainHeader').style.display = 'flex';
+        document.getElementById('mainContent').style.display = 'block';
+        
+    } catch (error) {
+        console.error("Initialization error:", error);
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('errorMessage').innerHTML = `
+            <h3>Error Loading Probationers</h3>
+            <p>Please try again later.</p>
+            <button class="error-btn" onclick="window.location.href='index.html'">Go to Login</button>
+        `;
+    }
+}
 
         // Setup event listeners
         function setupEventListeners() {
@@ -2556,6 +2771,9 @@
             }
         });
             });
+
+
+          setupProfileDropdownListeners();
         }
 
         // ============ NEW FUNCTIONS FOR FEATURES ============
