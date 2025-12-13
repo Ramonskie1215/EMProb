@@ -4,28 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMProb - Email Verification</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
+            background: linear-gradient(135deg, #F5F7FA 0%, #E4E9F2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #FFFFFF;
+            color: #2C3E50;
             padding: 20px;
         }
+        
         .container {
-            background: #1C1C1C;
+            background: white;
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 15px 35px rgba(37, 159, 222, 0.15);
             padding: 40px;
             width: 100%;
             max-width: 450px;
-            border: 1px solid #259FDE;
+            border: 2px solid rgba(37, 159, 222, 0.2);
             text-align: center;
+            position: relative;
         }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            border-radius: 20px 20px 0 0;
+        }
+        
         .logo-container {
             display: flex;
             flex-direction: column;
@@ -33,45 +52,86 @@
             gap: 15px;
             margin-bottom: 20px;
         }
+        
         .logo {
             width: 100px;
             height: 100px;
             object-fit: contain;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(37, 159, 222, 0.1) 0%, rgba(14, 60, 189, 0.1) 100%);
             padding: 10px;
-            border: 2px solid #259FDE;
+            border: 3px solid white;
+            outline: 2px solid rgba(37, 159, 222, 0.3);
+            box-shadow: 0 8px 25px rgba(37, 159, 222, 0.2);
         }
+        
         .site-name {
             font-size: 32px;
-            font-weight: 700;
-            color: #FFFFFF;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-weight: 800;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-bottom: 5px;
         }
-        h1 { color: #FFFFFF; margin-bottom: 20px; font-size: 24px; }
+        
+        h1 { 
+            color: #2C3E50; 
+            margin-bottom: 20px; 
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
         .message {
             padding: 20px;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 20px;
             display: none;
+            font-weight: 500;
         }
-        .success { background: rgba(37, 159, 222, 0.2); border: 1px solid #259FDE; }
-        .error { background: rgba(222, 37, 37, 0.2); border: 1px solid #DE2525; }
-        .loading { background: rgba(37, 159, 222, 0.2); border: 1px solid #259FDE; }
+        
+        .success { 
+            background: rgba(46, 204, 113, 0.1); 
+            border: 2px solid #2ECC71; 
+            color: #2ECC71;
+        }
+        
+        .error { 
+            background: rgba(231, 76, 60, 0.1); 
+            border: 2px solid #E74C3C; 
+            color: #E74C3C;
+        }
+        
+        .loading { 
+            background: rgba(37, 159, 222, 0.1); 
+            border: 2px solid #259FDE; 
+            color: #259FDE;
+        }
+        
         .user-info {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 10px;
+            background: rgba(37, 159, 222, 0.05);
+            padding: 20px;
+            border-radius: 12px;
             margin: 20px 0;
             text-align: left;
+            border: 2px solid rgba(37, 159, 222, 0.2);
         }
-        .user-info p { margin: 5px 0; color: #848484; }
-        .user-info strong { color: #FFFFFF; }
+        
+        .user-info p { 
+            margin: 8px 0; 
+            color: #7F8C8D; 
+        }
+        
+        .user-info strong { 
+            color: #2C3E50; 
+            font-weight: 600;
+        }
+        
         button {
             padding: 16px 32px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -80,16 +140,84 @@
             color: white;
             width: 100%;
             margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(37, 159, 222, 0.2);
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37, 159, 222, 0.4); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        button:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 25px rgba(37, 159, 222, 0.3); 
+        }
+        
+        button:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            transform: none !important;
+            box-shadow: 0 4px 15px rgba(37, 159, 222, 0.2) !important;
+        }
+        
         .redirect-btn {
-            background: transparent;
+            background: white;
             color: #259FDE;
             border: 2px solid #259FDE;
             margin-top: 10px;
         }
-        .redirect-btn:hover { background: #259FDE; color: white; }
+        
+        .redirect-btn:hover { 
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            color: white;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+                border-radius: 15px;
+            }
+            
+            .logo {
+                width: 90px;
+                height: 90px;
+            }
+            
+            .site-name {
+                font-size: 28px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .message {
+                padding: 15px;
+            }
+            
+            .user-info {
+                padding: 15px;
+            }
+            
+            button {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .container {
+                padding: 25px 15px;
+            }
+            
+            .logo {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .site-name {
+                font-size: 24px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+        }
     </style>
 </head>
 <body>
