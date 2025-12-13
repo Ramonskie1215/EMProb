@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EMProb Map Portal</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
+            min-height: 100vh;
+            color: #FFFFFF;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 30px;
+            background: rgba(28, 28, 28, 0.9);
+            border-bottom: 1px solid #259FDE;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            height: 70px;
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo {
+            height: 90%;
+            width: auto;
+            max-height: 50px;
+        }
+
+        .site-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #259FDE;
+        }
+
+        .user-profile {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(37, 159, 222, 0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 1px solid #259FDE;
+            transition: all 0.3s ease;
+        }
+
+        .user-info:hover {
+            background: rgba(37, 159, 222, 0.3);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .email {
+            font-size: 12px;
+            color: #848484;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(28, 28, 28, 0.95);
+            border: 1px solid #259FDE;
+            border-radius: 10px;
+            padding: 10px 0;
+            margin-top: 10px;
+            min-width: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .profile-dropdown.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(37, 159, 222, 0.2);
+        }
+
+        .dropdown-item.active {
+            background: rgba(37, 159, 222, 0.3);
+            color: #259FDE;
+        }
+
+        .dropdown-item.logout {
+            color: #ff6b6b;
+            border-top: 1px solid #5E5E5E;
+        }
+
+        .dropdown-item.logout:hover {
+            background: rgba(222, 37, 37, 0.2);
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #259FDE;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Dashboard Card Styles */
+        .dashboard-card {
+            background: rgba(28, 28, 28, 0.9);
+            border-radius: 15px;
+            padding: 40px 30px;
+            border: 1px solid #259FDE;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            height: 200px;
+            cursor: pointer;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(37, 159, 222, 0.3);
+            background: rgba(28, 28, 28, 0.95);
+            border-color: #0E3CBD;
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            border-radius: 50%;
+            padding: 15px;
+        }
+
+        .card-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: white;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #FFFFFF;
+            margin-bottom: 10px;
+        }
+
+        .card-description {
+            font-size: 14px;
+            color: #B0B0B0;
+            line-height: 1.5;
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            background: rgba(28, 28, 28, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #259FDE;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            color: #259FDE;
+            margin-bottom: 10px;
+        }
+
+        .welcome-subtitle {
+            font-size: 18px;
+            color: #B0B0B0;
+            margin-bottom: 20px;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1C1C1C 0%, #0E3CBD 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #5E5E5E;
+            border-top: 4px solid #259FDE;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #FFFFFF;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header {
+                padding: 8px 15px;
+                height: 60px;
+            }
+            
+            .left-section {
+                gap: 15px;
+            }
+            
+            .site-name {
+                font-size: 22px;
+            }
+            
+            .user-info {
+                padding: 8px 12px;
+            }
+            
+            .user-details {
+                display: none;
+            }
+            
+            .page-title {
+                font-size: 28px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .dashboard-card {
+                padding: 30px 20px;
+                height: 180px;
+            }
+            
+            .welcome-section {
+                padding: 20px;
+            }
+            
+            .welcome-title {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .site-name {
+                font-size: 18px;
+            }
+            
+            .left-section {
+                gap: 10px;
+            }
+            
+            .page-title {
+                font-size: 24px;
+            }
+            
+            .dashboard-card {
+                height: 160px;
+                padding: 25px 15px;
+            }
+            
+            .card-icon {
+                width: 50px;
+                height: 50px;
+                margin-bottom: 15px;
+            }
+            
+            .card-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Dashboard...</div>
+    </div>
+
+    <div class="header" style="display: none;" id="mainHeader">
+        <!-- Left Section: Logo + EMProb -->
+        <div class="left-section">
+            <div class="logo-container">
+                <img src="https://iili.io/fnM2iqx.png" alt="EMProb Logo" class="logo">
+            </div>
+            <div class="site-name">EMProb</div>
+        </div>
+
+        <!-- Right Section: User Profile -->
+        <div class="user-profile" id="userProfile">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">
+                    <!-- Profile picture will be inserted here by JavaScript -->
+                </div>
+                <div class="user-details">
+                    <div class="username" id="usernameDisplay">John Doe</div>
+                    <div class="email" id="emailDisplay">john.doe@example.com</div>
+                </div>
+            </div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="dropdown-item" onclick="location.href='profile.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
+                    </svg>
+                    My Profile
+                </div>
+                <div class="dropdown-item" onclick="location.href='interface.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M15 2H1c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h14c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zM8 13L2 7h3V4h6v3h3l-6 6z"/>
+                    </svg>
+                    Map
+                </div>
+                <div class="dropdown-item" onclick="location.href='probationers.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM6 2h4v2H6V2zm0 4h4v2H6V6zm0 4h4v2H6v-2zm6 4H6v-2h6v2zm0-4H10V8h2v2zm0-4H10V4h2v2z"/>
+                    </svg>
+                    Probationers
+                </div>
+                <div class="dropdown-item active" onclick="location.href='settings.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
+                    </svg>
+                    Settings
+                </div>
+                <div class="dropdown-item logout" id="logoutBtn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    </svg>
+                    Logout
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content" style="display: none;" id="mainContent">
+        <h1 class="page-title">Dashboard</h1>
+        
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h2 class="welcome-title">Welcome back, <span id="welcomeUsername">User</span>!</h2>
+            <p class="welcome-subtitle">Manage your probation tracking system from one central location</p>
+        </div>
+        
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- My Profile Card -->
+            <a href="profile.html" class="dashboard-card">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title">My Profile</h3>
+                <p class="card-description">View and edit your personal information and account settings</p>
+            </a>
+            
+            <!-- Map Card -->
+            <a href="interface.html" class="dashboard-card">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title">Map</h3>
+                <p class="card-description">Access the interactive map to track probationers in real-time</p>
+            </a>
+            
+            <!-- Probationers Card -->
+            <a href="probationers.html" class="dashboard-card">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title">Probationers</h3>
+                <p class="card-description">Manage probationer profiles, locations, and case information</p>
+            </a>
+            
+            <!-- Settings Card -->
+            <a href="settings.html" class="dashboard-card">
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+                    </svg>
+                </div>
+                <h3 class="card-title">Settings</h3>
+                <p class="card-description">Configure application preferences and default map settings</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
+            authDomain: "probationlocator.firebaseapp.com",
+            databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
+            projectId: "probationlocator",
+            storageBucket: "probationlocator.firebasestorage.app",
+            messagingSenderId: "323066331183",
+            appId: "1:323066331183:web:61f35b70cb07c0618106da"
+        };
+
+        // Initialize Firebase
+        const app = initializeFirebase(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+
+        // Authentication check function
+        function checkAuth() {
+            const username = localStorage.getItem('emprobUsername');
+            if (!username) {
+                window.location.href = 'index.html';
+            }
+            return username;
+        }
+
+        // Get user data from Firebase
+        async function getUserData(username) {
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    return snapshot.val();
+                } else {
+                    console.error('User data not found in Firebase');
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                return null;
+            }
+        }
+
+        // Initialize the application
+        async function initApplication() {
+            const username = checkAuth();
+            
+            if (!username) {
+                return;
+            }
+
+            try {
+                // Authenticate anonymously with Firebase
+                await signInAnonymously(auth);
+                console.log("Anonymous authentication successful");
+
+                // Get user data from Firebase
+                const userData = await getUserData(username);
+                
+                if (userData) {
+                    // Update UI with user data
+                    document.getElementById('usernameDisplay').textContent = userData.username;
+                    document.getElementById('emailDisplay').textContent = userData.email;
+                    document.getElementById('welcomeUsername').textContent = userData.username;
+                    
+                    // Update user avatar with profile picture from Firebase
+                    const userAvatar = document.getElementById('userAvatar');
+                    
+                    if (userData.profilePicture && userData.profilePicture.trim() !== '') {
+                        // Create an img element for the base64 profile picture
+                        const profileImg = document.createElement('img');
+                        profileImg.src = userData.profilePicture;
+                        profileImg.alt = userData.username + "'s profile picture";
+                        profileImg.style.width = '100%';
+                        profileImg.style.height = '100%';
+                        profileImg.style.objectFit = 'cover';
+                        
+                        // Clear any existing content and add the image
+                        userAvatar.innerHTML = '';
+                        userAvatar.appendChild(profileImg);
+                    } else {
+                        // If no profile picture, show initials as fallback
+                        userAvatar.textContent = userData.username.charAt(0).toUpperCase();
+                        userAvatar.style.display = 'flex';
+                        userAvatar.style.alignItems = 'center';
+                        userAvatar.style.justifyContent = 'center';
+                        userAvatar.style.fontWeight = 'bold';
+                        userAvatar.style.fontSize = '18px';
+                        userAvatar.style.background = 'linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%)';
+                    }
+                    
+                    // Show the main interface
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainHeader').style.display = 'flex';
+                    document.getElementById('mainContent').style.display = 'block';
+                    
+                    // Initialize event listeners
+                    initializeEventListeners();
+                } else {
+                    // If user data not found, redirect to login
+                    localStorage.removeItem('emprobUsername');
+                    window.location.href = 'index.html';
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                document.getElementById('loadingScreen').innerHTML = `
+                    <div style="text-align: center; color: #ff6b6b;">
+                        <h3>Error Loading Application</h3>
+                        <p>Please refresh the page or try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Profile dropdown functionality
+            const userProfile = document.getElementById('userProfile');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            userProfile.addEventListener('click', function(e) {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('active');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                profileDropdown.classList.remove('active');
+            });
+            
+            // Logout functionality
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to logout?')) {
+                    localStorage.removeItem('emprobUsername');
+                    window.location.href = 'index.html';
+                }
+            });
+        }
+
+        // Call initialization when page loads
+        document.addEventListener('DOMContentLoaded', initApplication);
+    </script>
+</body>
+</html>
