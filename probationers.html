@@ -1284,6 +1284,25 @@
                 font-size: 32px;
             }
         }
+
+    .main-container {
+    max-width: 1400px;      /* Adjust this value if you want it narrower/wider */
+    margin: 0 auto;         /* Centers the container horizontally */
+    padding: 0 30px;        /* Optional: adds side padding for very wide screens */
+}
+
+/* Ensure the page-header and grid respect the container width */
+.page-header {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.probationers-grid {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
     </style>
 </head>
 <body>
@@ -1556,11 +1575,13 @@
     </div>
 
     <div class="main-container" style="display: none;" id="mainContent">
+        <div class="main-container">
         <div class="page-header">
             <div>
                 <h1 class="page-title">Probationers Management</h1>
                 <p class="page-subtitle">Monitor and manage all probationers under your supervision</p>
             </div>
+             </div>
             <button class="add-btn" id="addProbationerBtn">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
