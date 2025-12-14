@@ -826,7 +826,6 @@
             // Add a marker for your current location
             let marker = L.marker([currentLat, currentLng], {icon: createCircleIcon()}).addTo(map)
                 .bindPopup('<b>Your Current Location</b><br>Latitude: 14.7596° N<br>Longitude: 120.9633° E')
-                .openPopup();
             
             // Get address for current location
             async function getAddress(lat, lng) {
