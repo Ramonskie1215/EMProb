@@ -207,6 +207,7 @@
     max-height: 80vh; /* Limits height to 80% of viewport */
     overflow-y: auto; /* Enables vertical scrolling */
     scrollbar-width: thin; /* For Firefox - makes scrollbar thinner */
+    margin-bottom: 20px;
         }
 
         .map-controls::-webkit-scrollbar {
@@ -486,6 +487,16 @@
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
+
+                .map-controls {
+        max-width: 280px;
+        left: 10px;
+        top: 10px;
+        padding: 15px;
+        max-height: 75vh; /* Slightly smaller on mobile */
+        margin-bottom: 15px;
+    }
+            
             .header {
                 padding: 12px 20px;
                 height: 70px;
@@ -523,6 +534,13 @@
         }
 
         @media (max-width: 480px) {
+
+                .map-controls {
+        max-width: 250px;
+        max-height: 70vh; /* Even smaller on very small screens */
+        margin-bottom: 10px;
+    }
+            
             .site-name {
                 font-size: 20px;
             }
