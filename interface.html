@@ -775,7 +775,10 @@
         // Map initialization function
         function initializeMap() {
             // Initialize the map with your current location
-            const map = L.map('map').setView([currentLat, currentLng], 13);
+            const map = L.map('map', {
+    zoomControl: false,  // This disables the default zoom control
+    attributionControl: false  // Optional: also hides the attribution text
+}).setView([currentLat, currentLng], 13);
             
             // Add tile layers
             const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
