@@ -949,6 +949,30 @@
             });
             // Map Controls hide/show functionality
 const mapControls = document.getElementById('mapControls');
+            // === ADD THIS ENTIRE BLOCK ===
+// Function to automatically adjust map view when panels open/close
+function updateMapPadding() {
+    let leftPadding = 100;   // Small space when controls hidden
+    let bottomPadding = 100; // Small space when location info hidden
+
+    // If left controls are visible, need more space
+    if (!mapControls.classList.contains('hidden')) {
+        leftPadding = 340;
+    }
+
+    // If location info is visible, need more space at bottom
+    if (locationInfo.style.display !== 'none') {
+        bottomPadding = 220;
+    }
+
+    // Tell Leaflet to adjust the view with padding (this auto-zooms out a bit)
+    map.setView(map.getCenter(), map.getZoom(), {
+        paddingTopLeft: [leftPadding, 90],     // 90px for header
+        paddingBottomRight: [20, bottomPadding],
+        animate: true
+    });
+}
+// === END OF NEW BLOCK ===
 const hideControlsBtn = document.getElementById('hideControlsBtn');
 const showControlsBtn = document.getElementById('showControlsBtn');
 
@@ -961,25 +985,29 @@ const showLocationBtn = document.getElementById('showLocationBtn');
   locationInfo.style.display = 'none';
   showLocationBtn.style.display = 'block';
 
-hideLocationBtn.addEventListener('click', function() {
-    locationInfo.style.display = 'none';
-    showLocationBtn.style.display = 'block';
+hideControlsBtn.addEventListener('click', () => {
+    mapControls.classList.add('hidden');
+    showControlsBtn.style.display = 'block';
+    updateMapPadding();
 });
 
-showLocationBtn.addEventListener('click', function() {
+showControlsBtn.addEventListener('click', () => {
+    mapControls.classList.remove('hidden');
+    showControlsBtn.style.display = 'none';
+    updateMapPadding();
+});
+
+hideLocationBtn.addEventListener('click', () => {
+    locationInfo.style.display = 'none';
+    showLocationBtn.style.display = 'block';
+    updateMapPadding();
+});
+
+showLocationBtn.addEventListener('click', () => {
     locationInfo.style.display = 'block';
     showLocationBtn.style.display = 'none';
+    updateMapPadding();
 });
-            
-            hideControlsBtn.addEventListener('click', function() {
-                mapControls.classList.add('hidden');
-                showControlsBtn.style.display = 'block';
-            });
-            
-            showControlsBtn.addEventListener('click', function() {
-                mapControls.classList.remove('hidden');
-                showControlsBtn.style.display = 'none';
-            });
             
             // Profile dropdown functionality
             const userProfile = document.getElementById('userProfile');
@@ -1165,6 +1193,7 @@ document.getElementById('zoomOutBtn').addEventListener('click', function() {
                     searchResults.style.display = 'none';
                 }
             });
+            updateMapPadding();
         }
     </script>
 </body>
