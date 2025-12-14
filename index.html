@@ -627,7 +627,7 @@
         function checkLoginStatus() {
             const username = localStorage.getItem('emprobUsername');
             if (username) {
-                window.location.href = '/interface.html';
+                window.location.href = '/dashboard.html';
             }
         }
         checkLoginStatus();
@@ -772,7 +772,7 @@
                 await set(ref(database, 'credentials/' + username + '/lastLogin'), new Date().toISOString());
                 localStorage.setItem('emprobUsername', username);
                 showMessage('loginMessage', 'Login successful! Redirecting...', 'success');
-                setTimeout(() => window.location.href = '/interface.html', 1500);
+                setTimeout(() => window.location.href = '/dashboard.html', 1500);
             } catch (error) {
                 showMessage('loginMessage', 'Login failed.', 'error');
             } finally {
