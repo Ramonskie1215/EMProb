@@ -636,14 +636,19 @@
             <button class="control-btn secondary" id="currentLocationBtn">My Location</button>
         </div>
         
-        <div class="location-info">
-            <div class="location-title">Current Location</div>
-            <div class="location-details" id="locationDetails">
-                Latitude: 14.7596° N<br>
-                Longitude: 120.9633° E<br>
-                <span id="locationAddress">Loading address...</span>
-            </div>
-        </div>
+<div class="location-info">
+    <div class="controls-header" style="margin-bottom: 15px;">
+        <div class="control-title">Current Location</div>
+        <button class="hide-controls-btn" id="hideLocationBtn">Hide</button>
+    </div>
+    <div class="location-details" id="locationDetails">
+        Latitude: 14.7596° N<br>
+        Longitude: 120.9633° E<br>
+        <span id="locationAddress">Loading address...</span>
+    </div>
+</div>
+
+<button class="show-controls-btn" id="showLocationBtn" style="right: 20px; left: auto; bottom: 20px; top: auto;">Show Location</button>
     </div>
 
     <!-- Firebase SDK - FIXED VERSION -->
@@ -846,11 +851,28 @@
             getAddress(currentLat, currentLng).then(address => {
                 document.getElementById('locationAddress').textContent = address;
             });
-            
             // Map Controls hide/show functionality
-            const mapControls = document.getElementById('mapControls');
-            const hideControlsBtn = document.getElementById('hideControlsBtn');
-            const showControlsBtn = document.getElementById('showControlsBtn');
+const mapControls = document.getElementById('mapControls');
+const hideControlsBtn = document.getElementById('hideControlsBtn');
+const showControlsBtn = document.getElementById('showControlsBtn');
+
+// Location info hide/show functionality - ADD THIS CODE RIGHT HERE
+const locationInfo = document.querySelector('.location-info');
+const hideLocationBtn = document.getElementById('hideLocationBtn');
+const showLocationBtn = document.getElementById('showLocationBtn');
+
+// Hide location info by default if you want, or keep it visible
+// locationInfo.style.display = 'none';
+
+hideLocationBtn.addEventListener('click', function() {
+    locationInfo.style.display = 'none';
+    showLocationBtn.style.display = 'block';
+});
+
+showLocationBtn.addEventListener('click', function() {
+    locationInfo.style.display = 'block';
+    showLocationBtn.style.display = 'none';
+});
             
             hideControlsBtn.addEventListener('click', function() {
                 mapControls.classList.add('hidden');
