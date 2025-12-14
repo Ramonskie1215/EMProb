@@ -549,32 +549,45 @@
                     <div class="email" id="emailDisplay">john.doe@example.com</div>
                 </div>
             </div>
-            <div class="profile-dropdown" id="profileDropdown">
-                <div class="dropdown-item" onclick="window.location.href='profile.html'">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
-                    </svg>
-                    My Profile
-                </div>
-                <div class="dropdown-item" onclick="window.location.href='settings.html'">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
-                    </svg>
-                    Settings
-                </div>
-                <div class="dropdown-item" onclick="window.location.href='probationers.html'">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M4 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H4zm0 1h8v12H4V2zm2 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 8a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-                    </svg>
-                    Probationers
-                </div>
-                <div class="dropdown-item logout" id="logoutBtn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
-                    </svg>
-                    Logout
-                </div>
-            </div>
+<div class="profile-dropdown" id="profileDropdown">
+    <!-- Add Dashboard item here -->
+    <div class="dropdown-item" onclick="location.href='dashboard.html'">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M0 0v8h8V0H0zm1 1h6v6H1V1zm8-1v4h8V0H9zm0 5v8h8V5H9zm-8 5v4h8v-4H1zm1 1h6v2H2v-2z"/>
+        </svg>
+        Dashboard
+    </div>
+    <div class="dropdown-item" onclick="location.href='profile.html'">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
+        </svg>
+        My Profile
+    </div>
+    <div class="dropdown-item" onclick="location.href='settings.html'">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
+        </svg>
+        Settings
+    </div>
+    <div class="dropdown-item" onclick="location.href='probationers.html'">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM6 2h4v2H6V2zm0 4h4v2H6V6zm0 4h4v2H6v-2zm6 4H6v-2h6v2zm0-4H10V8h2v2zm0-4H10V4h2v2z"/>
+        </svg>
+        Probationers
+    </div>
+    <div class="dropdown-item active" onclick="location.href='interface.html'">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M0 0v16h16V0H0zm15 15H1V1h14v14zM2 2h12v12H2V2zm4 2H4v8h2V4zm2 0h2v8H8V4zm4 0h2v8h-2V4z"/>
+        </svg>
+        Map View
+    </div>
+    <div class="dropdown-item logout" id="logoutBtn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+        </svg>
+        Logout
+    </div>
+</div>
         </div>
     </div>
     
