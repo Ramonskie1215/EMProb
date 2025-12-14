@@ -623,6 +623,14 @@
                     <option value="terrain">Terrain</option>
                 </select>
             </div>
+
+            <div class="control-group">
+    <label class="control-label">Zoom Controls</label>
+    <div style="display: flex; gap: 10px;">
+        <button class="control-btn" style="flex: 1; padding: 10px;" id="zoomInBtn">+</button>
+        <button class="control-btn secondary" style="flex: 1; padding: 10px;" id="zoomOutBtn">-</button>
+    </div>
+</div>
             
             <button class="control-btn" id="searchBtn">Search</button>
             <button class="control-btn secondary" id="currentLocationBtn">My Location</button>
@@ -1017,6 +1025,14 @@
                     terrainLayer.addTo(map);
                 }
             });
+
+            document.getElementById('zoomInBtn').addEventListener('click', function() {
+    map.zoomIn();
+});
+
+document.getElementById('zoomOutBtn').addEventListener('click', function() {
+    map.zoomOut();
+});
             
             // Logout functionality
             document.getElementById('logoutBtn').addEventListener('click', function() {
