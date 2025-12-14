@@ -199,15 +199,51 @@
     z-index: 1000;
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: 15px;
     border: 2px solid rgba(37, 159, 222, 0.2);
     box-shadow: 0 8px 25px rgba(37, 159, 222, 0.15);
     max-width: 300px;
     transition: all 0.3s ease;
-    max-height: calc(100vh - 100px); /* Dynamically calculates available space */
+    /* Dynamic height with fallback */
+    height: auto;
+    max-height: 90vh;
     overflow-y: auto;
     scrollbar-width: thin;
-    padding-bottom: 40px;
+    /* Ensure content adapts */
+    display: flex;
+    flex-direction: column;
+}
+
+.map-controls::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+.map-controls.hidden {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Make the content area flexible */
+.map-controls > *:not(:last-child) {
+    margin-bottom: 12px;
+}
+
+/* Allow the controls container to shrink */
+.control-group {
+    flex-shrink: 0;
+}
+
+/* Adjust spacing for better fit */
+.control-btn {
+    margin-top: 8px;
 }
 
  .map-controls::-webkit-scrollbar {
@@ -227,23 +263,6 @@
 .map-controls::-webkit-scrollbar-thumb:hover {
     background: rgba(37, 159, 222, 0.5);
 }
-
-        .map-controls::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
-            border-radius: 12px 12px 0 0;
-        }
-
-        .map-controls.hidden {
-            transform: translateX(-100%);
-            opacity: 0;
-            pointer-events: none;
-        }
 
         .controls-header {
             display: flex;
@@ -485,87 +504,72 @@
             font-weight: 600;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .header {
+        padding: 12px 20px;
+        height: 70px;
+    }
+    
+    .left-section {
+        gap: 15px;
+    }
+    
+    .site-name {
+        font-size: 24px;
+    }
+    
+    .user-info {
+        padding: 10px 15px;
+    }
+    
+    .user-details {
+        display: none;
+    }
+    
     .map-controls {
         max-width: 280px;
         left: 10px;
         top: 10px;
-        padding: 15px;
-        max-height: calc(100vh - 90px); /* Adjusted for mobile */
-        padding-bottom: 30px;
+        padding: 12px;
+        max-height: 85vh;
     }
-            
-            .header {
-                padding: 12px 20px;
-                height: 70px;
-            }
-            
-            .left-section {
-                gap: 15px;
-            }
-            
-            .site-name {
-                font-size: 24px;
-            }
-            
-            .user-info {
-                padding: 10px 15px;
-            }
-            
-            .user-details {
-                display: none;
-            }
-            
-            .map-controls {
-                max-width: 280px;
-                left: 10px;
-                top: 10px;
-                padding: 15px;
-            }
-            
-            .location-info {
-                max-width: 280px;
-                right: 10px;
-                bottom: 10px;
-                padding: 15px;
-            }
-        }
+    
+    .location-info {
+        max-width: 280px;
+        right: 10px;
+        bottom: 10px;
+        padding: 15px;
+    }
+}
 
-        @media (max-width: 480px) {
-            
+@media (max-width: 480px) {
+    .site-name {
+        font-size: 20px;
+    }
+    
+    .left-section {
+        gap: 10px;
+    }
+    
     .map-controls {
         max-width: 250px;
-        max-height: calc(100vh - 80px); /* Even tighter for very small screens */
-        padding-bottom: 25px;
+        max-height: 80vh;
+        padding: 10px;
     }
-            
-            .site-name {
-                font-size: 20px;
-            }
-            
-            .left-section {
-                gap: 10px;
-            }
-            
-            .map-controls {
-                max-width: 250px;
-            }
-            
-            .location-info {
-                max-width: 250px;
-            }
-            
-            .control-title {
-                font-size: 16px;
-            }
-            
-            .location-title {
-                font-size: 16px;
-            }
-        }
-
+    
+    .location-info {
+        max-width: 250px;
+    }
+    
+    .control-title {
+        font-size: 16px;
+    }
+    
+    .location-title {
+        font-size: 16px;
+    }
+}
     /* Special handling for landscape orientation */
 @media (max-height: 600px) and (orientation: landscape) {
     .map-controls {
@@ -573,6 +577,50 @@
         padding: 15px;
         padding-bottom: 30px;
         top: 10px;
+    }
+}
+
+    /* For extremely tight heights */
+@media (max-height: 500px) {
+    .map-controls {
+        padding: 10px;
+        max-height: 85vh;
+    }
+    
+    .control-group {
+        margin-bottom: 8px;
+    }
+    
+    .control-btn {
+        padding: 8px 15px;
+        font-size: 13px;
+    }
+    
+    .control-input {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}
+
+/* Specific landscape handling */
+@media (orientation: landscape) and (max-height: 400px) {
+    .map-controls {
+        max-height: 80vh;
+        padding: 8px;
+        top: 5px;
+        left: 5px;
+    }
+    
+    .controls-header {
+        margin-bottom: 8px;
+    }
+    
+    .control-title {
+        font-size: 14px;
+    }
+    
+    .hide-controls-btn {
+        font-size: 12px;
     }
 }
     </style>
