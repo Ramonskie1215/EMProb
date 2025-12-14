@@ -192,25 +192,25 @@
             width: 100%;
         }
 
-        .map-controls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            border: 2px solid rgba(37, 159, 222, 0.2);
-            box-shadow: 0 8px 25px rgba(37, 159, 222, 0.15);
-            max-width: 300px;
-            transition: all 0.3s ease;
-    max-height: 80vh; /* Limits height to 80% of viewport */
-    overflow-y: auto; /* Enables vertical scrolling */
-    scrollbar-width: thin; /* For Firefox - makes scrollbar thinner */
-    margin-bottom: 100px;
-        }
+.map-controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid rgba(37, 159, 222, 0.2);
+    box-shadow: 0 8px 25px rgba(37, 159, 222, 0.15);
+    max-width: 300px;
+    transition: all 0.3s ease;
+    max-height: calc(100vh - 100px); /* Dynamically calculates available space */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-bottom: 40px;
+}
 
-        .map-controls::-webkit-scrollbar {
+ .map-controls::-webkit-scrollbar {
     width: 6px;
 }
 
@@ -488,13 +488,13 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
 
-                .map-controls {
+    .map-controls {
         max-width: 280px;
         left: 10px;
         top: 10px;
         padding: 15px;
-        max-height: 75vh; /* Slightly smaller on mobile */
-        margin-bottom: 15px;
+        max-height: calc(100vh - 90px); /* Adjusted for mobile */
+        padding-bottom: 30px;
     }
             
             .header {
@@ -534,11 +534,11 @@
         }
 
         @media (max-width: 480px) {
-
-                .map-controls {
+            
+    .map-controls {
         max-width: 250px;
-        max-height: 70vh; /* Even smaller on very small screens */
-        margin-bottom: 10px;
+        max-height: calc(100vh - 80px); /* Even tighter for very small screens */
+        padding-bottom: 25px;
     }
             
             .site-name {
@@ -565,6 +565,16 @@
                 font-size: 16px;
             }
         }
+
+    /* Special handling for landscape orientation */
+@media (max-height: 600px) and (orientation: landscape) {
+    .map-controls {
+        max-height: calc(100vh - 70px); /* Even shorter for landscape */
+        padding: 15px;
+        padding-bottom: 30px;
+        top: 10px;
+    }
+}
     </style>
 </head>
 <body>
