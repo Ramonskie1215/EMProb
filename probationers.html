@@ -2574,54 +2574,61 @@ if (newWatchId !== 'none') {
 
                 loadWatches();
             
-            if (probationer) {
-                editingId = probationer.id;
-                document.getElementById('modalTitle').textContent = 'Edit Probationer';
-                document.getElementById('fullName').value = probationer.fullName || '';
-                document.getElementById('assignedId').value = probationer.assignedId || '';
-                document.getElementById('assignedId').disabled = true;
-                document.getElementById('assignedId').title = 'ID cannot be changed after creation';
-                document.getElementById('email').value = probationer.email || '';
-                document.getElementById('phone').value = probationer.phone || '';
-                document.getElementById('address').value = probationer.address || '';
-                document.getElementById('dob').value = probationer.dob || '';
-                document.getElementById('startDate').value = probationer.startDate || '';
-                document.getElementById('endDate').value = probationer.endDate || '';
-                document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
-                const currentWatch = probationer.watch || 'none';
-                document.getElementById('assignedWatch').value = currentWatch;
+if (probationer) {
+    editingId = probationer.id;
+    document.getElementById('modalTitle').textContent = 'Edit Probationer';
+    document.getElementById('fullName').value = probationer.fullName || '';
+    document.getElementById('assignedId').value = probationer.assignedId || '';
+    document.getElementById('assignedId').disabled = true;
+    document.getElementById('email').value = probationer.email || '';
+    document.getElementById('phone').value = probationer.phone || '';
+    document.getElementById('address').value = probationer.address || '';
+    document.getElementById('dob').value = probationer.dob || '';
+    document.getElementById('startDate').value = probationer.startDate || '';
+    document.getElementById('endDate').value = probationer.endDate || '';
+    document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
 
-    // NEW: Remember the old watch for later unassignment
-   // currentOldWatchId = currentWatch;
-                // Set avatar preview
-                const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
-                document.getElementById('avatarInitial').textContent = initial;
-                
-                if (probationer.profilePicture) {
-                    document.getElementById('avatarImagePreview').src = probationer.profilePicture;
-                    document.getElementById('avatarImagePreview').style.display = 'block';
-                    document.getElementById('avatarInitial').style.display = 'none';
-                }
+    // === FIX START: Clean ID and current watch ===
+    // Use let so we can reassign if needed (or just declare once)
+    let cleanCurrentId = (probationer.assignedId || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
 
-    const cleanCurrentId = (probationer.assignedId || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    let currentWatchId = probationer.watch || 'none';
 
-    // Reload watches, allowing the current one to be selectable
+    console.log(`Editing probationer ${probationer.assignedId} (clean: ${cleanCurrentId}), current watch: ${currentWatchId}`);
+
+    // === Load watches ONCE with correct ID ===
     loadWatches(cleanCurrentId);
 
-    // Then set the selected value
-    currentWatch = probationer.watch || 'none';
-    document.getElementById('assignedWatch').value = currentWatch;
+    // === Pre-select the current watch AFTER dropdown is populated ===
+    // Small delay to ensure options are added (since loadWatches uses .then())
+    setTimeout(() => {
+        const select = document.getElementById('assignedWatch');
+        select.value = currentWatchId;
+        console.log(`Dropdown set to: ${select.value}`);
+    }, 100);  // 100ms is plenty — safe and fast
 
-    console.log(`Editing probationer ${probationer.assignedId}, clean ID: ${cleanCurrentId}, current watch: ${currentWatch}`);
-                
-            } else {
-                
-                loadWatches(null);
-                document.getElementById('assignedId').disabled = false;
-                document.getElementById('assignedId').title = '';
-                currentOldWatchId = 'none';  // No previous watch
-                resetModalForm();
-            }
+    // Avatar preview code...
+    const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
+    document.getElementById('avatarInitial').textContent = initial;
+
+    if (probationer.profilePicture) {
+        document.getElementById('avatarImagePreview').src = probationer.profilePicture;
+        document.getElementById('avatarImagePreview').style.display = 'block';
+        document.getElementById('avatarInitial').style.display = 'none';
+    } else {
+        document.getElementById('avatarImagePreview').style.display = 'none';
+        document.getElementById('avatarInitial').style.display = 'block';
+    }
+} else {
+    // New probationer
+    document.getElementById('assignedId').disabled = false;
+    resetModalForm();
+    loadWatches(null);  // No one is editing → disable all assigned watches
+}
         }
 
         // Close modal
