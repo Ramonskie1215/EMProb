@@ -1802,41 +1802,33 @@ function setupProfileDropdownListeners() {
     }
 }
 
-async function loadWatches(currentProbationerCleanId = null) {
-    try {
-        const watchesRef = ref(database, 'watch');
-        const snapshot = await get(watchesRef);
-
+function loadWatches(currentProbationerCleanId = null) {
+    const watchesRef = ref(database, 'watch');
+    get(watchesRef).then(snapshot => {
         const select = document.getElementById('assignedWatch');
         select.innerHTML = '<option value="none">None (No Watch)</option>';
 
         if (snapshot.exists()) {
             const watches = snapshot.val();
-
             Object.keys(watches).forEach(watchId => {
                 const watch = watches[watchId];
                 const assignedTo = watch.probationer || "none";
 
                 const option = document.createElement('option');
                 option.value = watchId;
-                option.textContent = `${watchId} ${assignedTo !== "none" ? `(Assigned to: ${assignedTo})` : '(Available)'}`;
+                option.textContent = `${watchId} ${assignedTo !== "none" ? `(Assigned to: ${assignedTo})` : '(Free)'}`;
 
-                // ONLY disable if assigned to someone ELSE
                 if (assignedTo !== "none" && assignedTo !== currentProbationerCleanId) {
                     option.disabled = true;
-                    option.title = `Assigned to another probationer (${assignedTo})`;
-                    console.log(`🔒 Disabled watch ${watchId}: assigned to ${assignedTo} (current editing: ${currentProbationerCleanId})`);
+                    console.log(`🔒 Disabled ${watchId}: assigned to ${assignedTo}`);
                 } else {
-                    option.disabled = false;
-                    console.log(`✅ Enabled watch ${watchId}: free or belongs to current (${assignedTo})`);
+                    console.log(`✅ Enabled ${watchId}: free or owned`);
                 }
 
                 select.appendChild(option);
             });
         }
-    } catch (error) {
-        console.error('Error loading watches:', error);
-    }
+    }).catch(err => console.error('Load watches error:', err));
 }
 
 
