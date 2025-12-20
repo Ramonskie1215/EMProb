@@ -1876,9 +1876,9 @@ async function updateWatchAssignment(probationerId, watchId) {
             const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
             await set(oldWatchRef, "none");
         }
-        
-        // Assign to new watch
-        await set(ref(database, `watch/${watchId}/probationer`), probationerId);
+        // Assign to new watch - remove "probationer_" prefix
+const cleanProbationerId = probationerId.replace(/^probationer_/, '');
+await set(ref(database, `watch/${watchId}/probationer`), cleanProbationerId);
         
         return true;
     } catch (error) {
