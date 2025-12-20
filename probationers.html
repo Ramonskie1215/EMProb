@@ -2737,27 +2737,54 @@ const probationerData = {
                 }
             }
             
-const success = await saveProbationer(probationerData);
+            const success = await saveProbationer(probationerData);
 
-// START ADD: Update watch assignment
-if (success) {
-    const selectedWatchId = document.getElementById('assignedWatch').value;
-    const watchSuccess = await updateWatchAssignment(editingId || id, selectedWatchId);
-    
-    if (watchSuccess) {
-        showNotification(
-            editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
-            'success'
-        );
-        closeModal();
-    } else {
-        // Probationer was saved but watch assignment failed
-        showNotification('Probationer saved but watch assignment failed', 'warning');
-        closeModal();
-    }
-} else {
-    showNotification('Failed to save probationer. Please try again.', 'error');
-}
+            if (success) {
+                // === START: IMPROVED WATCH ASSIGNMENT WITH CLEANUP ===
+                let oldWatchId = "none";
+                let finalProbationerId;
+
+                if (editingId) {
+                    // We're editing an existing probationer
+                    finalProbationerId = editingId;
+                    const currentProbationer = probationers.find(p => p.id === editingId);
+                    oldWatchId = currentProbationer?.watch || "none";
+                } else {
+                    // New probationer - create the correct ID
+                    const cleanId = assignedId
+                        .trim()
+                        .toLowerCase()
+                        .replace(/\s+/g, '_')
+                        .replace(/[^a-z0-9_]/g, '');
+                    finalProbationerId = `probationer_${cleanId}`;
+                    oldWatchId = "none"; // New ones have no old watch
+                }
+
+                const newWatchId = document.getElementById('assignedWatch').value;
+
+                // Step 1: Remove from old watch (only if it changed and wasn't "none")
+                if (oldWatchId !== "none" && oldWatchId !== newWatchId) {
+                    await clearOldWatchAssignment(oldWatchId, finalProbationerId);
+                }
+
+                // Step 2: Assign to new watch (only if not "none")
+                if (newWatchId && newWatchId !== "none") {
+                    await updateWatchAssignment(finalProbationerId, newWatchId);
+                }
+                // === END: IMPROVED WATCH ASSIGNMENT WITH CLEANUP ===
+
+                showNotification(
+                    editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
+                    'success'
+                );
+                closeModal();
+            } else {
+                showNotification('Failed to save probationer. Please try again.', 'error');
+            }
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Probationer';
+        }
 // END ADD: Update watch assignment
             
             saveBtn.disabled = false;
@@ -3133,6 +3160,25 @@ async function initApplication() {
             }
         }
 
+            // === START: FIX FOR CLEANING UP OLD WATCH ASSIGNMENT ===
+        // This function removes the probationer from the OLD watch when you change it
+        async function clearOldWatchAssignment(oldWatchId, probationerId) {
+            if (!oldWatchId || oldWatchId === "none") {
+                return true; // Nothing to clean up
+            }
+
+            try {
+                const oldRef = ref(database, `watches/${oldWatchId}/${probationerId}`);
+                await remove(oldRef);
+                console.log(`Cleared old assignment: ${probationerId} from watch ${oldWatchId}`);
+                return true;
+            } catch (error) {
+                console.error("Failed to clear old watch assignment:", error);
+                return false;
+            }
+        }
+        // === END: FIX FOR CLEANING UP OLD WATCH ASSIGNMENT ===
+        
         // Confirm delete violation
         async function confirmDeleteViolation() {
             if (!deleteViolationData) return;
