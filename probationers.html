@@ -2091,8 +2091,9 @@ async function updateWatchAssignment(probationerId, newWatchId) {
                 return false;
             }
 
-            // ASSIGN THE FULL PROBATIONER ID (e.g., "probationer_john_doe")
-            await set(ref(database, `watch/${newWatchId}/probationer`), probationerId);
+            // ASSIGN THE FULL PROBATIONER ID (e.g., "probationer_john_doe")// Trim the "probationer_" prefix before saving
+const cleanProbationerId = probationerId.replace(/^probationer_/, '');
+await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
             console.log(`Assigned ${probationerId} to watch: ${newWatchId}`);
         }
 
