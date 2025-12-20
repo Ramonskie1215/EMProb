@@ -2567,69 +2567,70 @@ if (newWatchId !== 'none') {
             document.getElementById('modalTitle').textContent = 'Add New Probationer';
         }
 
-        // Open modal for adding/editing
-        function openModal(probationer = null) {
-            const modal = document.getElementById('probationerModal');
-            modal.style.display = 'flex';
+// Open modal for adding/editing
+function openModal(probationer = null) {
+    const modal = document.getElementById('probationerModal');
+    modal.style.display = 'flex';
 
-                loadWatches();
-            
-if (probationer) {
-    editingId = probationer.id;
-    document.getElementById('modalTitle').textContent = 'Edit Probationer';
-    document.getElementById('fullName').value = probationer.fullName || '';
-    document.getElementById('assignedId').value = probationer.assignedId || '';
-    document.getElementById('assignedId').disabled = true;
-    document.getElementById('email').value = probationer.email || '';
-    document.getElementById('phone').value = probationer.phone || '';
-    document.getElementById('address').value = probationer.address || '';
-    document.getElementById('dob').value = probationer.dob || '';
-    document.getElementById('startDate').value = probationer.startDate || '';
-    document.getElementById('endDate').value = probationer.endDate || '';
-    document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
+    if (probationer) {
+        editingId = probationer.id;
+        document.getElementById('modalTitle').textContent = 'Edit Probationer';
+        document.getElementById('fullName').value = probationer.fullName || '';
+        document.getElementById('assignedId').value = probationer.assignedId || '';
+        document.getElementById('assignedId').disabled = true;
+        document.getElementById('email').value = probationer.email || '';
+        document.getElementById('phone').value = probationer.phone || '';
+        document.getElementById('address').value = probationer.address || '';
+        document.getElementById('dob').value = probationer.dob || '';
+        document.getElementById('startDate').value = probationer.startDate || '';
+        document.getElementById('endDate').value = probationer.endDate || '';
+        document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
 
-    // === FIX START: Clean ID and current watch ===
-    // Use let so we can reassign if needed (or just declare once)
-    let cleanCurrentId = (probationer.assignedId || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_]/g, '');
+        // Calculate clean ID (without "probationer_" prefix, just the assignedId cleaned)
+        const cleanCurrentId = (probationer.assignedId || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '');
 
-    let currentWatchId = probationer.watch || 'none';
+        // Get current watch (or 'none' if not assigned)
+        const currentWatchId = probationer.watch || 'none';
 
-    console.log(`Editing probationer ${probationer.assignedId} (clean: ${cleanCurrentId}), current watch: ${currentWatchId}`);
+        console.log(`Editing probationer ${probationer.assignedId} (clean ID: ${cleanCurrentId}), current watch: ${currentWatchId}`);
 
-    // === Load watches ONCE with correct ID ===
-    loadWatches(cleanCurrentId);
+        // Load watches with proper disable logic — only disable if assigned to someone ELSE
+        loadWatches(cleanCurrentId);
 
-    // === Pre-select the current watch AFTER dropdown is populated ===
-    // Small delay to ensure options are added (since loadWatches uses .then())
-    setTimeout(() => {
-        const select = document.getElementById('assignedWatch');
-        select.value = currentWatchId;
-        console.log(`Dropdown set to: ${select.value}`);
-    }, 100);  // 100ms is plenty — safe and fast
+        // Pre-select the current watch after the dropdown is populated
+        setTimeout(() => {
+            const select = document.getElementById('assignedWatch');
+            select.value = currentWatchId;
+            console.log(`Dropdown pre-selected to: ${select.value}`);
+        }, 100); // Small delay ensures options exist
 
-    // Avatar preview code...
-    const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
-    document.getElementById('avatarInitial').textContent = initial;
+        // Avatar preview
+        const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
+        document.getElementById('avatarInitial').textContent = initial;
 
-    if (probationer.profilePicture) {
-        document.getElementById('avatarImagePreview').src = probationer.profilePicture;
-        document.getElementById('avatarImagePreview').style.display = 'block';
-        document.getElementById('avatarInitial').style.display = 'none';
-    } else {
-        document.getElementById('avatarImagePreview').style.display = 'none';
-        document.getElementById('avatarInitial').style.display = 'block';
-    }
-} else {
-    // New probationer
-    document.getElementById('assignedId').disabled = false;
-    resetModalForm();
-    loadWatches(null);  // No one is editing → disable all assigned watches
-}
+        if (probationer.profilePicture) {
+            document.getElementById('avatarImagePreview').src = probationer.profilePicture;
+            document.getElementById('avatarImagePreview').style.display = 'block';
+            document.getElementById('avatarInitial').style.display = 'none';
+        } else {
+            document.getElementById('avatarImagePreview').style.display = 'none';
+            document.getElementById('avatarInitial').style.display = 'block';
         }
+
+    } else {
+        // New probationer
+        document.getElementById('assignedId').disabled = false;
+        document.getElementById('assignedId').title = '';
+        resetModalForm();
+
+        // For new probationer: disable all watches that are already assigned
+        loadWatches(null);
+    }
+}
 
         // Close modal
         function closeModal() {
