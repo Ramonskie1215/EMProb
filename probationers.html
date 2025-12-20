@@ -1847,6 +1847,16 @@ async function updateWatchAssignment(probationerId, watchId) {
                 // Remove probationer from the watch
                 const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
                 await set(oldWatchRef, "none");
+                
+                // ⭐ UPDATE THE PROBATIONER'S WATCH FIELD TOO ⭐
+                const probationerRef = ref(database, `probationers/${probationerId}`);
+                const probationerSnapshot = await get(probationerRef);
+                if (probationerSnapshot.exists()) {
+                    const probationerData = probationerSnapshot.val();
+                    probationerData.watch = "none";
+                    probationerData.updatedAt = new Date().toISOString();
+                    await set(probationerRef, probationerData);
+                }
             }
             return true;
         }
@@ -1863,22 +1873,47 @@ async function updateWatchAssignment(probationerId, watchId) {
         // Get current watch data
         const watchData = snapshot.val();
         
-        // Check if watch is already assigned
+        // Check if watch is already assigned (handle both with and without prefix)
         if (watchData.probationer && watchData.probationer !== "none") {
-            showNotification('This watch is already assigned to another probationer', 'error');
+            // Remove prefix for comparison
+            const probationerIdWithoutPrefix = probationerId.replace(/^probationer_/, '');
+            
+            // Check if it's assigned to this same probationer (allow re-assignment)
+            if (watchData.probationer === probationerIdWithoutPrefix) {
+                return true; // Already assigned to this probationer, no change needed
+            } else {
+                showNotification('This watch is already assigned to another probationer', 'error');
+                return false;
+            }
+        }
+        
+        // ⭐⭐ CRITICAL: Find CURRENT probationer data from Firebase (not from local array) ⭐⭐
+        const probationerRef = ref(database, `probationers/${probationerId}`);
+        const probationerSnapshot = await get(probationerRef);
+        
+        if (!probationerSnapshot.exists()) {
+            showNotification('Probationer not found', 'error');
             return false;
         }
         
-        // Find if probationer already has a watch
-        const probationer = probationers.find(p => p.id === probationerId);
-        if (probationer && probationer.watch && probationer.watch !== "none") {
+        const probationerData = probationerSnapshot.val();
+        const currentWatch = probationerData.watch;
+        
+        // If probationer already has a watch, set it to "none" first
+        if (currentWatch && currentWatch !== "none") {
             // Remove from old watch
-            const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
+            const oldWatchRef = ref(database, `watch/${currentWatch}/probationer`);
             await set(oldWatchRef, "none");
         }
+        
         // Assign to new watch - remove "probationer_" prefix
-const cleanProbationerId = probationerId.replace(/^probationer_/, '');
-await set(ref(database, `watch/${watchId}/probationer`), cleanProbationerId);
+        const cleanProbationerId = probationerId.replace(/^probationer_/, '');
+        await set(ref(database, `watch/${watchId}/probationer`), cleanProbationerId);
+        
+        // ⭐ UPDATE PROBATIONER'S WATCH FIELD TO THE NEW WATCH ⭐
+        probationerData.watch = watchId;
+        probationerData.updatedAt = new Date().toISOString();
+        await set(probationerRef, probationerData);
         
         return true;
     } catch (error) {
