@@ -1334,21 +1334,17 @@ function startDrawingCircle() {
     clearCurrentShape();
     removeAllTempMarkers();
     
-    // Hide any existing instructions
-    if (drawingInstruction && map.hasLayer(drawingInstruction)) {
-        map.removeLayer(drawingInstruction);
-    }
-    
     isDrawingCircle = true;
     document.getElementById('drawCircleBtn').classList.add('drawing');
     document.getElementById('drawPolylineBtn').disabled = true;
     
     circlePoints = [];
     
+    // Show instruction immediately when button is clicked
+    showDrawingInstruction("Step 1: Click for circle center");
+    
     // Change cursor to crosshair
     map.getContainer().style.cursor = 'crosshair';
-    
-    // Don't show instruction immediately - only show after first click
 }
 
 function handleCircleClick(e) {
@@ -1358,7 +1354,10 @@ function handleCircleClick(e) {
     
     if (circlePoints.length === 1) {
         // First click - center point
-        showDrawingInstruction("Step 2: Click for radius distance");
+        // IMMEDIATELY REMOVE INSTRUCTION
+        if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+            map.removeLayer(drawingInstruction);
+        }
         
         // Create temporary marker for center
         addTempMarker(e.latlng, '#259FDE', "Center");
@@ -1437,21 +1436,17 @@ function startDrawingPolygon() {
     clearCurrentShape();
     removeAllTempMarkers();
     
-    // Hide any existing instructions
-    if (drawingInstruction && map.hasLayer(drawingInstruction)) {
-        map.removeLayer(drawingInstruction);
-    }
-    
     isDrawingPolygon = true;
     document.getElementById('drawPolylineBtn').classList.add('drawing');
     document.getElementById('drawCircleBtn').disabled = true;
     
     polygonPoints = [];
     
+    // Show instruction immediately when button is clicked
+    showDrawingInstruction("Click first point for polygon (minimum 3)<br>ESC to cancel | Double-click to finish");
+    
     // Change cursor to crosshair
     map.getContainer().style.cursor = 'crosshair';
-    
-    // Don't show instruction immediately
 }
 
 function handlePolygonClick(e) {
@@ -1462,14 +1457,11 @@ function handlePolygonClick(e) {
     // Add marker for the point
     addTempMarker(e.latlng, '#E74C3C', `Point ${polygonPoints.length}`);
     
-    // Show instruction only for first point
+    // IMMEDIATELY REMOVE INSTRUCTION AFTER FIRST CLICK
     if (polygonPoints.length === 1) {
-        showDrawingInstruction("Click more points (minimum 3 total)<br>Double-click to finish");
-        setTimeout(() => {
-            if (map.hasLayer(drawingInstruction)) {
-                map.removeLayer(drawingInstruction);
-            }
-        }, 3000); // Hide after 3 seconds
+        if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+            map.removeLayer(drawingInstruction);
+        }
     }
     
     // If we have at least 2 points, update the temp polyline
@@ -1497,13 +1489,8 @@ function handlePolygonDoubleClick() {
     if (polygonPoints.length < 3) {
         showDrawingInstruction(`Need at least 3 points!<br>Currently: ${polygonPoints.length} points`);
         setTimeout(() => {
-            if (polygonPoints.length < 3) {
-                showDrawingInstruction(`Click to add point ${polygonPoints.length + 1}/3`);
-                setTimeout(() => {
-                    if (map.hasLayer(drawingInstruction)) {
-                        map.removeLayer(drawingInstruction);
-                    }
-                }, 3000);
+            if (map.hasLayer(drawingInstruction)) {
+                map.removeLayer(drawingInstruction);
             }
         }, 2000);
         return; // Don't create shape
@@ -1585,6 +1572,11 @@ function stopDrawingPolygon() {
     // Remove all temporary markers
     removeAllTempMarkers();
     
+    // Remove instruction if exists
+    if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+        map.removeLayer(drawingInstruction);
+    }
+    
     // Reset cursor
     map.getContainer().style.cursor = '';
 }
@@ -1660,6 +1652,10 @@ document.addEventListener('keydown', function(e) {
         if (isDrawingCircle) {
             // Remove all temp markers
             removeAllTempMarkers();
+            // Remove instruction
+            if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+                map.removeLayer(drawingInstruction);
+            }
             stopDrawingCircle();
         } else if (isDrawingPolygon) {
             // Remove all temp markers
@@ -1669,12 +1665,11 @@ document.addEventListener('keydown', function(e) {
                 map.removeLayer(tempPolyline);
                 tempPolyline = null;
             }
+            // Remove instruction
+            if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+                map.removeLayer(drawingInstruction);
+            }
             stopDrawingPolygon();
-        }
-        
-        // Hide any instruction
-        if (drawingInstruction && map.hasLayer(drawingInstruction)) {
-            map.removeLayer(drawingInstruction);
         }
     }
 });
