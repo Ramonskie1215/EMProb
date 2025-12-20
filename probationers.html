@@ -1802,37 +1802,40 @@ function setupProfileDropdownListeners() {
     }
 }
 
-// Load available watches from Firebase
-async function loadWatches() {
+async function loadWatches(currentProbationerCleanId = null) {
     try {
         const watchesRef = ref(database, 'watch');
         const snapshot = await get(watchesRef);
-        
-        const watchSelect = document.getElementById('assignedWatch');
-        
+
+        const select = document.getElementById('assignedWatch');
+        select.innerHTML = '<option value="none">None (No Watch)</option>';
+
         if (snapshot.exists()) {
             const watches = snapshot.val();
-            let watchOptions = '<option value="none">None (No Watch)</option>';
-            
+
             Object.keys(watches).forEach(watchId => {
                 const watch = watches[watchId];
-                const isAssigned = watch.probationer && watch.probationer !== "none";
-                const status = isAssigned ? 'Assigned' : 'Available';
-                const battery = watch.battery ? `${watch.battery.p}%` : 'N/A';
-                const displayText = `${watchId} - ${status} (Battery: ${battery})`;
-                
-                watchOptions += `<option value="${watchId}" ${isAssigned ? 'disabled' : ''}>
-                    ${displayText}
-                </option>`;
+                const assignedTo = watch.probationer || "none";
+
+                const option = document.createElement('option');
+                option.value = watchId;
+                option.textContent = `${watchId} ${assignedTo !== "none" ? `(Assigned to: ${assignedTo})` : '(Available)'}`;
+
+                // ONLY disable if assigned to someone ELSE
+                if (assignedTo !== "none" && assignedTo !== currentProbationerCleanId) {
+                    option.disabled = true;
+                    option.title = `Assigned to another probationer (${assignedTo})`;
+                    console.log(`🔒 Disabled watch ${watchId}: assigned to ${assignedTo} (current editing: ${currentProbationerCleanId})`);
+                } else {
+                    option.disabled = false;
+                    console.log(`✅ Enabled watch ${watchId}: free or belongs to current (${assignedTo})`);
+                }
+
+                select.appendChild(option);
             });
-            
-            watchSelect.innerHTML = watchOptions;
-        } else {
-            watchSelect.innerHTML = '<option value="none">No watches available in system</option>';
         }
     } catch (error) {
         console.error('Error loading watches:', error);
-        showNotification('Error loading watch list', 'error');
     }
 }
 
@@ -2599,7 +2602,21 @@ if (newWatchId !== 'none') {
                     document.getElementById('avatarImagePreview').style.display = 'block';
                     document.getElementById('avatarInitial').style.display = 'none';
                 }
+
+    const cleanCurrentId = (probationer.assignedId || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
+    // Reload watches, allowing the current one to be selectable
+    await loadWatches(cleanCurrentId);
+
+    // Then set the selected value
+    const currentWatch = probationer.watch || 'none';
+    document.getElementById('assignedWatch').value = currentWatch;
+
+    console.log(`Editing probationer ${probationer.assignedId}, clean ID: ${cleanCurrentId}, current watch: ${currentWatch}`);
+                
             } else {
+                
+                await loadWatches(null);
                 document.getElementById('assignedId').disabled = false;
                 document.getElementById('assignedId').title = '';
                 currentOldWatchId = 'none';  // No previous watch
