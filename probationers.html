@@ -2064,20 +2064,20 @@ async function getWatchDetails(watchId) {
             }
         }
 
-// NEW & IMPROVED: Proper watch assignment handler (handles assign + unassign correctly)
+// CORRECTED: Matches your actual Firebase path "/watch/"
 async function updateWatchAssignment(probationerId, newWatchId) {
     try {
-        // Step 1: If there was a previous watch (tracked by currentOldWatchId), unassign it
+        // Step 1: Unassign the old watch if needed
         if (currentOldWatchId !== 'none' && currentOldWatchId !== newWatchId) {
-            const oldWatchRef = ref(database, `watches/${currentOldWatchId}/probationer`);
+            const oldWatchRef = ref(database, `watch/${currentOldWatchId}/probationer`);
             await set(oldWatchRef, "none");
             console.log(`Unassigned old watch: ${currentOldWatchId}`);
         }
 
-        // Step 2: If new watch is not "none", assign the probationer to it
+        // Step 2: If selecting a real watch (not "none"), assign the probationer
         if (newWatchId !== 'none') {
-            // Check if the watch exists
-            const watchSnapshot = await get(ref(database, `watches/${newWatchId}`));
+            // Check if the watch actually exists
+            const watchSnapshot = await get(ref(database, `watch/${newWatchId}`));
             if (!watchSnapshot.exists()) {
                 showNotification('Selected watch does not exist', 'error');
                 return false;
@@ -2085,18 +2085,18 @@ async function updateWatchAssignment(probationerId, newWatchId) {
 
             const watchData = watchSnapshot.val();
 
-            // Check if it's already assigned to someone else
+            // Prevent assigning if already taken by someone else
             if (watchData.probationer && watchData.probationer !== "none" && watchData.probationer !== probationerId) {
                 showNotification('This watch is already assigned to another probationer', 'error');
                 return false;
             }
 
-            // Assign the full probationer ID (e.g., "probationer_john_doe")
-            await set(ref(database, `watches/${newWatchId}/probationer`), probationerId);
+            // ASSIGN THE FULL PROBATIONER ID (e.g., "probationer_john_doe")
+            await set(ref(database, `watch/${newWatchId}/probationer`), probationerId);
             console.log(`Assigned ${probationerId} to watch: ${newWatchId}`);
         }
 
-        // Optional: Update the tracker for next edit
+        // Update tracker for next edit
         currentOldWatchId = newWatchId;
 
         return true;
