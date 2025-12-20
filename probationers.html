@@ -1837,57 +1837,7 @@ async function loadWatches() {
     }
 }
 
-// Update watch assignment in Firebase
-async function updateWatchAssignment(probationerId, watchId) {
-    try {
-        // If watchId is "none", remove assignment
-        if (watchId === "none") {
-            // Find if this probationer has a watch currently assigned
-            const probationer = probationers.find(p => p.id === probationerId);
-            if (probationer && probationer.watch && probationer.watch !== "none") {
-                // Remove probationer from the watch
-                const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
-                await set(oldWatchRef, "none");
-            }
-            return true;
-        }
-        
-        // Check if this watch exists
-        const watchRef = ref(database, `watch/${watchId}`);
-        const snapshot = await get(watchRef);
-        
-        if (!snapshot.exists()) {
-            showNotification('Selected watch does not exist', 'error');
-            return false;
-        }
-        
-        // Get current watch data
-        const watchData = snapshot.val();
-        
-        // Check if watch is already assigned
-        if (watchData.probationer && watchData.probationer !== "none") {
-            showNotification('This watch is already assigned to another probationer', 'error');
-            return false;
-        }
-        
-        // Find if probationer already has a watch
-        const probationer = probationers.find(p => p.id === probationerId);
-        if (probationer && probationer.watch && probationer.watch !== "none") {
-            // Remove from old watch
-            const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
-            await set(oldWatchRef, "none");
-        }
-        // Assign to new watch - remove "probationer_" prefix
-const cleanProbationerId = probationerId.replace(/^probationer_/, '');
-await set(ref(database, `watch/${watchId}/probationer`), cleanProbationerId);
-        
-        return true;
-    } catch (error) {
-        console.error('Error updating watch assignment:', error);
-        showNotification('Failed to update watch assignment', 'error');
-        return false;
-    }
-}
+
 
 // Get watch details for display
 async function getWatchDetails(watchId) {
@@ -2114,27 +2064,45 @@ async function getWatchDetails(watchId) {
             }
         }
 
-        // NEW FUNCTION: Properly assign/unassign watches in Firebase
+// NEW & IMPROVED: Proper watch assignment handler (handles assign + unassign correctly)
 async function updateWatchAssignment(probationerId, newWatchId) {
     try {
-        // If there was an old watch and it's different from new one, unassign it
+        // Step 1: If there was a previous watch (tracked by currentOldWatchId), unassign it
         if (currentOldWatchId !== 'none' && currentOldWatchId !== newWatchId) {
             const oldWatchRef = ref(database, `watches/${currentOldWatchId}/probationer`);
             await set(oldWatchRef, "none");
             console.log(`Unassigned old watch: ${currentOldWatchId}`);
         }
 
-        // If new watch is not "none", assign the probationer to it
+        // Step 2: If new watch is not "none", assign the probationer to it
         if (newWatchId !== 'none') {
-            const newWatchRef = ref(database, `watches/${newWatchId}/probationer`);
-            await set(newWatchRef, probationerId);  // e.g., "probationer_john_doe"
-            console.log(`Assigned to new watch: ${newWatchId}`);
+            // Check if the watch exists
+            const watchSnapshot = await get(ref(database, `watches/${newWatchId}`));
+            if (!watchSnapshot.exists()) {
+                showNotification('Selected watch does not exist', 'error');
+                return false;
+            }
+
+            const watchData = watchSnapshot.val();
+
+            // Check if it's already assigned to someone else
+            if (watchData.probationer && watchData.probationer !== "none" && watchData.probationer !== probationerId) {
+                showNotification('This watch is already assigned to another probationer', 'error');
+                return false;
+            }
+
+            // Assign the full probationer ID (e.g., "probationer_john_doe")
+            await set(ref(database, `watches/${newWatchId}/probationer`), probationerId);
+            console.log(`Assigned ${probationerId} to watch: ${newWatchId}`);
         }
 
-        // Success!
+        // Optional: Update the tracker for next edit
+        currentOldWatchId = newWatchId;
+
         return true;
     } catch (error) {
         console.error('Error updating watch assignment:', error);
+        showNotification('Failed to update watch assignment', 'error');
         return false;
     }
 }
