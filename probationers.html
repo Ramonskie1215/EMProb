@@ -2602,7 +2602,14 @@ function openModal(probationer = null) {
 
         // Load watches with proper disable logic — only disable if assigned to someone ELSE
         loadWatches(cleanCurrentId, currentWatchId);
-
+        // Extra insurance — force the value again after everything settles
+setTimeout(() => {
+    const select = document.getElementById('assignedWatch');
+    if (select.value !== currentWatchId) {
+        select.value = currentWatchId;
+        console.log(`Forced re-select to: ${currentWatchId}`);
+    }
+}, 200);
 
         // Avatar preview
         const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
