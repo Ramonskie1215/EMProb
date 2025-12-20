@@ -1802,7 +1802,7 @@ function setupProfileDropdownListeners() {
     }
 }
 
-function loadWatches(currentProbationerCleanId = null) {
+function loadWatches(currentProbationerCleanId = null, preselectValue = null) {
     const watchesRef = ref(database, 'watch');
     get(watchesRef).then(snapshot => {
         const select = document.getElementById('assignedWatch');
@@ -1828,7 +1828,17 @@ function loadWatches(currentProbationerCleanId = null) {
                 select.appendChild(option);
             });
         }
-    }).catch(err => console.error('Load watches error:', err));
+
+        // === NEW: Pre-select after options are fully added ===
+        if (preselectValue !== null) {
+            select.value = preselectValue;
+            console.log(`Dropdown successfully pre-selected to: ${select.value}`);
+        }
+
+    }).catch(err => {
+        console.error('Load watches error:', err);
+        showNotification('Failed to load watches', 'error');
+    });
 }
 
 
@@ -2591,14 +2601,8 @@ function openModal(probationer = null) {
         console.log(`Editing probationer ${probationer.assignedId} (clean ID: ${cleanCurrentId}), current watch: ${currentWatchId}`);
 
         // Load watches with proper disable logic — only disable if assigned to someone ELSE
-        loadWatches(cleanCurrentId);
+        loadWatches(cleanCurrentId, currentWatchId);
 
-        // Pre-select the current watch after the dropdown is populated
-        setTimeout(() => {
-            const select = document.getElementById('assignedWatch');
-            select.value = currentWatchId;
-            console.log(`Dropdown pre-selected to: ${select.value}`);
-        }, 100); // Small delay ensures options exist
 
         // Avatar preview
         const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
@@ -2614,10 +2618,9 @@ function openModal(probationer = null) {
         }
 
     } else {
-        // New probationer
-        document.getElementById('assignedId').disabled = false;
-        document.getElementById('assignedId').title = '';
-        resetModalForm();
+document.getElementById('assignedId').disabled = false;
+    resetModalForm();
+    loadWatches(null, 'none');  // Pre-select "None" for new
 
         // For new probationer: disable all watches that are already assigned
         loadWatches(null);
