@@ -1837,58 +1837,48 @@ async function loadWatches() {
 }
 
 // Update watch assignment in Firebase
-async function updateWatchAssignment(probationerId, newWatchId) {
+async function updateWatchAssignment(probationerId, watchId) {
     try {
-        console.log("Updating watch assignment:", { probationerId, newWatchId });
-        
-        // Get the probationer's current data
-        const probationer = probationers.find(p => p.id === probationerId);
-        const currentWatchId = probationer ? probationer.watch : null;
-        
-        // Clean the probationer ID for storage
-        const cleanProbationerId = probationerId.replace(/^probationer_/, '');
-        
-        // If new watch is "none", remove all assignments
-        if (newWatchId === "none") {
-            // Remove from current watch if exists
-            if (currentWatchId && currentWatchId !== "none") {
-                const currentWatchRef = ref(database, `watch/${currentWatchId}/probationer`);
-                await set(currentWatchRef, "none");
-                console.log("Removed probationer from watch:", currentWatchId);
+        // If watchId is "none", remove assignment
+        if (watchId === "none") {
+            // Find if this probationer has a watch currently assigned
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (probationer && probationer.watch && probationer.watch !== "none") {
+                // Remove probationer from the watch
+                const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
+                await set(oldWatchRef, "none");
             }
             return true;
         }
         
-        // Check if new watch exists
-        const newWatchRef = ref(database, `watch/${newWatchId}`);
-        const snapshot = await get(newWatchRef);
+        // Check if this watch exists
+        const watchRef = ref(database, `watch/${watchId}`);
+        const snapshot = await get(watchRef);
         
         if (!snapshot.exists()) {
             showNotification('Selected watch does not exist', 'error');
             return false;
         }
         
-        // Get new watch data
-        const newWatchData = snapshot.val();
+        // Get current watch data
+        const watchData = snapshot.val();
         
-        // Check if new watch is already assigned to someone else
-        if (newWatchData.probationer && newWatchData.probationer !== "none" && 
-            newWatchData.probationer !== cleanProbationerId) {
+        // Check if watch is already assigned
+        if (watchData.probationer && watchData.probationer !== "none") {
             showNotification('This watch is already assigned to another probationer', 'error');
             return false;
         }
         
-        // Handle switching from one watch to another
-        if (currentWatchId && currentWatchId !== "none" && currentWatchId !== newWatchId) {
+        // Find if probationer already has a watch
+        const probationer = probationers.find(p => p.id === probationerId);
+        if (probationer && probationer.watch && probationer.watch !== "none") {
             // Remove from old watch
-            const oldWatchRef = ref(database, `watch/${currentWatchId}/probationer`);
+            const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
             await set(oldWatchRef, "none");
-            console.log("Removed from old watch:", currentWatchId);
         }
-        
-        // Assign to new watch
-        await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
-        console.log("Assigned to new watch:", newWatchId);
+        // Assign to new watch - remove "probationer_" prefix
+const cleanProbationerId = probationerId.replace(/^probationer_/, '');
+await set(ref(database, `watch/${watchId}/probationer`), cleanProbationerId);
         
         return true;
     } catch (error) {
@@ -1915,24 +1905,6 @@ async function getWatchDetails(watchId) {
         return null;
     }
 }
-
- 
-// Monitor watch changes in real-time
-function monitorWatchChanges() {
-    const watchRef = ref(database, 'watch');
-    
-    onValue(watchRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const watches = snapshot.val();
-            console.log("Watches updated:", watches);
-            
-            // Refresh the watch dropdown if modal is open
-            if (document.getElementById('probationerModal').style.display === 'flex') {
-                loadWatches();
-            }
-        }
-    });
-}       
         // Format date for display
         function formatDate(dateString) {
             try {
@@ -2678,19 +2650,19 @@ function monitorWatchChanges() {
             saveBtn.disabled = true;
             saveBtn.textContent = 'Saving...';
             
-const probationerData = {
-    fullName,
-    assignedId,
-    email: document.getElementById('email').value.trim(),
-    phone: document.getElementById('phone').value.trim(),
-    address: document.getElementById('address').value.trim(),
-    dob: document.getElementById('dob').value,
-    startDate: document.getElementById('startDate').value,
-    endDate: document.getElementById('endDate').value,
-    officerInCharge: document.getElementById('officerInCharge').value.trim() || 'Not Assigned',
-    watch: selectedWatchId, // Make sure this is included!
-    updatedAt: new Date().toISOString()
-};
+            const probationerData = {
+                fullName,
+                assignedId,
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                dob: document.getElementById('dob').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value, 
+                officerInCharge: document.getElementById('officerInCharge').value.trim() || 'Not Assigned',
+                watch: document.getElementById('assignedWatch').value,
+                updatedAt: new Date().toISOString()
+            };
             
             // Add profile picture if available
             if (fileReader && fileReader.result) {
@@ -2716,28 +2688,28 @@ const probationerData = {
                 }
             }
             
-const selectedWatchId = document.getElementById('assignedWatch').value;
-
-// First update watch assignment
-const watchSuccess = await updateWatchAssignment(editingId || id, selectedWatchId);
-
-if (!watchSuccess && selectedWatchId !== "none") {
-    showNotification('Watch assignment failed. Probationer not saved.', 'error');
-    return;
-}
-
-// Then save probationer data
 const success = await saveProbationer(probationerData);
 
+// START ADD: Update watch assignment
 if (success) {
-    showNotification(
-        editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
-        'success'
-    );
-    closeModal();
+    const selectedWatchId = document.getElementById('assignedWatch').value;
+    const watchSuccess = await updateWatchAssignment(editingId || id, selectedWatchId);
+    
+    if (watchSuccess) {
+        showNotification(
+            editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
+            'success'
+        );
+        closeModal();
+    } else {
+        // Probationer was saved but watch assignment failed
+        showNotification('Probationer saved but watch assignment failed', 'warning');
+        closeModal();
+    }
 } else {
     showNotification('Failed to save probationer. Please try again.', 'error');
 }
+// END ADD: Update watch assignment
             
             saveBtn.disabled = false;
             saveBtn.textContent = 'Save Probationer';
