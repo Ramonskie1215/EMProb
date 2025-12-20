@@ -375,6 +375,48 @@
             background: rgba(37, 159, 222, 0.1);
         }
 
+        /* Drawing mode styles */
+.control-btn.drawing {
+    background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+    color: white;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 4px 15px rgba(37, 159, 222, 0.2); }
+    50% { box-shadow: 0 4px 20px rgba(37, 159, 222, 0.4); }
+    100% { box-shadow: 0 4px 15px rgba(37, 159, 222, 0.2); }
+}
+
+/* Circle and polyline styles */
+.circle-boundary {
+    stroke: #259FDE;
+    stroke-width: 3;
+    stroke-opacity: 1;
+    fill: #259FDE;
+    fill-opacity: 0.05; /* 95% transparency */
+}
+
+.polyline-boundary {
+    stroke: #E74C3C;
+    stroke-width: 3;
+    stroke-opacity: 0.8;
+    fill: none;
+}
+
+.drawing-instruction {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    z-index: 1001;
+    font-weight: bold;
+    pointer-events: none;
+}
         .search-results {
             position: absolute;
             top: 100%;
@@ -727,6 +769,21 @@
         <button class="control-btn secondary" style="flex: 1; padding: 10px;" id="zoomInBtn">+</button>
         <button class="control-btn secondary" style="flex: 1; padding: 10px;" id="zoomOutBtn">-</button>
     </div>
+</div>
+
+    <div class="control-group">
+    <label class="control-label">Draw Boundaries</label>
+    <div style="display: flex; gap: 10px;">
+        <button class="control-btn secondary" style="flex: 1; padding: 10px;" id="drawCircleBtn">
+            ○ Circle
+        </button>
+        <button class="control-btn secondary" style="flex: 1; padding: 10px;" id="drawPolylineBtn">
+            ┄ Polyline
+        </button>
+    </div>
+    <button class="control-btn secondary" id="clearBoundariesBtn" style="margin-top: 8px;">
+        Clear All Boundaries
+    </button>
 </div>
             
             <button class="control-btn" id="searchBtn">Search</button>
@@ -1178,6 +1235,301 @@ showLocationBtn.addEventListener('click', () => {
 document.getElementById('zoomOutBtn').addEventListener('click', function() {
     map.zoomOut();
 });
+
+            // =================== BOUNDARY DRAWING CODE START ===================
+// Variables for boundary drawing
+let isDrawingCircle = false;
+let isDrawingPolyline = false;
+let circlePoints = [];
+let polylinePoints = [];
+let tempCircle = null;
+let tempPolyline = null;
+let allBoundaries = []; // Store all drawn boundaries
+let drawingInstruction = null;
+
+// Function to create drawing instruction text
+function showDrawingInstruction(text) {
+    if (!drawingInstruction) {
+        drawingInstruction = L.divIcon({
+            html: `<div class="drawing-instruction">${text}</div>`,
+            iconSize: [1, 1], // Minimal size, content determines size
+            className: 'drawing-instruction-container'
+        });
+    }
+    
+    // Remove existing instruction
+    if (map.hasLayer(drawingInstruction)) {
+        map.removeLayer(drawingInstruction);
+    }
+    
+    // Update text and add to map
+    drawingInstruction.options.html = `<div class="drawing-instruction">${text}</div>`;
+    L.marker(map.getCenter(), { icon: drawingInstruction }).addTo(map);
+}
+
+// Circle drawing function
+function startDrawingCircle() {
+    if (isDrawingPolyline) {
+        stopDrawingPolyline();
+    }
+    
+    isDrawingCircle = true;
+    document.getElementById('drawCircleBtn').classList.add('drawing');
+    document.getElementById('drawPolylineBtn').disabled = true;
+    
+    circlePoints = [];
+    showDrawingInstruction("Click on map for circle center");
+    
+    // Change cursor to crosshair
+    map.getContainer().style.cursor = 'crosshair';
+}
+
+function handleCircleClick(e) {
+    if (!isDrawingCircle) return;
+    
+    circlePoints.push(e.latlng);
+    
+    if (circlePoints.length === 1) {
+        // First click - center point
+        showDrawingInstruction("Click again for radius distance");
+        
+        // Create temporary marker for center
+        L.circleMarker(e.latlng, {
+            radius: 6,
+            color: '#259FDE',
+            fillColor: '#259FDE',
+            fillOpacity: 0.8
+        }).addTo(map);
+        
+    } else if (circlePoints.length === 2) {
+        // Second click - radius point
+        const center = circlePoints[0];
+        const radiusPoint = circlePoints[1];
+        
+        // Calculate radius in meters
+        const radius = center.distanceTo(radiusPoint);
+        
+        // Create the final circle
+        const circle = L.circle(center, {
+            radius: radius,
+            className: 'circle-boundary',
+            color: '#259FDE',
+            fillColor: '#259FDE',
+            fillOpacity: 0.05, // 95% transparency
+            weight: 3
+        }).addTo(map);
+        
+        // Add popup with info
+        circle.bindPopup(`
+            <b>Circle Boundary</b><br>
+            Center: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}<br>
+            Radius: ${Math.round(radius)} meters
+        `);
+        
+        // Add to boundaries array
+        allBoundaries.push(circle);
+        
+        // Reset drawing state
+        stopDrawingCircle();
+        
+        // Show success message
+        showDrawingInstruction("Circle created successfully!");
+        setTimeout(() => {
+            if (map.hasLayer(drawingInstruction)) {
+                map.removeLayer(drawingInstruction);
+            }
+        }, 2000);
+    }
+}
+
+function stopDrawingCircle() {
+    isDrawingCircle = false;
+    document.getElementById('drawCircleBtn').classList.remove('drawing');
+    document.getElementById('drawPolylineBtn').disabled = false;
+    circlePoints = [];
+    
+    // Remove temp layers
+    if (tempCircle && map.hasLayer(tempCircle)) {
+        map.removeLayer(tempCircle);
+    }
+    
+    // Reset cursor
+    map.getContainer().style.cursor = '';
+    
+    // Remove instruction
+    if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+        map.removeLayer(drawingInstruction);
+    }
+}
+
+// Polyline drawing function
+function startDrawingPolyline() {
+    if (isDrawingCircle) {
+        stopDrawingCircle();
+    }
+    
+    isDrawingPolyline = true;
+    document.getElementById('drawPolylineBtn').classList.add('drawing');
+    document.getElementById('drawCircleBtn').disabled = true;
+    
+    polylinePoints = [];
+    showDrawingInstruction("Click points for polyline. Double-click to finish.");
+    
+    // Change cursor to crosshair
+    map.getContainer().style.cursor = 'crosshair';
+}
+
+function handlePolylineClick(e) {
+    if (!isDrawingPolyline) return;
+    
+    polylinePoints.push(e.latlng);
+    
+    // Add marker for the point
+    L.circleMarker(e.latlng, {
+        radius: 4,
+        color: '#E74C3C',
+        fillColor: '#E74C3C',
+        fillOpacity: 0.8
+    }).addTo(map).bindTooltip(`Point ${polylinePoints.length}`, { permanent: false });
+    
+    // If we have at least 2 points, update the polyline
+    if (polylinePoints.length >= 2) {
+        // Remove previous temp polyline
+        if (tempPolyline && map.hasLayer(tempPolyline)) {
+            map.removeLayer(tempPolyline);
+        }
+        
+        // Create new temp polyline
+        tempPolyline = L.polyline(polylinePoints, {
+            color: '#E74C3C',
+            weight: 3,
+            opacity: 0.8,
+            dashArray: '5, 5',
+            className: 'polyline-boundary'
+        }).addTo(map);
+    }
+}
+
+function handlePolylineDoubleClick() {
+    if (!isDrawingPolyline || polylinePoints.length < 2) return;
+    
+    // Create final polyline
+    const polyline = L.polyline(polylinePoints, {
+        color: '#E74C3C',
+        weight: 3,
+        opacity: 0.8,
+        className: 'polyline-boundary'
+    }).addTo(map);
+    
+    // Calculate total distance
+    let totalDistance = 0;
+    for (let i = 0; i < polylinePoints.length - 1; i++) {
+        totalDistance += polylinePoints[i].distanceTo(polylinePoints[i + 1]);
+    }
+    
+    // Add popup with info
+    polyline.bindPopup(`
+        <b>Polyline Boundary</b><br>
+        Points: ${polylinePoints.length}<br>
+        Length: ${Math.round(totalDistance)} meters
+    `);
+    
+    // Add to boundaries array
+    allBoundaries.push(polyline);
+    
+    // Reset drawing state
+    stopDrawingPolyline();
+    
+    // Show success message
+    showDrawingInstruction("Polyline created successfully!");
+    setTimeout(() => {
+        if (map.hasLayer(drawingInstruction)) {
+            map.removeLayer(drawingInstruction);
+        }
+    }, 2000);
+}
+
+function stopDrawingPolyline() {
+    isDrawingPolyline = false;
+    document.getElementById('drawPolylineBtn').classList.remove('drawing');
+    document.getElementById('drawCircleBtn').disabled = false;
+    polylinePoints = [];
+    
+    // Remove temp layers
+    if (tempPolyline && map.hasLayer(tempPolyline)) {
+        map.removeLayer(tempPolyline);
+    }
+    
+    // Reset cursor
+    map.getContainer().style.cursor = '';
+    
+    // Remove instruction
+    if (drawingInstruction && map.hasLayer(drawingInstruction)) {
+        map.removeLayer(drawingInstruction);
+    }
+}
+
+// Clear all boundaries function
+function clearAllBoundaries() {
+    // Remove all boundaries from map
+    allBoundaries.forEach(boundary => {
+        if (map.hasLayer(boundary)) {
+            map.removeLayer(boundary);
+        }
+    });
+    
+    // Clear the array
+    allBoundaries = [];
+    
+    // Stop any active drawing
+    if (isDrawingCircle) stopDrawingCircle();
+    if (isDrawingPolyline) stopDrawingPolyline();
+}
+
+// Add event listeners for the buttons
+document.getElementById('drawCircleBtn').addEventListener('click', function() {
+    if (isDrawingCircle) {
+        stopDrawingCircle();
+    } else {
+        startDrawingCircle();
+    }
+});
+
+document.getElementById('drawPolylineBtn').addEventListener('click', function() {
+    if (isDrawingPolyline) {
+        stopDrawingPolyline();
+    } else {
+        startDrawingPolyline();
+    }
+});
+
+document.getElementById('clearBoundariesBtn').addEventListener('click', clearAllBoundaries);
+
+// Add map click handlers for drawing
+map.on('click', function(e) {
+    if (isDrawingCircle) {
+        handleCircleClick(e);
+    } else if (isDrawingPolyline) {
+        handlePolylineClick(e);
+    }
+});
+
+// Add double-click handler for polyline (to finish drawing)
+map.on('dblclick', function(e) {
+    if (isDrawingPolyline) {
+        handlePolylineDoubleClick();
+        e.originalEvent.stopPropagation(); // Prevent map zoom on double-click
+    }
+});
+
+// Add ESC key handler to cancel drawing
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (isDrawingCircle) stopDrawingCircle();
+        if (isDrawingPolyline) stopDrawingPolyline();
+    }
+});
+// =================== BOUNDARY DRAWING CODE END ===================
             
             // Logout functionality
             document.getElementById('logoutBtn').addEventListener('click', function() {
