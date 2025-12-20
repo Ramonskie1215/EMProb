@@ -729,16 +729,39 @@
             font-weight: 600;
         }
 
-        .form-input {
-            background: white;
-            border: 2px solid #ECF0F1;
-            border-radius: 10px;
-            padding: 14px 16px;
-            color: #2C3E50;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
+.form-input {
+    background: white;
+    border: 2px solid #ECF0F1;
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #2C3E50;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* START ADD: Select Dropdown Styling */
+.form-input[type="select"],
+.form-input select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23259FDE' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 16px;
+    padding-right: 40px;
+    cursor: pointer;
+}
+
+.form-input option:disabled {
+    color: #E74C3C;
+    font-style: italic;
+    background-color: #FDF2F2;
+}
+
+.form-input option {
+    padding: 8px;
+}
+/* END ADD: Select Dropdown Styling */
 
         .form-input:focus {
             outline: none;
@@ -1384,6 +1407,14 @@
                     <input type="text" class="form-input" id="officerInCharge" placeholder="Enter officer name">
                 </div>
             </div>
+
+            <div class="form-group">
+    <label class="form-label">Assigned Watch</label>
+    <select class="form-input" id="assignedWatch">
+        <option value="none">None (No Watch)</option>
+        <!-- Watch options will be added by JavaScript -->
+    </select>
+</div>
             
             <div class="modal-buttons">
                 <button class="modal-btn secondary" id="cancelBtn">Cancel</button>
@@ -1771,6 +1802,109 @@ function setupProfileDropdownListeners() {
     }
 }
 
+// Load available watches from Firebase
+async function loadWatches() {
+    try {
+        const watchesRef = ref(database, 'watch');
+        const snapshot = await get(watchesRef);
+        
+        const watchSelect = document.getElementById('assignedWatch');
+        
+        if (snapshot.exists()) {
+            const watches = snapshot.val();
+            let watchOptions = '<option value="none">None (No Watch)</option>';
+            
+            Object.keys(watches).forEach(watchId => {
+                const watch = watches[watchId];
+                const isAssigned = watch.probationer && watch.probationer !== "none";
+                const status = isAssigned ? 'Assigned' : 'Available';
+                const battery = watch.battery ? `${watch.battery.p}%` : 'N/A';
+                const displayText = `${watchId} - ${status} (Battery: ${battery})`;
+                
+                watchOptions += `<option value="${watchId}" ${isAssigned ? 'disabled' : ''}>
+                    ${displayText}
+                </option>`;
+            });
+            
+            watchSelect.innerHTML = watchOptions;
+        } else {
+            watchSelect.innerHTML = '<option value="none">No watches available in system</option>';
+        }
+    } catch (error) {
+        console.error('Error loading watches:', error);
+        showNotification('Error loading watch list', 'error');
+    }
+}
+
+// Update watch assignment in Firebase
+async function updateWatchAssignment(probationerId, watchId) {
+    try {
+        // If watchId is "none", remove assignment
+        if (watchId === "none") {
+            // Find if this probationer has a watch currently assigned
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (probationer && probationer.watch && probationer.watch !== "none") {
+                // Remove probationer from the watch
+                const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
+                await set(oldWatchRef, "none");
+            }
+            return true;
+        }
+        
+        // Check if this watch exists
+        const watchRef = ref(database, `watch/${watchId}`);
+        const snapshot = await get(watchRef);
+        
+        if (!snapshot.exists()) {
+            showNotification('Selected watch does not exist', 'error');
+            return false;
+        }
+        
+        // Get current watch data
+        const watchData = snapshot.val();
+        
+        // Check if watch is already assigned
+        if (watchData.probationer && watchData.probationer !== "none") {
+            showNotification('This watch is already assigned to another probationer', 'error');
+            return false;
+        }
+        
+        // Find if probationer already has a watch
+        const probationer = probationers.find(p => p.id === probationerId);
+        if (probationer && probationer.watch && probationer.watch !== "none") {
+            // Remove from old watch
+            const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
+            await set(oldWatchRef, "none");
+        }
+        
+        // Assign to new watch
+        await set(ref(database, `watch/${watchId}/probationer`), probationerId);
+        
+        return true;
+    } catch (error) {
+        console.error('Error updating watch assignment:', error);
+        showNotification('Failed to update watch assignment', 'error');
+        return false;
+    }
+}
+
+// Get watch details for display
+async function getWatchDetails(watchId) {
+    try {
+        if (!watchId || watchId === "none") return null;
+        
+        const watchRef = ref(database, `watch/${watchId}`);
+        const snapshot = await get(watchRef);
+        
+        if (snapshot.exists()) {
+            return snapshot.val();
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting watch details:', error);
+        return null;
+    }
+}
         // Format date for display
         function formatDate(dateString) {
             try {
@@ -2287,6 +2421,14 @@ function setupProfileDropdownListeners() {
                              <p style="font-size: 12px; color: #259FDE; margin-top: 2px;">
                                 Officer: ${probationer.officerInCharge || 'Not Assigned'}
                             </p>
+                            ${probationer.watch && probationer.watch !== "none" ? 
+    `<p style="font-size: 12px; color: #2ECC71; margin-top: 2px;">
+        ⌚ Watch: ${probationer.watch}
+    </p>` : 
+    `<p style="font-size: 12px; color: #7F8C8D; margin-top: 2px;">
+        ⌚ Watch: Not Assigned
+    </p>`
+}
                         </div>
                     </div>
                     
@@ -2425,6 +2567,8 @@ function setupProfileDropdownListeners() {
         function openModal(probationer = null) {
             const modal = document.getElementById('probationerModal');
             modal.style.display = 'flex';
+
+                loadWatches();
             
             if (probationer) {
                 editingId = probationer.id;
@@ -2440,6 +2584,7 @@ function setupProfileDropdownListeners() {
                 document.getElementById('startDate').value = probationer.startDate || '';
                 document.getElementById('endDate').value = probationer.endDate || '';
                 document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
+                document.getElementById('assignedWatch').value = 'none';
                 // Set avatar preview
                 const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
                 document.getElementById('avatarInitial').textContent = initial;
@@ -2515,6 +2660,7 @@ function setupProfileDropdownListeners() {
                 startDate: document.getElementById('startDate').value,
                 endDate: document.getElementById('endDate').value, 
                 officerInCharge: document.getElementById('officerInCharge').value.trim() || 'Not Assigned',
+                watch: document.getElementById('assignedWatch').value,
                 updatedAt: new Date().toISOString()
             };
             
@@ -2542,17 +2688,28 @@ function setupProfileDropdownListeners() {
                 }
             }
             
-            const success = await saveProbationer(probationerData);
-            
-            if (success) {
-                showNotification(
-                    editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
-                    'success'
-                );
-                closeModal();
-            } else {
-                showNotification('Failed to save probationer. Please try again.', 'error');
-            }
+const success = await saveProbationer(probationerData);
+
+// START ADD: Update watch assignment
+if (success) {
+    const selectedWatchId = document.getElementById('assignedWatch').value;
+    const watchSuccess = await updateWatchAssignment(editingId || id, selectedWatchId);
+    
+    if (watchSuccess) {
+        showNotification(
+            editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
+            'success'
+        );
+        closeModal();
+    } else {
+        // Probationer was saved but watch assignment failed
+        showNotification('Probationer saved but watch assignment failed', 'warning');
+        closeModal();
+    }
+} else {
+    showNotification('Failed to save probationer. Please try again.', 'error');
+}
+// END ADD: Update watch assignment
             
             saveBtn.disabled = false;
             saveBtn.textContent = 'Save Probationer';
@@ -2649,6 +2806,7 @@ async function initApplication() {
 
         // Initialize user profile
         await initializeUserProfile();
+        await loadWatches();
         
         // Load probationers from /probationers path
         await loadProbationers();
