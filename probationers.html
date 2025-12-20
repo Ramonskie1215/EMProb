@@ -2083,32 +2083,28 @@ async function updateWatchAssignment(probationerId, newWatchId) {
             console.log(`Successfully unassigned old watch: ${currentAssignedWatch}`);
         }
 
-        // Step 2: If assigning to a new watch (not "none")
-        if (newWatchId !== 'none') {
-            // Check if watch exists
-            const watchSnapshot = await get(ref(database, `watch/${newWatchId}`));
-            if (!watchSnapshot.exists()) {
-                showNotification('Selected watch does not exist', 'error');
-                return false;
-            }
+// STEP 2: Assign new watch if selected
+if (newWatchId !== 'none') {
+    const watchSnapshot = await get(ref(database, `watch/${newWatchId}`));
+    if (!watchSnapshot.exists()) {
+        showNotification('Selected watch does not exist', 'error');
+    } else {
+        const watchData = watchSnapshot.val();
+        const currentAssignedId = watchData.probationer || "none";  // This is clean (e.g., "123445" or "none")
 
-            const watchData = watchSnapshot.val();
-            const currentWatchProbationer = watchData.probationer || "none";
+        // Clean version of THIS probationer's ID
+        const thisCleanId = cleanAssignedId;  // e.g., "123445"
 
-            // Clean version of new probationer ID (without prefix)
-            const cleanNewId = probationerId.replace(/^probationer_/, '');
-
-            // Prevent double assignment
-            if (currentWatchProbationer !== "none" && currentWatchProbationer !== cleanNewId) {
-                showNotification('This watch is already assigned to another probationer', 'error');
-                return false;
-            }
-
-            // Assign the CLEAN ID (without "probationer_" prefix)
-            const cleanProbationerId = probationerId.replace(/^probationer_/, '');
-            await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
-            console.log(`Assigned ${cleanProbationerId} to watch: ${newWatchId}`);
+        // BLOCK only if assigned to someone ELSE
+        if (currentAssignedId !== "none" && currentAssignedId !== thisCleanId) {
+            showNotification('This watch is already assigned to another probationer!', 'error');
+        } else {
+            // Safe: either free, or already assigned to THIS probationer
+            await set(ref(database, `watch/${newWatchId}/probationer`), thisCleanId);
+            console.log(`Watch ${newWatchId} assigned/reconfirmed to ${thisCleanId}`);
         }
+    }
+}
 
         return true;
     } catch (error) {
