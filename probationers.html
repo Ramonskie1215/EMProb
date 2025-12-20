@@ -2609,14 +2609,14 @@ if (newWatchId !== 'none') {
     loadWatches(cleanCurrentId);
 
     // Then set the selected value
-    const currentWatch = probationer.watch || 'none';
+    currentWatch = probationer.watch || 'none';
     document.getElementById('assignedWatch').value = currentWatch;
 
     console.log(`Editing probationer ${probationer.assignedId}, clean ID: ${cleanCurrentId}, current watch: ${currentWatch}`);
                 
             } else {
                 
-                await loadWatches(null);
+                loadWatches(null);
                 document.getElementById('assignedId').disabled = false;
                 document.getElementById('assignedId').title = '';
                 currentOldWatchId = 'none';  // No previous watch
