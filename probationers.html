@@ -2746,13 +2746,18 @@ if (success) {
                 showNotification('Selected watch does not exist', 'error');
             } else {
                 const watchData = watchSnapshot.val();
-                // Extra safety: if someone else has it
-                if (watchData.probationer && watchData.probationer !== "none" && watchData.probationer !== cleanProbationerId) {
-                    showNotification('This watch is already assigned!', 'error');
-                } else {
-                    await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
-                    console.log(`Assigned ${cleanProbationerId} to ${newWatchId}`);
-                }
+// Only block if the watch is assigned to SOMEONE ELSE
+if (watchData.probationer && 
+    watchData.probationer !== "none" && 
+    watchData.probationer !== cleanProbationerId) {
+    
+    showNotification('This watch is already assigned to another probationer!', 'error');
+    // Optionally: you could revert the dropdown here, but not required
+} else {
+    // Safe to assign (either free or already assigned to THIS probationer)
+    await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
+    console.log(`Assigned (or re-confirmed) ${cleanProbationerId} to ${newWatchId}`);
+}
             }
         }
 
