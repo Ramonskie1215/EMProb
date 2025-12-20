@@ -2606,7 +2606,7 @@ if (newWatchId !== 'none') {
     const cleanCurrentId = (probationer.assignedId || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
 
     // Reload watches, allowing the current one to be selectable
-    await loadWatches(cleanCurrentId);
+    loadWatches(cleanCurrentId);
 
     // Then set the selected value
     const currentWatch = probationer.watch || 'none';
