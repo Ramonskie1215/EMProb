@@ -767,6 +767,11 @@
                     // Try to send final update (may not always work due to page unloading)
                     navigator.sendBeacon && this.sendUptime().catch(() => {});
                 });
+                
+    window.uptimeTracker = this;
+    
+    return this;
+                
             }
 
             // Stop uptime tracking
@@ -807,71 +812,166 @@
             console.log(event.key);
         });
 
-        // ============================================
-        // BATTERY MONITORING
-        // ============================================
-        const batteryFill = document.getElementById('batteryFill');
-        const batteryPercentage = document.getElementById('batteryPercentage');
-        const chargingOverlay = document.getElementById('chargingOverlay');
-        const chargingIcon = document.getElementById('chargingIcon');
-        let battery = null;
-        let isBatterySupported = false;
+// ============================================
+// BATTERY MONITORING WITH LOW BATTERY NOTIFICATION
+// ============================================
+const batteryFill = document.getElementById('batteryFill');
+const batteryPercentage = document.getElementById('batteryPercentage');
+const chargingOverlay = document.getElementById('chargingOverlay');
+const chargingIcon = document.getElementById('chargingIcon');
+let battery = null;
+let isBatterySupported = false;
+let lastLowBatteryNotificationTime = 0; // Track when we last notified
+const LOW_BATTERY_THRESHOLD = 20; // 20%
+const NOTIFICATION_COOLDOWN = 300000; // 5 minutes (in milliseconds)
 
-        function initBattery() {
-            if ('getBattery' in navigator) {
-                isBatterySupported = true;
-                navigator.getBattery().then(batt => {
-                    battery = batt;
-                    updateBatteryDisplay();
-                    
-                    battery.addEventListener('levelchange', updateBatteryDisplay);
-                    battery.addEventListener('chargingchange', updateBatteryDisplay);
-                }).catch(error => {
-                    console.error('Error accessing battery API:', error);
-                    showBatteryError();
-                });
-            } else {
-                showBatteryError();
-            }
+function initBattery() {
+    if ('getBattery' in navigator) {
+        isBatterySupported = true;
+        navigator.getBattery().then(batt => {
+            battery = batt;
+            updateBatteryDisplay();
+            
+            battery.addEventListener('levelchange', updateBatteryDisplay);
+            battery.addEventListener('chargingchange', updateBatteryDisplay);
+        }).catch(error => {
+            console.error('Error accessing battery API:', error);
+            showBatteryError();
+        });
+    } else {
+        showBatteryError();
+    }
+}
+
+function updateBatteryDisplay() {
+    if (!battery) return;
+    
+    const percentage = Math.round(battery.level * 100);
+    const isCharging = battery.charging;
+    
+    batteryPercentage.textContent = `${percentage}%`;
+    batteryFill.style.width = `${percentage}%`;
+    
+    if (percentage > 50) {
+        batteryFill.style.background = '#259FDE';
+        batteryFill.style.animation = '';
+    } else if (percentage > 20) {
+        batteryFill.style.background = '#FFA500';
+        batteryFill.style.animation = '';
+    } else {
+        batteryFill.style.background = '#DE3725';
+        batteryFill.style.animation = 'batteryLow 1s infinite';
+        
+        // Check if we should send low battery notification
+        if (!isCharging) {
+            checkAndSendLowBatteryNotification(percentage);
         }
+    }
+    
+    if (isCharging) {
+        chargingOverlay.style.display = 'block';
+        chargingIcon.classList.add('active');
+        batteryFill.style.animation = '';
+        // Reset low battery notification when charging starts
+        lastLowBatteryNotificationTime = 0;
+    } else {
+        chargingOverlay.style.display = 'none';
+        chargingIcon.classList.remove('active');
+    }
+}
 
-        function updateBatteryDisplay() {
-            if (!battery) return;
-            
-            const percentage = Math.round(battery.level * 100);
-            const isCharging = battery.charging;
-            
-            batteryPercentage.textContent = `${percentage}%`;
-            batteryFill.style.width = `${percentage}%`;
-            
-            if (percentage > 50) {
-                batteryFill.style.background = '#259FDE';
-                batteryFill.style.animation = '';
-            } else if (percentage > 20) {
-                batteryFill.style.background = '#FFA500';
-                batteryFill.style.animation = '';
-            } else {
-                batteryFill.style.background = '#DE3725';
-                batteryFill.style.animation = 'batteryLow 1s infinite';
-            }
-            
-            if (isCharging) {
-                chargingOverlay.style.display = 'block';
-                chargingIcon.classList.add('active');
-                batteryFill.style.animation = '';
-            } else {
-                chargingOverlay.style.display = 'none';
-                chargingIcon.classList.remove('active');
-            }
+function showBatteryError() {
+    batteryPercentage.textContent = 'N/A';
+    batteryFill.style.width = '100%';
+    batteryFill.style.background = '#5E5E5E';
+    isBatterySupported = false;
+}
+
+// Function to check and send low battery notification
+async function checkAndSendLowBatteryNotification(batteryPercentage) {
+    // Check if battery is below threshold
+    if (batteryPercentage > LOW_BATTERY_THRESHOLD) {
+        return; // Battery is not low enough
+    }
+    
+    // Check cooldown period
+    const now = Date.now();
+    if (now - lastLowBatteryNotificationTime < NOTIFICATION_COOLDOWN) {
+        console.log(`Low battery notification on cooldown. Next available in ${Math.round((NOTIFICATION_COOLDOWN - (now - lastLowBatteryNotificationTime)) / 60000)} minutes`);
+        return;
+    }
+    
+    try {
+        // Check if we have a probationer assigned
+        const probationerAssigned = await getAssignedProbationerId();
+        if (!probationerAssigned) {
+            console.log("No probationer assigned, skipping battery notification");
+            return;
         }
+        
+        // Log the low battery notification
+        await logLowBatteryNotification(probationerAssigned, batteryPercentage);
+        
+        // Update last notification time
+        lastLowBatteryNotificationTime = now;
+        console.log(`Low battery (${batteryPercentage}%) notification sent`);
+        
+    } catch (error) {
+        console.error("Error sending low battery notification:", error);
+    }
+}
 
-        function showBatteryError() {
-            batteryPercentage.textContent = 'N/A';
-            batteryFill.style.width = '100%';
-            batteryFill.style.background = '#5E5E5E';
-            isBatterySupported = false;
+// Helper function to get assigned probationer ID
+async function getAssignedProbationerId() {
+    try {
+        const uptimeTracker = window.uptimeTracker; // We'll expose this globally
+        if (!uptimeTracker || !uptimeTracker.deviceId) {
+            return null;
         }
+        
+        const probationerRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
+        const snapshot = await get(probationerRef);
+        const probationerId = (snapshot.val() || "").toString().trim();
+        
+        if (!probationerId || probationerId === "none") {
+            return null;
+        }
+        
+        return probationerId;
+    } catch (error) {
+        console.error("Error getting probationer ID:", error);
+        return null;
+    }
+}
 
+// Function to log low battery notification
+async function logLowBatteryNotification(probationerId, batteryPercentage) {
+    try {
+        // Create notification object
+        const notification = {
+            type: "battery_low",
+            message: `Device battery is low: ${batteryPercentage}%`,
+            batteryLevel: batteryPercentage,
+            timestamp: new Date().toISOString(),
+            acknowledged: false
+        };
+        
+        // Generate a unique ID for this notification
+        const notificationId = `battery_${Date.now()}`;
+        
+        // Reference to the notifications path
+        const notificationRef = ref(database, `probationers/probationer_${probationerId}/notifications/${notificationId}`);
+        
+        // Save the notification
+        await set(notificationRef, notification);
+        
+        console.log(`Low battery notification logged for probationer_${probationerId}`);
+        
+    } catch (error) {
+        console.error("Error logging low battery notification:", error);
+        throw error;
+    }
+}
         // ============================================
         // CLOCK LOGIC
         // ============================================
@@ -1092,7 +1192,7 @@ async function checkForAnnouncements() {
     }
 }
 
-// Acknowledge current announcement
+// Acknowledge current announcement and log notification
 async function acknowledgeCurrentAnnouncement() {
     if (pendingAnnouncements.length === 0 || !currentProbationerKey) return;
 
@@ -1100,12 +1200,16 @@ async function acknowledgeCurrentAnnouncement() {
     const index = current.index;
 
     try {
+        // 1. Update the announcement to acknowledged in Firebase
         const ackRef = ref(database, `probationers/${currentProbationerKey}/announcements/${index}/acknowledge`);
         await set(ackRef, true);
 
         console.log(`Acknowledged announcement #${index}: ${current.subject}`);
 
-        // Remove from pending and show next
+        // 2. Log this acknowledgement as a notification
+        await logAnnouncementAcknowledgement(currentProbationerKey, current);
+
+        // 3. Remove from pending and show next
         pendingAnnouncements.shift();
 
         if (pendingAnnouncements.length > 0) {
@@ -1117,6 +1221,41 @@ async function acknowledgeCurrentAnnouncement() {
         console.error("Failed to acknowledge announcement:", error);
     }
 }
+
+// Function to log announcement acknowledgement as notification
+async function logAnnouncementAcknowledgement(probationerKey, announcement) {
+    try {
+        // Extract probationer ID from key (probationer_12345 -> 12345)
+        const probationerId = probationerKey.replace('probationer_', '');
+        
+        // Create notification object
+        const notification = {
+            type: "announcement_acknowledged",
+            subject: announcement.subject || "No Subject",
+            message: announcement.details || "No Message",
+            announcementTime: announcement.time || new Date().toISOString(),
+            acknowledgedAt: new Date().toISOString(),
+            acknowledged: true,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Generate a unique ID for this notification
+        const notificationId = `announce_ack_${Date.now()}`;
+        
+        // Reference to the notifications path
+        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
+        
+        // Save the notification
+        await set(notificationRef, notification);
+        
+        console.log(`Announcement acknowledgement logged for ${probationerKey}`);
+        console.log(`Subject: ${notification.subject}`);
+        
+    } catch (error) {
+        console.error("Error logging announcement acknowledgement:", error);
+        throw error;
+    }
+}            
 
 // Listen for F1 key
 document.addEventListener('keydown', (e) => {
@@ -1160,6 +1299,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
