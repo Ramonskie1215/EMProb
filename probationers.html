@@ -2700,30 +2700,68 @@ async function updateWatchAssignment(probationerId, newWatchId) {
             
 const success = await saveProbationer(probationerData);
 
-// START ADD: Update watch assignment
 if (success) {
-    const selectedWatchId = document.getElementById('assignedWatch').value;
+    const newWatchId = document.getElementById('assignedWatch').value;
 
-    // Reconstruct ID for new probationers
-    const cleanAssignedId = probationerData.assignedId
+    // Reconstruct the correct probationer ID
+    const cleanId = probationerData.assignedId
         .trim()
         .toLowerCase()
         .replace(/\s+/g, '_')
         .replace(/[^a-z0-9_]/g, '');
-    const probationerFinalId = editingId || `probationer_${cleanAssignedId}`;
+    const probationerFinalId = editingId || `probationer_${cleanId}`;
 
-    const watchSuccess = await updateWatchAssignment(probationerFinalId, selectedWatchId);
+    // CLEAN ID for storing in watch
+    const cleanProbationerId = probationerFinalId.replace(/^probationer_/, '');
 
-    if (watchSuccess) {
-        showNotification(
-            editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
-            'success'
-        );
+    // Get the OLD watch from the probationer BEFORE we saved the new one
+    // (If editing, get from local array; if new, there is no old watch)
+    let oldWatchId = 'none';
+    if (editingId) {
+        const currentProbationer = probationers.find(p => p.id === editingId);
+        if (currentProbationer) {
+            oldWatchId = currentProbationer.watch || 'none';
+        }
+    }
+
+    // Now do the watch assignment/unassignment
+    try {
+        // Unassign old watch if needed
+        if (oldWatchId !== 'none' && oldWatchId !== newWatchId) {
+            await set(ref(database, `watch/${oldWatchId}/probationer`), "none");
+            console.log(`Unassigned old watch: ${oldWatchId}`);
+        }
+
+        // Assign new watch if not "none"
+        if (newWatchId !== 'none') {
+            // Optional: extra safety check
+            const watchSnap = await get(ref(database, `watch/${newWatchId}`));
+            if (watchSnap.exists()) {
+                const watchData = watchSnap.val();
+                if (watchData.probationer && watchData.probationer !== "none" && watchData.probationer !== cleanProbationerId) {
+                    showNotification('Watch already assigned to someone else!', 'error');
+                    // Optionally revert probationer watch here if you want
+                } else {
+                    await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
+                    console.log(`Assigned to new watch: ${newWatchId}`);
+                }
+            } else {
+                showNotification('Selected watch does not exist', 'error');
+            }
+        }
+
+        showNotification(editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!', 'success');
         closeModal();
-    } else {
-        showNotification('Probationer saved, but watch update failed', 'error');
+
+    } catch (error) {
+        console.error('Watch assignment failed:', error);
+        showNotification('Saved probationer, but watch update failed', 'error');
         closeModal();
     }
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save Probationer';
+    return;
 } else {
     showNotification('Failed to save probationer. Please try again.', 'error');
 }
