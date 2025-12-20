@@ -1683,7 +1683,6 @@
         // Global variables
         let probationers = [];
         let editingId = null;
-        let currentOldWatchId = 'none';
         let deletingId = null;
         let selectedFile = null;
         let fileReader = null;
@@ -2064,19 +2063,29 @@ async function getWatchDetails(watchId) {
             }
         }
 
-// CORRECTED: Matches your actual Firebase path "/watch/"
+// RELIABLE VERSION: Always uses latest probationer data
 async function updateWatchAssignment(probationerId, newWatchId) {
     try {
-        // Step 1: Unassign the old watch if needed
-        if (currentOldWatchId !== 'none' && currentOldWatchId !== newWatchId) {
-            const oldWatchRef = ref(database, `watch/${currentOldWatchId}/probationer`);
-            await set(oldWatchRef, "none");
-            console.log(`Unassigned old watch: ${currentOldWatchId}`);
+        // Get the CURRENT probationer data from our local array (always up-to-date via onValue)
+        const probationer = probationers.find(p => p.id === probationerId);
+        if (!probationer) {
+            showNotification('Probationer not found', 'error');
+            return false;
         }
 
-        // Step 2: If selecting a real watch (not "none"), assign the probationer
+        // Get the CURRENTLY assigned watch (this is always fresh!)
+        const currentAssignedWatch = probationer.watch || 'none';
+
+        // Step 1: If changing from an old watch to a new one (or to none), unassign the old one
+        if (currentAssignedWatch !== 'none' && currentAssignedWatch !== newWatchId) {
+            const oldWatchRef = ref(database, `watch/${currentAssignedWatch}/probationer`);
+            await set(oldWatchRef, "none");
+            console.log(`Successfully unassigned old watch: ${currentAssignedWatch}`);
+        }
+
+        // Step 2: If assigning to a new watch (not "none")
         if (newWatchId !== 'none') {
-            // Check if the watch actually exists
+            // Check if watch exists
             const watchSnapshot = await get(ref(database, `watch/${newWatchId}`));
             if (!watchSnapshot.exists()) {
                 showNotification('Selected watch does not exist', 'error');
@@ -2084,21 +2093,22 @@ async function updateWatchAssignment(probationerId, newWatchId) {
             }
 
             const watchData = watchSnapshot.val();
+            const currentWatchProbationer = watchData.probationer || "none";
 
-            // Prevent assigning if already taken by someone else
-            if (watchData.probationer && watchData.probationer !== "none" && watchData.probationer !== probationerId) {
+            // Clean version of new probationer ID (without prefix)
+            const cleanNewId = probationerId.replace(/^probationer_/, '');
+
+            // Prevent double assignment
+            if (currentWatchProbationer !== "none" && currentWatchProbationer !== cleanNewId) {
                 showNotification('This watch is already assigned to another probationer', 'error');
                 return false;
             }
 
-            // ASSIGN THE FULL PROBATIONER ID (e.g., "probationer_john_doe")// Trim the "probationer_" prefix before saving
-const cleanProbationerId = probationerId.replace(/^probationer_/, '');
-await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
-            console.log(`Assigned ${probationerId} to watch: ${newWatchId}`);
+            // Assign the CLEAN ID (without "probationer_" prefix)
+            const cleanProbationerId = probationerId.replace(/^probationer_/, '');
+            await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
+            console.log(`Assigned ${cleanProbationerId} to watch: ${newWatchId}`);
         }
-
-        // Update tracker for next edit
-        currentOldWatchId = newWatchId;
 
         return true;
     } catch (error) {
@@ -2583,7 +2593,7 @@ await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
                 document.getElementById('assignedWatch').value = currentWatch;
 
     // NEW: Remember the old watch for later unassignment
-    currentOldWatchId = currentWatch;
+   // currentOldWatchId = currentWatch;
                 // Set avatar preview
                 const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
                 document.getElementById('avatarInitial').textContent = initial;
