@@ -1683,6 +1683,7 @@
         // Global variables
         let probationers = [];
         let editingId = null;
+        let currentOldWatchId = 'none';
         let deletingId = null;
         let selectedFile = null;
         let fileReader = null;
@@ -2112,6 +2113,31 @@ async function getWatchDetails(watchId) {
                 return false;
             }
         }
+
+        // NEW FUNCTION: Properly assign/unassign watches in Firebase
+async function updateWatchAssignment(probationerId, newWatchId) {
+    try {
+        // If there was an old watch and it's different from new one, unassign it
+        if (currentOldWatchId !== 'none' && currentOldWatchId !== newWatchId) {
+            const oldWatchRef = ref(database, `watches/${currentOldWatchId}/probationer`);
+            await set(oldWatchRef, "none");
+            console.log(`Unassigned old watch: ${currentOldWatchId}`);
+        }
+
+        // If new watch is not "none", assign the probationer to it
+        if (newWatchId !== 'none') {
+            const newWatchRef = ref(database, `watches/${newWatchId}/probationer`);
+            await set(newWatchRef, probationerId);  // e.g., "probationer_john_doe"
+            console.log(`Assigned to new watch: ${newWatchId}`);
+        }
+
+        // Success!
+        return true;
+    } catch (error) {
+        console.error('Error updating watch assignment:', error);
+        return false;
+    }
+}
 
         // Add announcement to probationer
         async function addAnnouncementToProbationer(probationerId, announcementData) {
@@ -2584,7 +2610,11 @@ async function getWatchDetails(watchId) {
                 document.getElementById('startDate').value = probationer.startDate || '';
                 document.getElementById('endDate').value = probationer.endDate || '';
                 document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
-                document.getElementById('assignedWatch').value = 'none';
+                const currentWatch = probationer.watch || 'none';
+                document.getElementById('assignedWatch').value = currentWatch;
+
+    // NEW: Remember the old watch for later unassignment
+    currentOldWatchId = currentWatch;
                 // Set avatar preview
                 const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
                 document.getElementById('avatarInitial').textContent = initial;
@@ -2597,6 +2627,7 @@ async function getWatchDetails(watchId) {
             } else {
                 document.getElementById('assignedId').disabled = false;
                 document.getElementById('assignedId').title = '';
+                currentOldWatchId = 'none';  // No previous watch
                 resetModalForm();
             }
         }
@@ -2693,8 +2724,17 @@ const success = await saveProbationer(probationerData);
 // START ADD: Update watch assignment
 if (success) {
     const selectedWatchId = document.getElementById('assignedWatch').value;
-    const watchSuccess = await updateWatchAssignment(editingId || id, selectedWatchId);
-    
+
+    // Reconstruct ID for new probationers
+    const cleanAssignedId = probationerData.assignedId
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+    const probationerFinalId = editingId || `probationer_${cleanAssignedId}`;
+
+    const watchSuccess = await updateWatchAssignment(probationerFinalId, selectedWatchId);
+
     if (watchSuccess) {
         showNotification(
             editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!',
@@ -2702,8 +2742,7 @@ if (success) {
         );
         closeModal();
     } else {
-        // Probationer was saved but watch assignment failed
-        showNotification('Probationer saved but watch assignment failed', 'warning');
+        showNotification('Probationer saved, but watch update failed', 'error');
         closeModal();
     }
 } else {
