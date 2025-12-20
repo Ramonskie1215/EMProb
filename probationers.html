@@ -1837,7 +1837,57 @@ async function loadWatches() {
     }
 }
 
-
+// Update watch assignment in Firebase
+async function updateWatchAssignment(probationerId, watchId) {
+    try {
+        // If watchId is "none", remove assignment
+        if (watchId === "none") {
+            // Find if this probationer has a watch currently assigned
+            const probationer = probationers.find(p => p.id === probationerId);
+            if (probationer && probationer.watch && probationer.watch !== "none") {
+                // Remove probationer from the watch
+                const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
+                await set(oldWatchRef, "none");
+            }
+            return true;
+        }
+        
+        // Check if this watch exists
+        const watchRef = ref(database, `watch/${watchId}`);
+        const snapshot = await get(watchRef);
+        
+        if (!snapshot.exists()) {
+            showNotification('Selected watch does not exist', 'error');
+            return false;
+        }
+        
+        // Get current watch data
+        const watchData = snapshot.val();
+        
+        // Check if watch is already assigned
+        if (watchData.probationer && watchData.probationer !== "none") {
+            showNotification('This watch is already assigned to another probationer', 'error');
+            return false;
+        }
+        
+        // Find if probationer already has a watch
+        const probationer = probationers.find(p => p.id === probationerId);
+        if (probationer && probationer.watch && probationer.watch !== "none") {
+            // Remove from old watch
+            const oldWatchRef = ref(database, `watch/${probationer.watch}/probationer`);
+            await set(oldWatchRef, "none");
+        }
+        // Assign to new watch - remove "probationer_" prefix
+const cleanProbationerId = probationerId.replace(/^probationer_/, '');
+await set(ref(database, `watch/${watchId}/probationer`), cleanProbationerId);
+        
+        return true;
+    } catch (error) {
+        console.error('Error updating watch assignment:', error);
+        showNotification('Failed to update watch assignment', 'error');
+        return false;
+    }
+}
 
 // Get watch details for display
 async function getWatchDetails(watchId) {
