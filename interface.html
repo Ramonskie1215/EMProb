@@ -1619,7 +1619,7 @@ map.on('dblclick', function(e) {
 
             try {
                 const probRef = ref(database, 'probationers');
-                const snapshot = await get(probRef);
+                const snapshot =  get(probRef);
 
                 if (!snapshot.exists()) {
                     alert("No probationers found.");
