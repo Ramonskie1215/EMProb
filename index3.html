@@ -393,7 +393,69 @@
                 font-size: 1.8vmin;
                 bottom: 1vmin;
             }
+
+                .gps-indicator {
+        top: 3vmin;
+        right: 25vmin;
+        padding: 1.5vmin 2.5vmin;
+    }
+    
+    .gps-icon {
+        width: 4vmin;
+        height: 4vmin;
+    }
+    
+    .gps-status {
+        font-size: 3vmin;
+    }
         }
+
+        /* GPS Indicator - Next to battery */
+.gps-indicator {
+    position: absolute;
+    top: 5vmin;
+    right: 30vmin; /* Adjust based on battery indicator width */
+    display: flex;
+    align-items: center;
+    gap: 1.5vmin;
+    z-index: 100;
+    background: rgba(28, 28, 28, 0.95);
+    padding: 2vmin 3vmin;
+    border-radius: 2.5vmin;
+    border: 2px solid rgba(37, 159, 222, 0.5);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.gps-icon {
+    width: 5vmin;
+    height: 5vmin;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gps-status {
+    font-size: 4vmin;
+    font-weight: 800;
+    color: #FFFFFF;
+    font-family: 'Courier New', monospace;
+    min-width: 8vmin;
+    text-align: center;
+    text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
+}
+
+/* GPS icon animations */
+@keyframes gpsSearching {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes gpsConnected {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+        
     </style>
 </head>
 <body>
@@ -417,6 +479,16 @@
                 </svg>
             </div>
         </div>
+
+        <!-- GPS Status Indicator - Next to battery -->
+<div class="gps-indicator" id="gpsIndicator">
+    <div class="gps-icon">
+        <svg id="gpsIcon" viewBox="0 0 24 24" fill="currentColor">
+            <!-- This will change based on status -->
+        </svg>
+    </div>
+    <div class="gps-status" id="gpsStatus">--</div>
+</div>
         
         <!-- Corner Accents -->
         <div class="corner corner-tl"></div>
@@ -812,6 +884,8 @@
             console.log(event.key);
         });
 
+
+        
 // ============================================
 // BATTERY MONITORING WITH LOW BATTERY NOTIFICATION
 // ============================================
@@ -972,6 +1046,206 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
         throw error;
     }
 }
+
+// ============================================
+// GEOLOCATION TRACKING SYSTEM
+// ============================================
+
+// GPS Icon SVG templates (ADD THIS CONSTANT)
+const GPS_ICONS = {
+    searching: `<path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm10.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>`,
+    connected: `<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>`,
+    error: `<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>`,
+    disabled: `<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zM7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 2.88-2.88 7.19-5 9.88C9.92 16.21 7 11.85 7 9z"/>`
+};
+
+// Update GPS icon based on status (ADD THIS FUNCTION)
+function updateGPSIcon(status) {
+    const gpsIcon = document.getElementById('gpsIcon');
+    const gpsStatus = document.getElementById('gpsStatus');
+    
+    if (!gpsIcon || !gpsStatus) return;
+    
+    // Set the SVG icon
+    gpsIcon.innerHTML = GPS_ICONS[status] || GPS_ICONS.disabled;
+    
+    // Set color and status text based on state
+    switch(status) {
+        case 'searching':
+            gpsIcon.style.color = '#FFA500'; // Orange
+            gpsStatus.textContent = '...';
+            gpsIcon.style.animation = 'gpsSearching 1.5s infinite';
+            break;
+        case 'connected':
+            gpsIcon.style.color = '#259FDE'; // Blue
+            gpsStatus.textContent = '✓';
+            gpsIcon.style.animation = 'gpsConnected 2s infinite';
+            break;
+        case 'error':
+            gpsIcon.style.color = '#DE3725'; // Red
+            gpsStatus.textContent = '!';
+            gpsIcon.style.animation = '';
+            break;
+        default:
+            gpsIcon.style.color = '#5E5E5E'; // Gray
+            gpsStatus.textContent = '--';
+            gpsIcon.style.animation = '';
+    }
+}
+
+// GPS Tracking Class (ADD THIS CLASS)
+class GeolocationTracker {
+    constructor() {
+        this.isTracking = false;
+        this.watchId = null;
+        this.retryCount = 0;
+        this.maxRetries = 10;
+        this.retryDelay = 5000; // 5 seconds
+        this.currentCoords = null;
+    }
+    
+    // Start GPS tracking
+    async start() {
+        if (!('geolocation' in navigator)) {
+            console.log("Geolocation not available");
+            updateGPSIcon('error');
+            return;
+        }
+        
+        console.log("Starting GPS tracking...");
+        updateGPSIcon('searching');
+        
+        // Ask for permission and start watching
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
+        
+        this.watchId = navigator.geolocation.watchPosition(
+            (position) => this.handleSuccess(position),
+            (error) => this.handleError(error),
+            options
+        );
+        
+        this.isTracking = true;
+    }
+    
+    // Handle successful position
+    async handleSuccess(position) {
+        const coords = position.coords;
+        this.currentCoords = {
+            lat: coords.latitude.toFixed(6),
+            lng: coords.longitude.toFixed(6),
+            accuracy: coords.accuracy ? Math.round(coords.accuracy) : null,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log(`GPS acquired: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
+        
+        // Update UI
+        updateGPSIcon('connected');
+        this.retryCount = 0; // Reset retry counter
+        
+        // Save to Firebase
+        await this.saveToFirebase();
+    }
+    
+    // Handle GPS errors
+    handleError(error) {
+        console.error("GPS Error:", error);
+        
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                console.log("GPS permission denied");
+                updateGPSIcon('error');
+                break;
+                
+            case error.POSITION_UNAVAILABLE:
+                console.log("GPS position unavailable");
+                this.scheduleRetry('searching');
+                break;
+                
+            case error.TIMEOUT:
+                console.log("GPS request timeout");
+                this.scheduleRetry('searching');
+                break;
+                
+            default:
+                updateGPSIcon('error');
+        }
+    }
+    
+    // Schedule retry if GPS not available
+    scheduleRetry(status) {
+        if (this.retryCount >= this.maxRetries) {
+            console.log("Max GPS retries reached");
+            updateGPSIcon('error');
+            return;
+        }
+        
+        this.retryCount++;
+        console.log(`GPS retry ${this.retryCount}/${this.maxRetries}`);
+        
+        updateGPSIcon(status);
+        
+        // Wait and retry
+        setTimeout(() => {
+            if (this.isTracking) {
+                this.start();
+            }
+        }, this.retryDelay);
+    }
+    
+    // Save coordinates to Firebase
+    async saveToFirebase() {
+        try {
+            const uptimeTracker = window.uptimeTracker;
+            if (!uptimeTracker || !uptimeTracker.deviceId || !this.currentCoords) {
+                return;
+            }
+            
+            // Format coordinates
+            const coordString = `${this.currentCoords.lat},${this.currentCoords.lng}`;
+            
+            // Reference to database
+            const coordsRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/coordinates`);
+            
+            // Save data
+            await set(coordsRef, {
+                value: coordString,
+                accuracy: this.currentCoords.accuracy,
+                timestamp: this.currentCoords.timestamp,
+                updated: new Date().toISOString()
+            });
+            
+            console.log(`Saved to Firebase: ${coordString}`);
+            
+        } catch (error) {
+            console.error("Error saving GPS to Firebase:", error);
+        }
+    }
+    
+    // Stop tracking
+    stop() {
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+        this.isTracking = false;
+        updateGPSIcon('disabled');
+        console.log("GPS tracking stopped");
+    }
+    
+    // Get current coordinates
+    getCoordinates() {
+        return this.currentCoords;
+    }
+}
+
+// Create global GPS tracker instance
+const gpsTracker = new GeolocationTracker();
+        
         // ============================================
         // CLOCK LOGIC
         // ============================================
@@ -1032,6 +1306,7 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
             // Start uptime tracking
             const uptimeTracker = new UptimeTracker();
             await uptimeTracker.start();
+            await gpsTracker.start();
 
             async function checkProbationerAndShowModal() {
     if (!uptimeTracker.isConnected || !uptimeTracker.deviceId) {
@@ -1291,6 +1566,7 @@ updateProbationerDisplay = async function() {
             window.addEventListener('beforeunload', () => {
                 clearInterval(clockInterval);
                 uptimeTracker.stop();
+                gpsTracker.stop();
             });
         }
 
@@ -1299,6 +1575,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
