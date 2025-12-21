@@ -947,54 +947,7 @@
             }
         }
 
-        // Get the probationer key for the current officer
-async function getProbationerKey() {
-    if (!currentUser || !currentUser.fullName) {
-        alert("Complete your Details First!");
-        return null;
-    }
 
-    try {
-        const probRef = ref(database, 'probationers');
-        const snapshot = await get(probRef);
-        
-        if (!snapshot.exists()) {
-            alert("No probationers found.");
-            return null;
-        }
-        
-        const probationers = snapshot.val();
-        for (const key in probationers) {
-            if (probationers[key].officerInCharge === currentUser.fullName) {
-                return key;
-            }
-        }
-        
-        alert("Set Probationer Assigned First!");
-        return null;
-    } catch (error) {
-        console.error("Error fetching probationers:", error);
-        alert("Error loading probationer data.");
-        return null;
-    }
-}
-
-// Save the probation area to Firebase
-async function saveProbationArea(type, data) {
-    const key = await getProbationerKey();
-    if (!key) return;
-    
-    const areaRef = ref(database, `probationers/${key}/probationArea`);
-    const areaData = { type, ...data };
-    
-    try {
-        await set(areaRef, areaData);
-        console.log("Probation area saved.");
-    } catch (error) {
-        console.error("Error saving probation area:", error);
-        alert("Error saving boundary.");
-    }
-}
         
         // Call initialization when page loads
         document.addEventListener('DOMContentLoaded', initApplication);
@@ -1401,10 +1354,11 @@ function handleCircleClick(e) {
             Radius: ${Math.round(radius)} meters
         `).openPopup();
         // Save to probationArea
-saveProbationArea('circle', {
-    center: { lat: center.lat, lng: center.lng },
-    radius
-});
+        // Save circle to probationArea
+        await saveProbationArea('circle', {
+            center: { lat: center.lat, lng: center.lng },
+            radius: radius
+        });
         
         removeAllTempMarkers();
         stopDrawingCircle();
@@ -1526,10 +1480,10 @@ function finishPolygon() {
         Area: ${Math.round(area)} m²
     `).openPopup();
 
-    // Save to probationArea
-saveProbationArea('polygon', {
-    points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
-});
+        // Save polygon to probationArea
+        await saveProbationArea('polygon', {
+            points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
+        });
     
     stopDrawingPolygon();
 }
@@ -1582,6 +1536,7 @@ document.getElementById('clearBoundariesBtn').addEventListener('click', function
     
     if (isDrawingCircle) stopDrawingCircle();
     if (isDrawingPolygon) stopDrawingPolygon();
+    await clearProbationArea();
 });
 
 // =================== MAP EVENT LISTENERS ===================
@@ -1631,6 +1586,97 @@ map.on('dblclick', function(e) {
             });
             updateMapPadding();
         }
+                // ===== PROBATION AREA SAVE FUNCTIONS =====
+        let currentUserFullName = null;
+
+        // Set fullName when user data is loaded
+        // (We'll capture it from the existing userData in initApplication)
+        // But since initApplication is in module scope, we'll patch it below
+
+        // We'll override part of initApplication to capture fullName
+        // This is a safe way since we can't directly access currentUser from here
+
+        // ===== PATCH: Capture fullName after user data loads =====
+        const originalInit = initApplication;
+        initApplication = async function() {
+            await originalInit();
+            // After successful login and userData loaded
+            const username = localStorage.getItem('emprobUsername');
+            if (username) {
+                const userData = await getUserData(username);
+                if (userData && userData.fullName) {
+                    currentUserFullName = userData.fullName;
+                }
+            }
+        };
+
+        // Get probationer key assigned to current officer
+        async function getProbationerKey() {
+            if (!currentUserFullName) {
+                alert("Complete your Details First!");
+                return null;
+            }
+
+            try {
+                const probRef = ref(database, 'probationers');
+                const snapshot = await get(probRef);
+
+                if (!snapshot.exists()) {
+                    alert("No probationers found.");
+                    return null;
+                }
+
+                const probationers = snapshot.val();
+                for (const key in probationers) {
+                    if (probationers[key].officerInCharge === currentUserFullName) {
+                        return key;
+                    }
+                }
+
+                alert("Set Probationer Assigned First!");
+                return null;
+            } catch (error) {
+                console.error("Error fetching probationers:", error);
+                alert("Error loading probationer data.");
+                return null;
+            }
+        }
+
+        // Save probation area to Firebase
+        async function saveProbationArea(type, data) {
+            const key = await getProbationerKey();
+            if (!key) return;
+
+            const areaRef = ref(database, `probationers/${key}/probationArea`);
+
+            try {
+                await set(areaRef, {
+                    type: type,
+                    ...data,
+                    savedAt: new Date().toISOString()
+                });
+                console.log("Probation area saved successfully:", type);
+            } catch (error) {
+                console.error("Error saving probation area:", error);
+                alert("Failed to save boundary. Check console for details.");
+            }
+        }
+
+        // Clear probation area from Firebase
+        async function clearProbationArea() {
+            const key = await getProbationerKey();
+            if (!key) return;
+
+            const areaRef = ref(database, `probationers/${key}/probationArea`);
+
+            try {
+                await set(areaRef, null);
+                console.log("Probation area cleared from database.");
+            } catch (error) {
+                console.error("Error clearing probation area:", error);
+            }
+        }
+        // ===== END PROBATION AREA FUNCTIONS =====
     </script>
 </body>
 </html>
