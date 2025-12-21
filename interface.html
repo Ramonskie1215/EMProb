@@ -845,11 +845,7 @@
         const app = initializeFirebase(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
-        import { set, remove, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-// Global variables
-let currentUserFullName = "";
-let assignedProbationerId = ""; // Will hold the probationer key, e.g. "probationer_123445"
         // Authentication check function
         function checkAuth() {
             const username = localStorage.getItem('emprobUsername');
@@ -902,59 +898,6 @@ let assignedProbationerId = ""; // Will hold the probationer key, e.g. "probatio
             }
         }
 
-        async function findAssignedProbationer(officerName) {
-    try {
-        const probationersRef = ref(database, 'probationers');
-        const snapshot = await get(probationersRef);
-        
-        if (snapshot.exists()) {
-            const probationers = snapshot.val();
-            const found = Object.keys(probationers).find(key => 
-                probationers[key].officerInCharge === officerName
-            );
-            
-            if (found) {
-                assignedProbationerId = found; // e.g. "probationer_123445"
-                console.log("Assigned probationer found:", assignedProbationerId);
-            } else {
-                assignedProbationerId = "";
-                alert("Set Probationer Assigned First!");
-            }
-        } else {
-            assignedProbationerId = "";
-            alert("Set Probationer Assigned First!");
-        }
-    } catch (error) {
-        console.error("Error finding assigned probationer:", error);
-        alert("Error checking assigned probationer.");
-    }
-}
-
-        async function saveBoundaryToFirebase(shapeData) {
-    if (!currentUserFullName) {
-        alert("Complete your Details First!");
-        return;
-    }
-    
-    if (!assignedProbationerId) {
-        alert("Set Probationer Assigned First!");
-        return;
-    }
-    
-    try {
-        const areaRef = ref(database, `probationers/${assignedProbationerId}/probationArea`);
-        await set(areaRef, {
-            ...shapeData,
-            savedBy: currentUserFullName,
-            savedAt: new Date().toISOString()
-        });
-        console.log("Boundary saved successfully for probationer:", assignedProbationerId);
-    } catch (error) {
-        console.error("Error saving boundary:", error);
-        alert("Failed to save boundary area.");
-    }
-}
-        
         // Initialize the application
         async function initApplication() {
             const username = checkAuth();
@@ -978,15 +921,6 @@ let assignedProbationerId = ""; // Will hold the probationer key, e.g. "probatio
                     
                     // Update avatar with profile picture or initials
                     updateAvatar(userData);
-                    currentUserFullName = userData.fullName || "";
-    
-    if (!currentUserFullName) {
-        alert("Complete your Details First!");
-        // Optionally redirect or disable map features
-    } else {
-        // Search for probationer with this officerInCharge
-        findAssignedProbationer(currentUserFullName);
-    }
                     
                     // Show the main interface
                     document.getElementById('loadingScreen').style.display = 'none';
@@ -1401,7 +1335,7 @@ function handleCircleClick(e) {
         
         clearCurrentShape();
         
-currentShape = L.circle(center, {
+        currentShape = L.circle(center, {
             radius: radius,
             className: 'circle-boundary',
             color: '#259FDE',
@@ -1415,14 +1349,6 @@ currentShape = L.circle(center, {
             Center: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}<br>
             Radius: ${Math.round(radius)} meters
         `).openPopup();
-        
-        // === SAVE TO FIREBASE ===
-        saveBoundaryToFirebase({
-            type: "circle",
-            center: [center.lat, center.lng],
-            radius_meters: Math.round(radius)
-        });
-        // ===
         
         removeAllTempMarkers();
         stopDrawingCircle();
@@ -1537,23 +1463,13 @@ function finishPolygon() {
     }
     area = Math.abs(area / 2) * 111319.9 * 111319.9;
     
-currentShape.bindPopup(`
+    currentShape.bindPopup(`
         <b>Polygon Boundary</b><br>
         Points: ${polygonPoints.length}<br>
         Perimeter: ${Math.round(perimeter)} meters<br>
         Area: ${Math.round(area)} m²
     `).openPopup();
     
-    // === SAVE TO FIREBASE ===
-    const polygonCoords = polygonPoints.map(p => [p.lat, p.lng]);
-    saveBoundaryToFirebase({
-        type: "polygon",
-        coordinates: polygonCoords,
-        perimeter_meters: Math.round(perimeter),
-        area_sqm: Math.round(area)
-    });
-    // ===
-
     stopDrawingPolygon();
 }
 
@@ -1594,7 +1510,7 @@ document.getElementById('drawPolylineBtn').addEventListener('click', function() 
     }
 });
 
-document.getElementById('clearBoundariesBtn').addEventListener('click', async function() {
+document.getElementById('clearBoundariesBtn').addEventListener('click', function() {
     clearCurrentShape();
     removeAllTempMarkers();
     
@@ -1605,18 +1521,6 @@ document.getElementById('clearBoundariesBtn').addEventListener('click', async fu
     
     if (isDrawingCircle) stopDrawingCircle();
     if (isDrawingPolygon) stopDrawingPolygon();
-
-    // === ALSO CLEAR FROM FIREBASE ===
-    if (assignedProbationerId) {
-        try {
-            const areaRef = ref(database, `probationers/${assignedProbationerId}/probationArea`);
-            await remove(areaRef);
-            console.log("Cleared saved boundary from Firebase");
-        } catch (error) {
-            console.error("Error clearing boundary from Firebase:", error);
-        }
-    }
-    // ===
 });
 
 // =================== MAP EVENT LISTENERS ===================
