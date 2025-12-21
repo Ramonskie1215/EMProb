@@ -1441,8 +1441,16 @@ function finalizePolygon() {
 
     // Fully stop drawing mode
     stopDrawingPolygon();
+    resetPolygonButton();
 }
-            
+
+function resetPolygonButton() {
+    const btn = document.getElementById('drawPolylineBtn');
+    btn.textContent = '▰ Polygon';
+    btn.classList.remove('drawing');
+    document.getElementById('drawCircleBtn').disabled = false;
+}
+
 // Polygon drawing function
 function startDrawingPolygon() {
     // Stop any active circle drawing first
@@ -1568,6 +1576,7 @@ function stopDrawingPolygon() {
     
     // Reset cursor
     map.getContainer().style.cursor = '';
+    resetPolygonButton();
 }
 
 // Clear all boundaries function
