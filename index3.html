@@ -39,22 +39,54 @@
                 0 0 50px rgba(0, 0, 0, 0.8);
         }
 
-        /* Battery Indicator - Top right corner */
-        .battery-indicator {
+        /* Combined Status Container - GPS & Battery */
+        .combined-status {
             position: absolute;
             top: 5vmin;
             right: 5vmin;
             display: flex;
             align-items: center;
-            gap: 2vmin;
             z-index: 100;
             background: rgba(28, 28, 28, 0.95);
-            padding: 2vmin 3vmin;
+            padding: 2vmin;
             border-radius: 2.5vmin;
             border: 2px solid rgba(37, 159, 222, 0.5);
             backdrop-filter: blur(10px);
         }
 
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5vmin;
+            padding: 0 2vmin;
+        }
+
+        .status-divider {
+            width: 1px;
+            height: 5vmin;
+            background: rgba(37, 159, 222, 0.3);
+        }
+
+        /* GPS Icon */
+        .gps-icon {
+            width: 5vmin;
+            height: 5vmin;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gps-status {
+            font-size: 4vmin;
+            font-weight: 800;
+            color: #FFFFFF;
+            font-family: 'Courier New', monospace;
+            min-width: 8vmin;
+            text-align: center;
+            text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
+        }
+
+        /* Battery Icon */
         .battery-icon {
             position: relative;
             width: 12vmin;
@@ -211,21 +243,22 @@
             padding: 0 5vmin;
         }
 
-#period {
-    position: absolute !important;
-    top: 3vmin !important; /* same height as battery */
-    right: 43% !important; /* push it left of battery */
-    left: auto !important;
-    transform: none !important;
-    font-size: 5.5vmin !important;
-    font-weight: 900 !important;
-    color: #259FDE !important;
-    background: rgba(28, 28, 28, 0.9) !important;
-    padding: 1.2vmin 3.5vmin !important;
-    border-radius: 2vmin !important;
-    border: 2px solid #259FDE !important;
-    z-index: 101 !important;
-}
+        #period {
+            position: absolute !important;
+            top: 3vmin !important; /* same height as combined status */
+            right: 50% !important; /* center horizontally */
+            left: auto !important;
+            transform: translateX(50%) !important; /* perfect centering */
+            font-size: 5.5vmin !important;
+            font-weight: 900 !important;
+            color: #259FDE !important;
+            background: rgba(28, 28, 28, 0.9) !important;
+            padding: 1.2vmin 3.5vmin !important;
+            border-radius: 2vmin !important;
+            border: 2px solid #259FDE !important;
+            z-index: 101 !important;
+        }
+
         /* Corner Accents */
         .corner {
             position: absolute;
@@ -277,33 +310,34 @@
             transform: translate(-50%, -50%);
         }
 
-#idDisplay {
-    position: fixed !important;
-    bottom: 0vh !important;           /* tiny gap from screen bottom (0vh = glued to edge) */
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+        #idDisplay {
+            position: fixed !important;
+            bottom: 0vh !important;           /* tiny gap from screen bottom (0vh = glued to edge) */
+            left: 50% !important;
+            transform: translateX(-50%) !important;
 
-    font-family: 'Courier New', monospace !important;
-    font-size: 4.5vmin !important;
-    font-weight: 900 !important;
-    color: #259FDE !important;
-    letter-spacing: 0.6vmin !important;
-    text-shadow: 
-        0 0 15px #0E3CBD,
-        0 0 30px #259FDE !important;
+            font-family: 'Courier New', monospace !important;
+            font-size: 4.5vmin !important;
+            font-weight: 900 !important;
+            color: #259FDE !important;
+            letter-spacing: 0.6vmin !important;
+            text-shadow: 
+                0 0 15px #0E3CBD,
+                0 0 30px #259FDE !important;
 
-    background: none !important;      /* no card */
-    border: none !important;          /* no border */
-    padding: 0 !important;            /* no padding removed */
-    margin: 0 !important;
-    z-index: 99999 !important;
-    pointer-events: none !important;  /* doesn’t block taps */
-}
-/* Optional: subtle floating animation so it feels alive */
-@keyframes float {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(-10px); }
-}
+            background: none !important;      /* no card */
+            border: none !important;          /* no border */
+            padding: 0 !important;            /* no padding removed */
+            margin: 0 !important;
+            z-index: 99999 !important;
+            pointer-events: none !important;  /* doesn't block taps */
+        }
+
+        /* Optional: subtle floating animation so it feels alive */
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
 
         /* Status Indicator - bottom center */
         .status-indicator {
@@ -338,6 +372,17 @@
             50% { background-color: #DE3725; }
         }
 
+        /* GPS icon animations */
+        @keyframes gpsSearching {
+            0%, 100% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        @keyframes gpsConnected {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
         /* Responsive Adjustments */
         @media (max-height: 500px) and (max-width: 500px) {
             .time-digit {
@@ -364,12 +409,34 @@
                 top: 12vmin;
             }
             
-            .battery-indicator {
+            /* Combined Status Container for small screens */
+            .combined-status {
                 top: 3vmin;
                 right: 3vmin;
-                padding: 1.5vmin 2.5vmin;
+                padding: 1.5vmin;
             }
             
+            .status-section {
+                gap: 1vmin;
+                padding: 0 1.5vmin;
+            }
+            
+            .status-divider {
+                height: 4vmin;
+            }
+            
+            /* GPS adjustments */
+            .gps-icon {
+                width: 4vmin;
+                height: 4vmin;
+            }
+            
+            .gps-status {
+                font-size: 3vmin;
+                min-width: 6vmin;
+            }
+            
+            /* Battery adjustments */
             .battery-icon {
                 width: 10vmin;
                 height: 5vmin;
@@ -377,6 +444,18 @@
             
             .battery-percentage {
                 font-size: 4vmin;
+                min-width: 10vmin;
+            }
+            
+            .battery-tip {
+                right: -1.5vmin;
+                width: 1.5vmin;
+                height: 2.5vmin;
+            }
+            
+            .charging-icon {
+                width: 4vmin;
+                height: 4vmin;
             }
             
             .date-display {
@@ -393,69 +472,7 @@
                 font-size: 1.8vmin;
                 bottom: 1vmin;
             }
-
-                .gps-indicator {
-        top: 3vmin;
-        right: 25vmin;
-        padding: 1.5vmin 2.5vmin;
-    }
-    
-    .gps-icon {
-        width: 4vmin;
-        height: 4vmin;
-    }
-    
-    .gps-status {
-        font-size: 3vmin;
-    }
         }
-
-        /* GPS Indicator - Next to battery */
-.gps-indicator {
-    position: absolute;
-    top: 5vmin;
-    right: 30vmin; /* Adjust based on battery indicator width */
-    display: flex;
-    align-items: center;
-    gap: 1.5vmin;
-    z-index: 100;
-    background: rgba(28, 28, 28, 0.95);
-    padding: 2vmin 3vmin;
-    border-radius: 2.5vmin;
-    border: 2px solid rgba(37, 159, 222, 0.5);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.gps-icon {
-    width: 5vmin;
-    height: 5vmin;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.gps-status {
-    font-size: 4vmin;
-    font-weight: 800;
-    color: #FFFFFF;
-    font-family: 'Courier New', monospace;
-    min-width: 8vmin;
-    text-align: center;
-    text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
-}
-
-/* GPS icon animations */
-@keyframes gpsSearching {
-    0%, 100% { opacity: 0.3; transform: scale(0.9); }
-    50% { opacity: 1; transform: scale(1.1); }
-}
-
-@keyframes gpsConnected {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-}
-        
     </style>
 </head>
 <body>
@@ -465,29 +482,33 @@
         <!-- Status Indicator -->
         <div class="status-indicator" id="statusIndicator">Connected</div>
         
-        <!-- Battery Indicator -->
-        <div class="battery-indicator">
-            <div class="battery-icon">
-                <div class="battery-fill" id="batteryFill"></div>
-                <div class="charging-overlay" id="chargingOverlay"></div>
-                <div class="battery-tip"></div>
-            </div>
-            <div class="battery-percentage" id="batteryPercentage">--%</div>
-            <div class="charging-icon" id="chargingIcon">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M11.67 2L6.33 8H10V14L13.67 8H10V2H11.67Z"/>
-                </svg>
-            </div>
+<!-- Combined Status Container -->
+<div class="combined-status">
+    <!-- GPS Section -->
+    <div class="status-section gps-section">
+        <div class="gps-icon">
+            <svg id="gpsIcon" viewBox="0 0 24 24" fill="currentColor"></svg>
         </div>
-
-        <!-- GPS Status Indicator - Next to battery -->
-<div class="gps-indicator" id="gpsIndicator">
-    <div class="gps-icon">
-        <svg id="gpsIcon" viewBox="0 0 24 24" fill="currentColor">
-            <!-- This will change based on status -->
-        </svg>
+        <div class="gps-status" id="gpsStatus">--</div>
     </div>
-    <div class="gps-status" id="gpsStatus">--</div>
+    
+    <!-- Divider -->
+    <div class="status-divider"></div>
+    
+    <!-- Battery Section -->
+    <div class="status-section battery-section">
+        <div class="battery-icon">
+            <div class="battery-fill" id="batteryFill"></div>
+            <div class="charging-overlay" id="chargingOverlay"></div>
+            <div class="battery-tip"></div>
+        </div>
+        <div class="battery-percentage" id="batteryPercentage">--%</div>
+        <div class="charging-icon" id="chargingIcon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.67 2L6.33 8H10V14L13.67 8H10V2H11.67Z"/>
+            </svg>
+        </div>
+    </div>
 </div>
         
         <!-- Corner Accents -->
@@ -1575,6 +1596,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
