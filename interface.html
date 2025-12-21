@@ -827,7 +827,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -845,6 +845,7 @@
         const app = initializeFirebase(firebaseConfig);
         const database = getDatabase(app);
         const auth = getAuth(app);
+        let currentUser = null;
 
         // Authentication check function
         function checkAuth() {
@@ -913,6 +914,7 @@
 
                 // Get user data from Firebase
                 const userData = await getUserData(username);
+                currentUser = userData;
                 
                 if (userData) {
                     // Update UI with user data
@@ -945,6 +947,55 @@
             }
         }
 
+        // Get the probationer key for the current officer
+async function getProbationerKey() {
+    if (!currentUser || !currentUser.fullName) {
+        alert("Complete your Details First!");
+        return null;
+    }
+
+    try {
+        const probRef = ref(database, 'probationers');
+        const snapshot = await get(probRef);
+        
+        if (!snapshot.exists()) {
+            alert("No probationers found.");
+            return null;
+        }
+        
+        const probationers = snapshot.val();
+        for (const key in probationers) {
+            if (probationers[key].officerInCharge === currentUser.fullName) {
+                return key;
+            }
+        }
+        
+        alert("Set Probationer Assigned First!");
+        return null;
+    } catch (error) {
+        console.error("Error fetching probationers:", error);
+        alert("Error loading probationer data.");
+        return null;
+    }
+}
+
+// Save the probation area to Firebase
+async function saveProbationArea(type, data) {
+    const key = await getProbationerKey();
+    if (!key) return;
+    
+    const areaRef = ref(database, `probationers/${key}/probationArea`);
+    const areaData = { type, ...data };
+    
+    try {
+        await set(areaRef, areaData);
+        console.log("Probation area saved.");
+    } catch (error) {
+        console.error("Error saving probation area:", error);
+        alert("Error saving boundary.");
+    }
+}
+        
         // Call initialization when page loads
         document.addEventListener('DOMContentLoaded', initApplication);
     </script>
@@ -1349,6 +1400,11 @@ function handleCircleClick(e) {
             Center: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}<br>
             Radius: ${Math.round(radius)} meters
         `).openPopup();
+        // Save to probationArea
+saveProbationArea('circle', {
+    center: { lat: center.lat, lng: center.lng },
+    radius
+});
         
         removeAllTempMarkers();
         stopDrawingCircle();
@@ -1469,6 +1525,11 @@ function finishPolygon() {
         Perimeter: ${Math.round(perimeter)} meters<br>
         Area: ${Math.round(area)} m²
     `).openPopup();
+
+    // Save to probationArea
+saveProbationArea('polygon', {
+    points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
+});
     
     stopDrawingPolygon();
 }
