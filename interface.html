@@ -1587,16 +1587,7 @@ map.on('dblclick', function(e) {
             updateMapPadding();
         }
                 // ===== PROBATION AREA SAVE FUNCTIONS =====
-        let currentUserFullName = null;
 
-        // Set fullName when user data is loaded
-        // (We'll capture it from the existing userData in initApplication)
-        // But since initApplication is in module scope, we'll patch it below
-
-        // We'll override part of initApplication to capture fullName
-        // This is a safe way since we can't directly access currentUser from here
-
-        // ===== PATCH: Capture fullName after user data loads =====
 // ===== PROBATION AREA SAVE FUNCTIONS =====
 let currentUserFullName = null;
 
