@@ -825,144 +825,134 @@
 
     <!-- Firebase SDK - FIXED VERSION -->
     <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+ <!-- Firebase SDK - SIMPLER VERSION -->
+<script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
-            authDomain: "probationlocator.firebaseapp.com",
-            databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
-            projectId: "probationlocator",
-            storageBucket: "probationlocator.firebasestorage.app",
-            messagingSenderId: "323066331183",
-            appId: "1:323066331183:web:61f35b70cb07c0618106da"
-        };
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
+        authDomain: "probationlocator.firebaseapp.com",
+        databaseURL: "https://probationlocator-default-rtdb.firebaseio.com",
+        projectId: "probationlocator",
+        storageBucket: "probationlocator.firebasestorage.app",
+        messagingSenderId: "323066331183",
+        appId: "1:323066331183:web:61f35b70cb07c0618106da"
+    };
 
-        // Initialize Firebase
-        const app = initializeFirebase(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
-        let currentUser = null;
-
-        // Authentication check function
-        function checkAuth() {
-            const username = localStorage.getItem('emprobUsername');
-            if (!username) {
-                window.location.href = 'index.html';
-            }
-            return username;
-        }
-
-        // Get user data from Firebase
-        async function getUserData(username) {
-            try {
-                const userRef = ref(database, 'credentials/' + username);
-                const snapshot = await get(userRef);
-                
-                if (snapshot.exists()) {
-                    return snapshot.val();
-                } else {
-                    console.error('User data not found in Firebase');
-                    return null;
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                return null;
-            }
-        }
-
-        // Update avatar with profile picture
-        function updateAvatar(userData) {
-            const userAvatar = document.getElementById('userAvatar');
-            const avatarInitials = document.getElementById('avatarInitials');
-            
-            if (userData.profilePicture) {
-                // Create img element for profile picture
-                const img = document.createElement('img');
-                img.src = userData.profilePicture;
-                img.alt = userData.username + ' profile picture';
-                img.className = 'user-avatar-img';
-                
-                // Clear the avatar div and add the image
-                userAvatar.innerHTML = '';
-                userAvatar.appendChild(img);
-                
-                // Hide initials if image loads successfully
-                avatarInitials.style.display = 'none';
-            } else {
-                // If no profile picture, show initials
-                avatarInitials.textContent = userData.username.charAt(0).toUpperCase();
-                avatarInitials.style.display = 'flex';
-            }
-        }
-
-// In the Firebase module (around line 320-340):
-async function initApplication() {
-    const username = checkAuth();
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+    const auth = getAuth(app);
     
-    if (!username) {
-        return;
-    }
+    // Store user data globally
+    let currentUserData = null;
 
-    try {
-        // Authenticate anonymously with Firebase
-        await signInAnonymously(auth);
-        console.log("Anonymous authentication successful");
+    // Make database available globally
+    window.firebaseDatabase = database;
+    window.firebaseRef = ref;
+    window.firebaseGet = get;
+    window.firebaseSet = set;
+    window.currentUserData = currentUserData;
 
-        // Get user data from Firebase
-        const userData = await getUserData(username);
-        currentUser = userData;
-        
-        if (userData) {
-            // Update UI with user data
-            document.getElementById('usernameDisplay').textContent = userData.username;
-            document.getElementById('emailDisplay').textContent = userData.email;
-            
-            // Update avatar with profile picture or initials
-            updateAvatar(userData);
-            
-            // SET THE FULL NAME FOR PROBATION AREA FUNCTIONS
-            // Set it in localStorage AND global variable
-            if (userData.fullName) {
-                localStorage.setItem('emprobFullName', userData.fullName);
-                // We need to make this available globally
-                window.currentUserFullName = userData.fullName;
-                console.log("DEBUG: Full name set to:", userData.fullName);
-            } else {
-                console.error("DEBUG: No fullName in userData:", userData);
-            }
-            
-            // Show the main interface
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('mainHeader').style.display = 'flex';
-            document.getElementById('mapContainer').style.display = 'block';
-            
-            // Initialize the map
-            initializeMap();
-        } else {
-            // If user data not found, redirect to login
-            localStorage.removeItem('emprobUsername');
-            localStorage.removeItem('emprobFullName');
+    // Check if user is logged in
+    function checkAuth() {
+        const username = localStorage.getItem('emprobUsername');
+        if (!username) {
             window.location.href = 'index.html';
         }
-    } catch (error) {
-        console.error("Initialization error:", error);
-        document.getElementById('loadingScreen').innerHTML = `
-            <div style="text-align: center; color: #ff6b6b;">
-                <h3>Error Loading Application</h3>
-                <p>Please refresh the page or try again later.</p>
-            </div>
-        `;
+        return username;
     }
-}
 
+    // Get user data
+    async function getUserData(username) {
+        try {
+            const userRef = ref(database, 'credentials/' + username);
+            const snapshot = await get(userRef);
+            
+            if (snapshot.exists()) {
+                return snapshot.val();
+            } else {
+                return null;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            return null;
+        }
+    }
 
+    // Update avatar
+    function updateAvatar(userData) {
+        const userAvatar = document.getElementById('userAvatar');
+        const avatarInitials = document.getElementById('avatarInitials');
         
-        // Call initialization when page loads
-        document.addEventListener('DOMContentLoaded', initApplication);
+        if (userData.profilePicture) {
+            const img = document.createElement('img');
+            img.src = userData.profilePicture;
+            img.alt = userData.username + ' profile picture';
+            img.className = 'user-avatar-img';
+            
+            userAvatar.innerHTML = '';
+            userAvatar.appendChild(img);
+            avatarInitials.style.display = 'none';
+        } else {
+            avatarInitials.textContent = userData.username.charAt(0).toUpperCase();
+            avatarInitials.style.display = 'flex';
+        }
+    }
+
+    // Main initialization
+    async function initApplication() {
+        const username = checkAuth();
+        
+        if (!username) return;
+
+        try {
+            // Login to Firebase
+            await signInAnonymously(auth);
+            
+            // Get user data
+            const userData = await getUserData(username);
+            currentUserData = userData;
+            
+            if (userData) {
+                // Update UI
+                document.getElementById('usernameDisplay').textContent = userData.username;
+                document.getElementById('emailDisplay').textContent = userData.email;
+                updateAvatar(userData);
+                
+                // VERY IMPORTANT: Store full name globally
+                window.currentUserFullName = userData.fullName;
+                console.log("User full name set to:", window.currentUserFullName);
+                
+                // Show the interface
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainHeader').style.display = 'flex';
+                document.getElementById('mapContainer').style.display = 'block';
+                
+                // Initialize map
+                initializeMap();
+            } else {
+                localStorage.removeItem('emprobUsername');
+                window.location.href = 'index.html';
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('loadingScreen').innerHTML = `
+                <div style="text-align: center; color: #ff6b6b;">
+                    <h3>Error Loading</h3>
+                    <p>Please refresh the page.</p>
+                </div>
+            `;
+        }
+    }
+
+    // Start when page loads
+    document.addEventListener('DOMContentLoaded', initApplication);
+</script>
     </script>
 
     <!-- Leaflet JS -->
@@ -1367,10 +1357,10 @@ function handleCircleClick(e) {
         `).openPopup();
         // Save to probationArea
         // Save circle to probationArea
-        saveProbationArea('circle', {
-            center: { lat: center.lat, lng: center.lng },
-            radius: radius
-        });
+        await saveProbationArea('circle', {
+    center: { lat: center.lat, lng: center.lng },
+    radius: radius
+});
         
         removeAllTempMarkers();
         stopDrawingCircle();
@@ -1493,10 +1483,9 @@ function finishPolygon() {
     `).openPopup();
 
         // Save polygon to probationArea
-        saveProbationArea('polygon', {
-            points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
-        });
-    
+        await saveProbationArea('polygon', {
+    points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
+});
     stopDrawingPolygon();
 }
 
@@ -1548,7 +1537,7 @@ document.getElementById('clearBoundariesBtn').addEventListener('click', function
     
     if (isDrawingCircle) stopDrawingCircle();
     if (isDrawingPolygon) stopDrawingPolygon();
-    clearProbationArea();
+    await clearProbationArea();
 });
 
 // =================== MAP EVENT LISTENERS ===================
@@ -1664,80 +1653,116 @@ async function initApplication() {
     }
 }
         
-// Get probationer key assigned to current officer
+// ===== SIMPLE PROBATION AREA FUNCTIONS =====
+
+// 1. Get the probationer assigned to current officer
 async function getProbationerKey() {
-    console.log("=== DEBUG: getProbationerKey() called ===");
+    console.log("Looking for probationer...");
     
-    // Try multiple ways to get full name
-    let fullName = window.currentUserFullName || localStorage.getItem('emprobFullName');
-    console.log("Full name from:", {
-        window: window.currentUserFullName,
-        localStorage: localStorage.getItem('emprobFullName'),
-        final: fullName
-    });
-    
-    if (!fullName) {
-        alert("Complete your Details First! No full name found in profile.");
-        console.error("DEBUG: No full name available anywhere");
+    // Check if we have the user's full name
+    if (!window.currentUserFullName) {
+        alert("Please complete your profile first!");
         return null;
     }
-
+    
+    console.log("Officer name:", window.currentUserFullName);
+    
     try {
-        const probRef = ref(database, 'probationers');
-        console.log("DEBUG: Fetching probationers from Firebase...");
+        // Use the Firebase functions we made global
+        const probRef = window.firebaseRef(window.firebaseDatabase, 'probationers');
+        const snapshot = await window.firebaseGet(probRef);
         
-        const snapshot = await get(probRef);
-        console.log("DEBUG: Snapshot exists:", snapshot.exists());
-
         if (!snapshot.exists()) {
-            alert("No probationers found in database.");
-            console.error("DEBUG: No probationers data in Firebase");
+            alert("No probationers found!");
             return null;
         }
-
-        const probationers = snapshot.val();
-        console.log("DEBUG: Looking for officer:", fullName);
         
-        // Search for matching probationer
+        const probationers = snapshot.val();
+        
+        // Look for probationer with matching officer
         for (const key in probationers) {
-            const officerInCharge = probationers[key].officerInCharge;
-            console.log(`Checking: "${officerInCharge}" vs "${fullName}"`);
+            const probationer = probationers[key];
+            const officerName = probationer.officerInCharge;
             
-            if (officerInCharge === fullName) {
-                console.log(`DEBUG: MATCH FOUND! Key: ${key}`);
+            if (officerName && officerName.trim() === window.currentUserFullName.trim()) {
+                console.log("Found probationer:", key);
                 return key;
             }
         }
-
-        console.error("DEBUG: No probationer found for officer:", fullName);
-        alert(`No probationer assigned to officer: ${fullName}\n\nPlease assign a probationer first in the dashboard.`);
+        
+        alert(`No probationer assigned to ${window.currentUserFullName}`);
         return null;
+        
     } catch (error) {
-        console.error("DEBUG: Error fetching probationers:", error);
-        alert(`Error loading probationer data: ${error.message}`);
+        console.error("Error:", error);
+        alert("Error loading data");
         return null;
     }
 }
 
-        // Save probation area to Firebase
-        function saveProbationArea(type, data) {
-            const key = getProbationerKey();
-            if (!key) return;
+// 2. Save boundary to Firebase
+async function saveProbationArea(type, data) {
+    console.log("Saving boundary...");
+    
+    const key = await getProbationerKey();
+    if (!key) return;
+    
+    try {
+        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+        
+        const areaData = {
+            type: type,
+            ...data,
+            savedAt: new Date().toISOString()
+        };
+        
+        await window.firebaseSet(areaRef, areaData);
+        console.log("Saved successfully!");
+        alert("Boundary saved!");
+        
+    } catch (error) {
+        console.error("Error saving:", error);
+        alert("Failed to save");
+    }
+}
 
-            const areaRef = ref(database, `probationers/${key}/probationArea`);
+// 3. Clear boundary from Firebase
+async function clearProbationArea() {
+    console.log("Clearing boundary...");
+    
+    const key = await getProbationerKey();
+    if (!key) return;
+    
+    try {
+        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+        await window.firebaseSet(areaRef, null);
+        console.log("Cleared successfully!");
+        alert("Boundary cleared!");
+        
+    } catch (error) {
+        console.error("Error clearing:", error);
+        alert("Failed to clear");
+    }
+}
 
-            try {
-                 set(areaRef, {
-                    type: type,
-                    ...data,
-                    savedAt: new Date().toISOString()
-                });
-                console.log("Probation area saved successfully:", type);
-            } catch (error) {
-                console.error("Error saving probation area:", error);
-                alert("Failed to save boundary. Check console for details.");
-            }
-        }
+// 4. Test function (for debugging)
+async function testProbationerKey() {
+    console.log("=== TESTING ===");
+    console.log("Username in localStorage:", localStorage.getItem('emprobUsername'));
+    console.log("Full name in window:", window.currentUserFullName);
+    
+    const key = await getProbationerKey();
+    console.log("Found probationer key:", key);
+    
+    if (key) {
+        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+        const areaSnapshot = await window.firebaseGet(areaRef);
+        console.log("Existing boundary:", areaSnapshot.val());
+    }
+}
+
+// Make test function available in browser console
+window.testProbationerKey = testProbationerKey;
 
         // Clear probation area from Firebase
         function clearProbationArea() {
