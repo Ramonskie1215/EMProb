@@ -1729,7 +1729,7 @@ function saveProbationArea(type, data) {
         })
 .then(() => {
     console.log("✓ Boundary saved!");
-    alert("✓ Boundary saved successfully!");
+  //  alert("✓ Boundary saved successfully!");
     
     // Plot the shape immediately after saving
     plotBoundaryOnMap({
@@ -1758,7 +1758,7 @@ function clearProbationArea() {
         })
         .then(() => {
             console.log("✓ Boundary cleared!");
-            alert("✓ Boundary cleared!");
+          //  alert("✓ Boundary cleared!");
             
             // Remove from map
             if (window.currentShape && map.hasLayer(window.currentShape)) {
