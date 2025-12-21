@@ -1025,6 +1025,11 @@
             getAddress(currentLat, currentLng).then(address => {
                 document.getElementById('locationAddress').textContent = address;
             });
+
+                setTimeout(() => {
+        loadAndPlotSavedBoundary();
+    }, 1000);
+            
             // Map Controls hide/show functionality
 const mapControls = document.getElementById('mapControls');
             // === ADD THIS ENTIRE BLOCK ===
@@ -1652,13 +1657,15 @@ async function initApplication() {
         
 // ===== SIMPLE PROBATION AREA FUNCTIONS =====
 
-// ===== SIMPLE PROBATION AREA FUNCTIONS =====
+// Make currentShape globally accessible
+if (!window.currentShape) {
+    window.currentShape = null;
+}
 
 // 1. Get the probationer assigned to current officer
 function getProbationerKey() {
     console.log("Looking for probationer...");
     
-    // Check if we have the user's full name
     if (!window.currentUserFullName) {
         alert("❌ Please complete your profile first!");
         return Promise.reject("No full name");
@@ -1666,9 +1673,7 @@ function getProbationerKey() {
     
     console.log("Officer name:", window.currentUserFullName);
     
-    // Return a promise
     return new Promise((resolve, reject) => {
-        // Use the Firebase functions we made global
         const probRef = window.firebaseRef(window.firebaseDatabase, 'probationers');
         
         window.firebaseGet(probRef)
@@ -1681,7 +1686,6 @@ function getProbationerKey() {
                 
                 const probationers = snapshot.val();
                 
-                // Look for probationer with matching officer
                 for (const key in probationers) {
                     const probationer = probationers[key];
                     const officerName = probationer.officerInCharge;
@@ -1724,10 +1728,16 @@ function saveProbationArea(type, data) {
         .then(() => {
             console.log("✓ Boundary saved!");
             alert("✓ Boundary saved successfully!");
+            
+            // Plot the shape immediately after saving
+            plotBoundaryOnMap({
+                type: type,
+                ...data,
+                savedAt: new Date().toISOString()
+            });
         })
         .catch(error => {
             if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
-                // These errors already showed alerts
                 return;
             }
             console.error("Save error:", error);
@@ -1747,10 +1757,15 @@ function clearProbationArea() {
         .then(() => {
             console.log("✓ Boundary cleared!");
             alert("✓ Boundary cleared!");
+            
+            // Remove from map
+            if (window.currentShape && map.hasLayer(window.currentShape)) {
+                map.removeLayer(window.currentShape);
+                window.currentShape = null;
+            }
         })
         .catch(error => {
             if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
-                // These errors already showed alerts
                 return;
             }
             console.error("Clear error:", error);
@@ -1758,7 +1773,128 @@ function clearProbationArea() {
         });
 }
 
-// 4. Test function (for debugging)
+// 4. Load and plot saved boundary from Firebase
+function loadAndPlotSavedBoundary() {
+    console.log("Loading saved boundary...");
+    
+    getProbationerKey()
+        .then(key => {
+            const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+            return window.firebaseGet(areaRef);
+        })
+        .then(snapshot => {
+            if (snapshot.exists()) {
+                const boundaryData = snapshot.val();
+                console.log("Found saved boundary:", boundaryData);
+                plotBoundaryOnMap(boundaryData);
+            } else {
+                console.log("No saved boundary found");
+            }
+        })
+        .catch(error => {
+            if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
+                console.log("No probationer assigned or no boundary saved");
+                return;
+            }
+            console.error("Error loading boundary:", error);
+        });
+}
+
+// 5. Plot boundary on the map
+function plotBoundaryOnMap(boundaryData) {
+    if (!boundaryData || !boundaryData.type) {
+        console.error("Invalid boundary data");
+        return;
+    }
+    
+    // Clear any existing boundary
+    if (window.currentShape && map.hasLayer(window.currentShape)) {
+        map.removeLayer(window.currentShape);
+        window.currentShape = null;
+    }
+    
+    const type = boundaryData.type;
+    
+    if (type === 'circle') {
+        const center = L.latLng(boundaryData.center.lat, boundaryData.center.lng);
+        const radius = boundaryData.radius;
+        
+        window.currentShape = L.circle(center, {
+            radius: radius,
+            className: 'circle-boundary',
+            color: '#259FDE',
+            fillColor: '#259FDE',
+            fillOpacity: 0.05,
+            weight: 3
+        }).addTo(map);
+        
+        window.currentShape.bindPopup(`
+            <b>Saved Circle Boundary</b><br>
+            Center: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}<br>
+            Radius: ${Math.round(radius)} meters<br>
+            <small>Saved on: ${new Date(boundaryData.savedAt).toLocaleDateString()}</small>
+        `);
+        
+    } else if (type === 'polygon') {
+        if (!boundaryData.points || boundaryData.points.length < 3) {
+            console.error("Invalid polygon points");
+            return;
+        }
+        
+        const points = boundaryData.points.map(p => L.latLng(p.lat, p.lng));
+        const closedPoints = [...points, points[0]];
+        
+        window.currentShape = L.polygon(closedPoints, {
+            color: '#E74C3C',
+            weight: 3,
+            opacity: 0.8,
+            fillColor: '#E74C3C',
+            fillOpacity: 0.05,
+            className: 'polyline-boundary'
+        }).addTo(map);
+        
+        // Calculate perimeter and area
+        let perimeter = 0;
+        for (let i = 0; i < points.length; i++) {
+            const next = (i + 1) % points.length;
+            perimeter += points[i].distanceTo(points[next]);
+        }
+        
+        let area = 0;
+        for (let i = 0; i < points.length; i++) {
+            const j = (i + 1) % points.length;
+            area += points[i].lng * points[j].lat;
+            area -= points[j].lng * points[i].lat;
+        }
+        area = Math.abs(area / 2) * 111319.9 * 111319.9;
+        
+        window.currentShape.bindPopup(`
+            <b>Saved Polygon Boundary</b><br>
+            Points: ${points.length}<br>
+            Perimeter: ${Math.round(perimeter)} meters<br>
+            Area: ${Math.round(area)} m²<br>
+            <small>Saved on: ${new Date(boundaryData.savedAt).toLocaleDateString()}</small>
+        `);
+    } else {
+        console.error("Unknown boundary type:", type);
+        return;
+    }
+    
+    // Zoom to fit the boundary
+    if (window.currentShape) {
+        map.fitBounds(window.currentShape.getBounds(), {
+            padding: [50, 50],
+            maxZoom: 15
+        });
+        
+        // Open popup after a delay
+        setTimeout(() => {
+            window.currentShape.openPopup();
+        }, 1000);
+    }
+}
+
+// 6. Test function
 function testProbationerKey() {
     console.log("=== TESTING ===");
     console.log("Username in localStorage:", localStorage.getItem('emprobUsername'));
@@ -1783,11 +1919,13 @@ function testProbationerKey() {
         });
 }
 
-// Make test function available in browser console
+// Make functions globally accessible
 window.testProbationerKey = testProbationerKey;
 window.getProbationerKey = getProbationerKey;
 window.saveProbationArea = saveProbationArea;
 window.clearProbationArea = clearProbationArea;
+window.loadAndPlotSavedBoundary = loadAndPlotSavedBoundary;
+window.plotBoundaryOnMap = plotBoundaryOnMap;
         // ===== END PROBATION AREA FUNCTIONS =====
     </script>
 </body>
