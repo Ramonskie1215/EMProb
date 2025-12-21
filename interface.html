@@ -956,6 +956,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script>
+        let map = null;
+
         // Your current coordinates
         const currentLat = 14.7596;
         const currentLng = 120.9633;
@@ -963,7 +965,7 @@
         // Map initialization function
         function initializeMap() {
             // Initialize the map with your current location
-            const map = L.map('map', {
+             map = L.map('map', {
     zoomControl: false,  // This disables the default zoom control
     attributionControl: false  // Optional: also hides the attribution text
 }).setView([currentLat, currentLng], 13);
@@ -1027,7 +1029,7 @@
             });
 
                 setTimeout(() => {
-        loadAndPlotSavedBoundary();
+         loadAndPlotSavedBoundary(map);
     }, 1000);
             
             // Map Controls hide/show functionality
@@ -1725,17 +1727,17 @@ function saveProbationArea(type, data) {
             
             return window.firebaseSet(areaRef, areaData);
         })
-        .then(() => {
-            console.log("✓ Boundary saved!");
-            alert("✓ Boundary saved successfully!");
-            
-            // Plot the shape immediately after saving
-            plotBoundaryOnMap({
-                type: type,
-                ...data,
-                savedAt: new Date().toISOString()
-            });
-        })
+.then(() => {
+    console.log("✓ Boundary saved!");
+    alert("✓ Boundary saved successfully!");
+    
+    // Plot the shape immediately after saving
+    plotBoundaryOnMap({
+        type: type,
+        ...data,
+        savedAt: new Date().toISOString()
+    }, map);  // Add map parameter here
+})
         .catch(error => {
             if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
                 return;
@@ -1774,8 +1776,14 @@ function clearProbationArea() {
 }
 
 // 4. Load and plot saved boundary from Firebase
-function loadAndPlotSavedBoundary() {
+function loadAndPlotSavedBoundary(mapInstance) {
     console.log("Loading saved boundary...");
+    console.log("Map instance received:", mapInstance ? "Yes" : "No");
+    
+    if (!mapInstance) {
+        console.error("Map instance not provided!");
+        return;
+    }
     
     getProbationerKey()
         .then(key => {
@@ -1786,7 +1794,7 @@ function loadAndPlotSavedBoundary() {
             if (snapshot.exists()) {
                 const boundaryData = snapshot.val();
                 console.log("Found saved boundary:", boundaryData);
-                plotBoundaryOnMap(boundaryData);
+                plotBoundaryOnMap(boundaryData, mapInstance);
             } else {
                 console.log("No saved boundary found");
             }
@@ -1801,23 +1809,34 @@ function loadAndPlotSavedBoundary() {
 }
 
 // 5. Plot boundary on the map
-function plotBoundaryOnMap(boundaryData) {
+function plotBoundaryOnMap(boundaryData, mapInstance) {
+    console.log("Plotting boundary on map...");
+    
     if (!boundaryData || !boundaryData.type) {
         console.error("Invalid boundary data");
         return;
     }
     
+    if (!mapInstance) {
+        console.error("Map instance not provided!");
+        return;
+    }
+    
     // Clear any existing boundary
-    if (window.currentShape && map.hasLayer(window.currentShape)) {
-        map.removeLayer(window.currentShape);
+    if (window.currentShape && mapInstance.hasLayer(window.currentShape)) {
+        mapInstance.removeLayer(window.currentShape);
         window.currentShape = null;
     }
     
     const type = boundaryData.type;
+    console.log("Boundary type:", type);
     
     if (type === 'circle') {
+        // Plot circle
         const center = L.latLng(boundaryData.center.lat, boundaryData.center.lng);
         const radius = boundaryData.radius;
+        
+        console.log("Creating circle at:", center, "radius:", radius);
         
         window.currentShape = L.circle(center, {
             radius: radius,
@@ -1826,7 +1845,7 @@ function plotBoundaryOnMap(boundaryData) {
             fillColor: '#259FDE',
             fillOpacity: 0.05,
             weight: 3
-        }).addTo(map);
+        }).addTo(mapInstance);
         
         window.currentShape.bindPopup(`
             <b>Saved Circle Boundary</b><br>
@@ -1835,14 +1854,19 @@ function plotBoundaryOnMap(boundaryData) {
             <small>Saved on: ${new Date(boundaryData.savedAt).toLocaleDateString()}</small>
         `);
         
+        console.log("Circle boundary plotted");
+        
     } else if (type === 'polygon') {
+        // Plot polygon
         if (!boundaryData.points || boundaryData.points.length < 3) {
             console.error("Invalid polygon points");
             return;
         }
         
+        console.log("Polygon points:", boundaryData.points.length);
+        
         const points = boundaryData.points.map(p => L.latLng(p.lat, p.lng));
-        const closedPoints = [...points, points[0]];
+        const closedPoints = [...points, points[0]]; // Close the polygon
         
         window.currentShape = L.polygon(closedPoints, {
             color: '#E74C3C',
@@ -1851,7 +1875,7 @@ function plotBoundaryOnMap(boundaryData) {
             fillColor: '#E74C3C',
             fillOpacity: 0.05,
             className: 'polyline-boundary'
-        }).addTo(map);
+        }).addTo(mapInstance);
         
         // Calculate perimeter and area
         let perimeter = 0;
@@ -1875,22 +1899,29 @@ function plotBoundaryOnMap(boundaryData) {
             Area: ${Math.round(area)} m²<br>
             <small>Saved on: ${new Date(boundaryData.savedAt).toLocaleDateString()}</small>
         `);
+        
+        console.log("Polygon boundary plotted");
+        
     } else {
         console.error("Unknown boundary type:", type);
-        return;
     }
     
     // Zoom to fit the boundary
     if (window.currentShape) {
-        map.fitBounds(window.currentShape.getBounds(), {
+        console.log("Zooming to fit boundary...");
+        
+        mapInstance.fitBounds(window.currentShape.getBounds(), {
             padding: [50, 50],
             maxZoom: 15
         });
         
-        // Open popup after a delay
+        // Open the popup
         setTimeout(() => {
             window.currentShape.openPopup();
+            console.log("Popup opened");
         }, 1000);
+    } else {
+        console.error("Failed to create shape");
     }
 }
 
