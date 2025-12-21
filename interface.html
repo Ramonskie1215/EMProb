@@ -1255,6 +1255,7 @@ document.getElementById('zoomOutBtn').addEventListener('click', function() {
 });
 
 // =================== BOUNDARY DRAWING CODE START ===================
+
 // Variables for boundary drawing
 let isDrawingCircle = false;
 let isDrawingPolygon = false;
@@ -1294,7 +1295,7 @@ function addTempMarker(latlng, color, label) {
     return marker;
 }
 
-// Function to clear any existing shape
+// Function to clear any existing finalized shape
 function clearCurrentShape() {
     if (currentShape && map.hasLayer(currentShape)) {
         map.removeLayer(currentShape);
@@ -1302,14 +1303,13 @@ function clearCurrentShape() {
     }
 }
 
-// Circle drawing function
+// =================== CIRCLE DRAWING ===================
+
 function startDrawingCircle() {
-    // Stop any active polygon drawing first
     if (isDrawingPolygon) {
         stopDrawingPolygon();
     }
     
-    // Clear existing shape AND all temporary markers
     clearCurrentShape();
     removeAllTempMarkers();
     
@@ -1318,8 +1318,6 @@ function startDrawingCircle() {
     document.getElementById('drawPolylineBtn').disabled = true;
     
     circlePoints = [];
-    
-    // Change cursor to crosshair
     map.getContainer().style.cursor = 'crosshair';
 }
 
@@ -1329,42 +1327,30 @@ function handleCircleClick(e) {
     circlePoints.push(e.latlng);
     
     if (circlePoints.length === 1) {
-        // First click - center point
-        // Create temporary marker for center
         addTempMarker(e.latlng, '#259FDE', "Center point");
-        
     } else if (circlePoints.length === 2) {
-        // Second click - radius point
         const center = circlePoints[0];
         const radiusPoint = circlePoints[1];
-        
-        // Calculate radius in meters
         const radius = center.distanceTo(radiusPoint);
         
-        // Clear any existing shape
         clearCurrentShape();
         
-        // Create the final circle with 95% transparency
         currentShape = L.circle(center, {
             radius: radius,
             className: 'circle-boundary',
             color: '#259FDE',
             fillColor: '#259FDE',
-            fillOpacity: 0.05, // 95% transparency
+            fillOpacity: 0.05,
             weight: 3
         }).addTo(map);
         
-        // Add popup with info
         currentShape.bindPopup(`
             <b>Circle Boundary</b><br>
             Center: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}<br>
             Radius: ${Math.round(radius)} meters
         `).openPopup();
         
-        // Remove all temporary markers (center point)
         removeAllTempMarkers();
-        
-        // Reset drawing state
         stopDrawingCircle();
     }
 }
@@ -1375,38 +1361,43 @@ function stopDrawingCircle() {
     document.getElementById('drawPolylineBtn').disabled = false;
     circlePoints = [];
     
-    // Remove temp layers
     if (tempCircle && map.hasLayer(tempCircle)) {
         map.removeLayer(tempCircle);
         tempCircle = null;
     }
     
-    // Remove temporary markers
     removeAllTempMarkers();
-    
-    // Reset cursor
     map.getContainer().style.cursor = '';
 }
 
-// Polygon drawing function
+// =================== POLYGON DRAWING (WITH "DONE" BUTTON) ===================
+
+function updatePolygonButton() {
+    const btn = document.getElementById('drawPolylineBtn');
+    if (isDrawingPolygon && polygonPoints.length > 0) {
+        btn.textContent = 'Done';
+        btn.classList.add('drawing');
+    } else {
+        btn.textContent = 'Polygon';
+        btn.classList.remove('drawing');
+    }
+}
+
 function startDrawingPolygon() {
-    // Stop any active circle drawing first
     if (isDrawingCircle) {
         stopDrawingCircle();
     }
     
-    // Clear existing shape AND all temporary markers
     clearCurrentShape();
     removeAllTempMarkers();
     
     isDrawingPolygon = true;
-    document.getElementById('drawPolylineBtn').classList.add('drawing');
-    document.getElementById('drawCircleBtn').disabled = true;
-    
     polygonPoints = [];
     
-    // Change cursor to crosshair
+    document.getElementById('drawCircleBtn').disabled = true;
     map.getContainer().style.cursor = 'crosshair';
+    
+    updatePolygonButton();
 }
 
 function handlePolygonClick(e) {
@@ -1414,69 +1405,64 @@ function handlePolygonClick(e) {
     
     polygonPoints.push(e.latlng);
     
-    // Add marker for the point
     addTempMarker(e.latlng, '#E74C3C', `Point ${polygonPoints.length}`);
     
-    // If we have at least 2 points, update the temp polyline
-    if (polygonPoints.length >= 2) {
-        // Remove previous temp polyline
-        if (tempPolyline && map.hasLayer(tempPolyline)) {
-            map.removeLayer(tempPolyline);
-        }
-        
-        // Create new temp polyline
-        tempPolyline = L.polyline(polygonPoints, {
-            color: '#E74C3C',
-            weight: 2,
-            opacity: 0.6,
-            dashArray: '5, 5',
-            className: 'polyline-outline'
-        }).addTo(map);
+    // Update preview polyline (close back to first point)
+    if (tempPolyline && map.hasLayer(tempPolyline)) {
+        map.removeLayer(tempPolyline);
     }
+    
+    const previewPoints = [...polygonPoints];
+    if (polygonPoints.length >= 2) {
+        previewPoints.push(polygonPoints[0]); // Close the preview
+    }
+    
+    tempPolyline = L.polyline(previewPoints, {
+        color: '#E74C3C',
+        weight: 3,
+        opacity: 0.8,
+        dashArray: '5, 5',
+        className: 'polyline-outline'
+    }).addTo(map);
+    
+    updatePolygonButton(); // Show "Done" after first point
 }
 
-function handlePolygonDoubleClick() {
-    if (!isDrawingPolygon) return;
-    
-    // Minimum 3 points required
-    if (polygonPoints.length < 3) {
-        // Don't create shape - just return
+function finishPolygon() {
+    if (!isDrawingPolygon || polygonPoints.length < 3) {
+        stopDrawingPolygon();
         return;
     }
     
-    // Close the polygon by adding first point at the end
-    const closedPolygonPoints = [...polygonPoints, polygonPoints[0]];
+    const closedPoints = [...polygonPoints, polygonPoints[0]];
     
-    // Clear any existing shape
     clearCurrentShape();
     
-    // Create the polygon with 95% transparent fill
-    currentShape = L.polygon(closedPolygonPoints, {
-        color: '#E74C3C',          // Border color
-        weight: 3,                 // Border thickness
-        opacity: 0.8,              // Border opacity
-        fillColor: '#E74C3C',      // Fill color
-        fillOpacity: 0.05,         // 95% transparency (5% visible)
+    currentShape = L.polygon(closedPoints, {
+        color: '#E74C3C',
+        weight: 3,
+        opacity: 0.8,
+        fillColor: '#E74C3C',
+        fillOpacity: 0.05,
         className: 'polyline-boundary'
     }).addTo(map);
     
-    // Calculate area and perimeter
+    // Calculate perimeter
     let perimeter = 0;
     for (let i = 0; i < polygonPoints.length; i++) {
-        const nextIndex = (i + 1) % polygonPoints.length;
-        perimeter += polygonPoints[i].distanceTo(polygonPoints[nextIndex]);
+        const next = (i + 1) % polygonPoints.length;
+        perimeter += polygonPoints[i].distanceTo(polygonPoints[next]);
     }
     
-    // Calculate approximate area (for simple polygons)
+    // Approximate area in square meters
     let area = 0;
     for (let i = 0; i < polygonPoints.length; i++) {
         const j = (i + 1) % polygonPoints.length;
         area += polygonPoints[i].lng * polygonPoints[j].lat;
         area -= polygonPoints[j].lng * polygonPoints[i].lat;
     }
-    area = Math.abs(area / 2) * 111319.9 * 111319.9; // Convert to square meters
+    area = Math.abs(area / 2) * 111319.9 * 111319.9;
     
-    // Add popup with info
     currentShape.bindPopup(`
         <b>Polygon Boundary</b><br>
         Points: ${polygonPoints.length}<br>
@@ -1484,58 +1470,29 @@ function handlePolygonDoubleClick() {
         Area: ${Math.round(area)} m²
     `).openPopup();
     
-    // Remove all temporary markers (polygon points)
-    removeAllTempMarkers();
-    
-    // Remove temp polyline
-    if (tempPolyline && map.hasLayer(tempPolyline)) {
-        map.removeLayer(tempPolyline);
-        tempPolyline = null;
-    }
-    
-    // Reset drawing state
     stopDrawingPolygon();
 }
 
 function stopDrawingPolygon() {
     isDrawingPolygon = false;
-    document.getElementById('drawPolylineBtn').classList.remove('drawing');
-    document.getElementById('drawCircleBtn').disabled = false;
     polygonPoints = [];
     
-    // Remove temp polyline
     if (tempPolyline && map.hasLayer(tempPolyline)) {
         map.removeLayer(tempPolyline);
         tempPolyline = null;
     }
     
-    // Remove all temporary markers
     removeAllTempMarkers();
-    
-    // Reset cursor
     map.getContainer().style.cursor = '';
+    
+    document.getElementById('drawCircleBtn').disabled = false;
+    updatePolygonButton();
 }
 
-// Clear all boundaries function
-function clearAllBoundaries() {
-    clearCurrentShape();
-    removeAllTempMarkers();
-    
-    // Remove temp polyline
-    if (tempPolyline && map.hasLayer(tempPolyline)) {
-        map.removeLayer(tempPolyline);
-        tempPolyline = null;
-    }
-    
-    // Stop any active drawing
-    if (isDrawingCircle) stopDrawingCircle();
-    if (isDrawingPolygon) stopDrawingPolygon();
-}
+// =================== BUTTON EVENT LISTENERS ===================
 
-// Add event listeners for the buttons
 document.getElementById('drawCircleBtn').addEventListener('click', function() {
     if (isDrawingCircle) {
-        // If already drawing, cancel it
         removeAllTempMarkers();
         stopDrawingCircle();
     } else {
@@ -1544,22 +1501,30 @@ document.getElementById('drawCircleBtn').addEventListener('click', function() {
 });
 
 document.getElementById('drawPolylineBtn').addEventListener('click', function() {
-    if (isDrawingPolygon) {
-        // If already drawing, cancel it
-        removeAllTempMarkers();
-        if (tempPolyline && map.hasLayer(tempPolyline)) {
-            map.removeLayer(tempPolyline);
-            tempPolyline = null;
-        }
-        stopDrawingPolygon();
-    } else {
+    if (!isDrawingPolygon) {
         startDrawingPolygon();
+    } else if (polygonPoints.length > 0) {
+        finishPolygon(); // Click "Done" to finalize
+    } else {
+        stopDrawingPolygon(); // Cancel if no points yet
     }
 });
 
-document.getElementById('clearBoundariesBtn').addEventListener('click', clearAllBoundaries);
+document.getElementById('clearBoundariesBtn').addEventListener('click', function() {
+    clearCurrentShape();
+    removeAllTempMarkers();
+    
+    if (tempPolyline && map.hasLayer(tempPolyline)) {
+        map.removeLayer(tempPolyline);
+        tempPolyline = null;
+    }
+    
+    if (isDrawingCircle) stopDrawingCircle();
+    if (isDrawingPolygon) stopDrawingPolygon();
+});
 
-// Add map click handlers for drawing
+// =================== MAP EVENT LISTENERS ===================
+
 map.on('click', function(e) {
     if (isDrawingCircle) {
         handleCircleClick(e);
@@ -1568,37 +1533,25 @@ map.on('click', function(e) {
     }
 });
 
-// Add double-click handler for polygon (to finish drawing)
-map.on('dblclick', function(e) {
-    if (isDrawingPolygon) {
-        handlePolygonDoubleClick();
-        e.originalEvent.stopPropagation(); // Prevent map zoom on double-click
-    }
-});
-
-// Add ESC key handler to cancel drawing
+// ESC key to cancel any drawing
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         if (isDrawingCircle) {
             removeAllTempMarkers();
             stopDrawingCircle();
         } else if (isDrawingPolygon) {
-            removeAllTempMarkers();
-            if (tempPolyline && map.hasLayer(tempPolyline)) {
-                map.removeLayer(tempPolyline);
-                tempPolyline = null;
-            }
             stopDrawingPolygon();
         }
     }
 });
 
-// Prevent default double-click zoom when drawing
+// Prevent map zoom on double-click when drawing (no longer needed for polygon)
 map.on('dblclick', function(e) {
     if (isDrawingCircle || isDrawingPolygon) {
         e.originalEvent.preventDefault();
     }
 });
+
 // =================== BOUNDARY DRAWING CODE END ===================
             
             // Logout functionality
