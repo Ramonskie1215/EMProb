@@ -1650,7 +1650,7 @@ map.on('dblclick', function(e) {
             const areaRef = ref(database, `probationers/${key}/probationArea`);
 
             try {
-                await set(areaRef, {
+                 set(areaRef, {
                     type: type,
                     ...data,
                     savedAt: new Date().toISOString()
