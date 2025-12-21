@@ -1651,38 +1651,82 @@ async function initApplication() {
         `;
     }
 }
+        
+// Get probationer key assigned to current officer
+async function getProbationerKey() {
+    console.log("=== DEBUG: getProbationerKey() called ===");
+    console.log("currentUserFullName:", currentUserFullName);
+    
+    if (!currentUserFullName) {
+        alert("Complete your Details First! No full name found.");
+        console.error("DEBUG: No currentUserFullName available");
+        return null;
+    }
 
-        // Get probationer key assigned to current officer
-        function getProbationerKey() {
-            if (!currentUserFullName) {
-                alert("Complete your Details First!");
-                return null;
-            }
+    try {
+        const probRef = ref(database, 'probationers');
+        console.log("DEBUG: Fetching probationers from Firebase...");
+        
+        const snapshot = await get(probRef);
+        console.log("DEBUG: Snapshot exists:", snapshot.exists());
 
-            try {
-                const probRef = ref(database, 'probationers');
-                const snapshot =  get(probRef);
+        if (!snapshot.exists()) {
+            alert("No probationers found in database.");
+            console.error("DEBUG: No probationers data in Firebase");
+            return null;
+        }
 
-                if (!snapshot.exists()) {
-                    alert("No probationers found.");
-                    return null;
-                }
+        const probationers = snapshot.val();
+        console.log("DEBUG: Raw probationers data:", probationers);
+        console.log("DEBUG: Number of probationers:", Object.keys(probationers).length);
 
-                const probationers = snapshot.val();
-                for (const key in probationers) {
-                    if (probationers[key].officerInCharge === currentUserFullName) {
-                        return key;
-                    }
-                }
+        // Debug: Log all probationers and their officers
+        console.log("DEBUG: Probationers list:");
+        for (const key in probationers) {
+            console.log(`- Key: ${key}`);
+            console.log(`  Probationer: ${probationers[key].name || 'No name'}`);
+            console.log(`  Officer: ${probationers[key].officerInCharge || 'No officer'}`);
+            console.log(`  Type of officerInCharge: ${typeof probationers[key].officerInCharge}`);
+            console.log(`  Comparison with "${currentUserFullName}": ${probationers[key].officerInCharge === currentUserFullName}`);
+        }
 
-                alert("Set Probationer Assigned First!");
-                return null;
-            } catch (error) {
-                console.error("Error fetching probationers:", error);
-                alert("Error loading probationer data.");
-                return null;
+        // Search for matching probationer
+        let foundKey = null;
+        for (const key in probationers) {
+            const officerInCharge = probationers[key].officerInCharge;
+            
+            // Normalize comparison
+            const normalizedCurrent = currentUserFullName.trim().toLowerCase();
+            const normalizedOfficer = (officerInCharge || '').toString().trim().toLowerCase();
+            
+            console.log(`DEBUG: Comparing "${normalizedCurrent}" with "${normalizedOfficer}"`);
+            
+            if (normalizedOfficer === normalizedCurrent) {
+                foundKey = key;
+                console.log(`DEBUG: MATCH FOUND! Key: ${key}`);
+                break;
             }
         }
+
+        if (foundKey) {
+            console.log(`DEBUG: Returning key: ${foundKey}`);
+            return foundKey;
+        } else {
+            console.error("DEBUG: No probationer found for officer:", currentUserFullName);
+            console.log("DEBUG: Available officers in probationers:");
+            for (const key in probationers) {
+                console.log(`  - ${probationers[key].officerInCharge || '(empty)'}`);
+            }
+            
+            alert(`No probationer assigned to officer: ${currentUserFullName}\n\nPlease assign a probationer first in the dashboard.`);
+            return null;
+        }
+    } catch (error) {
+        console.error("DEBUG: Error fetching probationers:", error);
+        alert(`Error loading probationer data: ${error.message}`);
+        return null;
+    }
+}
 
         // Save probation area to Firebase
         function saveProbationArea(type, data) {
