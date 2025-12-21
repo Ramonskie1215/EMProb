@@ -39,7 +39,7 @@
                 0 0 50px rgba(0, 0, 0, 0.8);
         }
 
-        /* Combined Status Container - GPS & Battery */
+        /* Combined Status Container - AM/PM, GPS & Battery */
         .combined-status {
             position: absolute;
             top: 5vmin;
@@ -59,12 +59,24 @@
             align-items: center;
             gap: 1.5vmin;
             padding: 0 2vmin;
+            height: 100%;
         }
 
         .status-divider {
             width: 1px;
             height: 5vmin;
             background: rgba(37, 159, 222, 0.3);
+        }
+
+        /* Period Indicator */
+        .period-indicator {
+            font-size: 5.5vmin;
+            font-weight: 900;
+            color: #259FDE;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            min-width: 10vmin;
+            text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
         }
 
         /* GPS Icon */
@@ -243,22 +255,6 @@
             padding: 0 5vmin;
         }
 
-        #period {
-            position: absolute !important;
-            top: 3vmin !important; /* same height as combined status */
-            right: 50% !important; /* center horizontally */
-            left: auto !important;
-            transform: translateX(50%) !important; /* perfect centering */
-            font-size: 5.5vmin !important;
-            font-weight: 900 !important;
-            color: #259FDE !important;
-            background: rgba(28, 28, 28, 0.9) !important;
-            padding: 1.2vmin 3.5vmin !important;
-            border-radius: 2vmin !important;
-            border: 2px solid #259FDE !important;
-            z-index: 101 !important;
-        }
-
         /* Corner Accents */
         .corner {
             position: absolute;
@@ -312,7 +308,7 @@
 
         #idDisplay {
             position: fixed !important;
-            bottom: 0vh !important;           /* tiny gap from screen bottom (0vh = glued to edge) */
+            bottom: 0vh !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
 
@@ -325,18 +321,12 @@
                 0 0 15px #0E3CBD,
                 0 0 30px #259FDE !important;
 
-            background: none !important;      /* no card */
-            border: none !important;          /* no border */
-            padding: 0 !important;            /* no padding removed */
+            background: none !important;
+            border: none !important;
+            padding: 0 !important;
             margin: 0 !important;
             z-index: 99999 !important;
-            pointer-events: none !important;  /* doesn't block taps */
-        }
-
-        /* Optional: subtle floating animation so it feels alive */
-        @keyframes float {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-10px); }
+            pointer-events: none !important;
         }
 
         /* Status Indicator - bottom center */
@@ -404,11 +394,6 @@
                 bottom: 8vmin;
             }
             
-            .period-indicator {
-                font-size: 5vmin;
-                top: 12vmin;
-            }
-            
             /* Combined Status Container for small screens */
             .combined-status {
                 top: 3vmin;
@@ -423,6 +408,12 @@
             
             .status-divider {
                 height: 4vmin;
+            }
+            
+            /* Period adjustments */
+            .period-indicator {
+                font-size: 4.5vmin;
+                min-width: 8vmin;
             }
             
             /* GPS adjustments */
@@ -483,33 +474,44 @@
         <div class="status-indicator" id="statusIndicator">Connected</div>
         
 <!-- Combined Status Container -->
-<div class="combined-status">
-    <!-- GPS Section -->
-    <div class="status-section gps-section">
-        <div class="gps-icon">
-            <svg id="gpsIcon" viewBox="0 0 24 24" fill="currentColor"></svg>
+        <!-- Combined Status Container - GPS, Battery & AM/PM -->
+        <div class="combined-status">
+            <!-- Period Indicator (AM/PM) -->
+            <div class="status-section period-section">
+                <div class="period-indicator" id="period">AM</div>
+            </div>
+            
+            <!-- Divider 1 -->
+            <div class="status-divider"></div>
+            
+            <!-- GPS Section -->
+            <div class="status-section gps-section">
+                <div class="gps-icon">
+                    <svg id="gpsIcon" viewBox="0 0 24 24" fill="currentColor">
+                        <!-- GPS icon will be set by JavaScript -->
+                    </svg>
+                </div>
+                <div class="gps-status" id="gpsStatus">--</div>
+            </div>
+            
+            <!-- Divider 2 -->
+            <div class="status-divider"></div>
+            
+            <!-- Battery Section -->
+            <div class="status-section battery-section">
+                <div class="battery-icon">
+                    <div class="battery-fill" id="batteryFill"></div>
+                    <div class="charging-overlay" id="chargingOverlay"></div>
+                    <div class="battery-tip"></div>
+                </div>
+                <div class="battery-percentage" id="batteryPercentage">--%</div>
+                <div class="charging-icon" id="chargingIcon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.67 2L6.33 8H10V14L13.67 8H10V2H11.67Z"/>
+                    </svg>
+                </div>
+            </div>
         </div>
-        <div class="gps-status" id="gpsStatus">--</div>
-    </div>
-    
-    <!-- Divider -->
-    <div class="status-divider"></div>
-    
-    <!-- Battery Section -->
-    <div class="status-section battery-section">
-        <div class="battery-icon">
-            <div class="battery-fill" id="batteryFill"></div>
-            <div class="charging-overlay" id="chargingOverlay"></div>
-            <div class="battery-tip"></div>
-        </div>
-        <div class="battery-percentage" id="batteryPercentage">--%</div>
-        <div class="charging-icon" id="chargingIcon">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.67 2L6.33 8H10V14L13.67 8H10V2H11.67Z"/>
-            </svg>
-        </div>
-    </div>
-</div>
         
         <!-- Corner Accents -->
         <div class="corner corner-tl"></div>
@@ -519,10 +521,7 @@
         
         <!-- Center Dot -->
         <div class="center-dot"></div>
-        
-        <!-- Period Indicator -->
-        <div class="period-indicator" id="period">AM</div>
-        
+
         <!-- Main Clock Content -->
         <div class="clock-content">
             <!-- Main Time Display -->
@@ -1596,6 +1595,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
