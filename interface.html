@@ -1667,11 +1667,18 @@ async function initApplication() {
 // Get probationer key assigned to current officer
 async function getProbationerKey() {
     console.log("=== DEBUG: getProbationerKey() called ===");
-    console.log("currentUserFullName:", currentUserFullName);
     
-    if (!currentUserFullName) {
-        alert("Complete your Details First! No full name found.");
-        console.error("DEBUG: No currentUserFullName available");
+    // Try multiple ways to get full name
+    let fullName = window.currentUserFullName || localStorage.getItem('emprobFullName');
+    console.log("Full name from:", {
+        window: window.currentUserFullName,
+        localStorage: localStorage.getItem('emprobFullName'),
+        final: fullName
+    });
+    
+    if (!fullName) {
+        alert("Complete your Details First! No full name found in profile.");
+        console.error("DEBUG: No full name available anywhere");
         return null;
     }
 
@@ -1689,50 +1696,22 @@ async function getProbationerKey() {
         }
 
         const probationers = snapshot.val();
-        console.log("DEBUG: Raw probationers data:", probationers);
-        console.log("DEBUG: Number of probationers:", Object.keys(probationers).length);
-
-        // Debug: Log all probationers and their officers
-        console.log("DEBUG: Probationers list:");
-        for (const key in probationers) {
-            console.log(`- Key: ${key}`);
-            console.log(`  Probationer: ${probationers[key].name || 'No name'}`);
-            console.log(`  Officer: ${probationers[key].officerInCharge || 'No officer'}`);
-            console.log(`  Type of officerInCharge: ${typeof probationers[key].officerInCharge}`);
-            console.log(`  Comparison with "${currentUserFullName}": ${probationers[key].officerInCharge === currentUserFullName}`);
-        }
-
+        console.log("DEBUG: Looking for officer:", fullName);
+        
         // Search for matching probationer
-        let foundKey = null;
         for (const key in probationers) {
             const officerInCharge = probationers[key].officerInCharge;
+            console.log(`Checking: "${officerInCharge}" vs "${fullName}"`);
             
-            // Normalize comparison
-            const normalizedCurrent = currentUserFullName.trim().toLowerCase();
-            const normalizedOfficer = (officerInCharge || '').toString().trim().toLowerCase();
-            
-            console.log(`DEBUG: Comparing "${normalizedCurrent}" with "${normalizedOfficer}"`);
-            
-            if (normalizedOfficer === normalizedCurrent) {
-                foundKey = key;
+            if (officerInCharge === fullName) {
                 console.log(`DEBUG: MATCH FOUND! Key: ${key}`);
-                break;
+                return key;
             }
         }
 
-        if (foundKey) {
-            console.log(`DEBUG: Returning key: ${foundKey}`);
-            return foundKey;
-        } else {
-            console.error("DEBUG: No probationer found for officer:", currentUserFullName);
-            console.log("DEBUG: Available officers in probationers:");
-            for (const key in probationers) {
-                console.log(`  - ${probationers[key].officerInCharge || '(empty)'}`);
-            }
-            
-            alert(`No probationer assigned to officer: ${currentUserFullName}\n\nPlease assign a probationer first in the dashboard.`);
-            return null;
-        }
+        console.error("DEBUG: No probationer found for officer:", fullName);
+        alert(`No probationer assigned to officer: ${fullName}\n\nPlease assign a probationer first in the dashboard.`);
+        return null;
     } catch (error) {
         console.error("DEBUG: Error fetching probationers:", error);
         alert(`Error loading probationer data: ${error.message}`);
