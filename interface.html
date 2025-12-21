@@ -1670,7 +1670,7 @@ map.on('dblclick', function(e) {
             const areaRef = ref(database, `probationers/${key}/probationArea`);
 
             try {
-                await set(areaRef, null);
+             set(areaRef, null);
                 console.log("Probation area cleared from database.");
             } catch (error) {
                 console.error("Error clearing probation area:", error);
