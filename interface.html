@@ -1355,7 +1355,7 @@ function handleCircleClick(e) {
         `).openPopup();
         // Save to probationArea
         // Save circle to probationArea
-        await saveProbationArea('circle', {
+        saveProbationArea('circle', {
             center: { lat: center.lat, lng: center.lng },
             radius: radius
         });
@@ -1481,7 +1481,7 @@ function finishPolygon() {
     `).openPopup();
 
         // Save polygon to probationArea
-        await saveProbationArea('polygon', {
+        saveProbationArea('polygon', {
             points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
         });
     
@@ -1536,7 +1536,7 @@ document.getElementById('clearBoundariesBtn').addEventListener('click', function
     
     if (isDrawingCircle) stopDrawingCircle();
     if (isDrawingPolygon) stopDrawingPolygon();
-    await clearProbationArea();
+    clearProbationArea();
 });
 
 // =================== MAP EVENT LISTENERS ===================
@@ -1611,7 +1611,7 @@ map.on('dblclick', function(e) {
         };
 
         // Get probationer key assigned to current officer
-        async function getProbationerKey() {
+        function getProbationerKey() {
             if (!currentUserFullName) {
                 alert("Complete your Details First!");
                 return null;
@@ -1643,8 +1643,8 @@ map.on('dblclick', function(e) {
         }
 
         // Save probation area to Firebase
-        async function saveProbationArea(type, data) {
-            const key = await getProbationerKey();
+        function saveProbationArea(type, data) {
+            const key = getProbationerKey();
             if (!key) return;
 
             const areaRef = ref(database, `probationers/${key}/probationArea`);
@@ -1663,8 +1663,8 @@ map.on('dblclick', function(e) {
         }
 
         // Clear probation area from Firebase
-        async function clearProbationArea() {
-            const key = await getProbationerKey();
+        function clearProbationArea() {
+            const key = getProbationerKey();
             if (!key) return;
 
             const areaRef = ref(database, `probationers/${key}/probationArea`);
