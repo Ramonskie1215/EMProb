@@ -1357,7 +1357,7 @@ function handleCircleClick(e) {
         `).openPopup();
         // Save to probationArea
         // Save circle to probationArea
-        await saveProbationArea('circle', {
+        saveProbationArea('circle', {
     center: { lat: center.lat, lng: center.lng },
     radius: radius
 });
@@ -1483,7 +1483,7 @@ function finishPolygon() {
     `).openPopup();
 
         // Save polygon to probationArea
-        await saveProbationArea('polygon', {
+        saveProbationArea('polygon', {
     points: polygonPoints.map(p => ({ lat: p.lat, lng: p.lng }))
 });
     stopDrawingPolygon();
@@ -1537,7 +1537,7 @@ document.getElementById('clearBoundariesBtn').addEventListener('click', function
     
     if (isDrawingCircle) stopDrawingCircle();
     if (isDrawingPolygon) stopDrawingPolygon();
-    await clearProbationArea();
+    clearProbationArea();
 });
 
 // =================== MAP EVENT LISTENERS ===================
@@ -1655,129 +1655,142 @@ async function initApplication() {
         
 // ===== SIMPLE PROBATION AREA FUNCTIONS =====
 
+// ===== SIMPLE PROBATION AREA FUNCTIONS =====
+
 // 1. Get the probationer assigned to current officer
-async function getProbationerKey() {
+function getProbationerKey() {
     console.log("Looking for probationer...");
     
     // Check if we have the user's full name
     if (!window.currentUserFullName) {
-        alert("Please complete your profile first!");
-        return null;
+        alert("❌ Please complete your profile first!");
+        return Promise.reject("No full name");
     }
     
     console.log("Officer name:", window.currentUserFullName);
     
-    try {
+    // Return a promise
+    return new Promise((resolve, reject) => {
         // Use the Firebase functions we made global
         const probRef = window.firebaseRef(window.firebaseDatabase, 'probationers');
-        const snapshot = await window.firebaseGet(probRef);
         
-        if (!snapshot.exists()) {
-            alert("No probationers found!");
-            return null;
-        }
-        
-        const probationers = snapshot.val();
-        
-        // Look for probationer with matching officer
-        for (const key in probationers) {
-            const probationer = probationers[key];
-            const officerName = probationer.officerInCharge;
-            
-            if (officerName && officerName.trim() === window.currentUserFullName.trim()) {
-                console.log("Found probationer:", key);
-                return key;
-            }
-        }
-        
-        alert(`No probationer assigned to ${window.currentUserFullName}`);
-        return null;
-        
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Error loading data");
-        return null;
-    }
+        window.firebaseGet(probRef)
+            .then(snapshot => {
+                if (!snapshot.exists()) {
+                    alert("No probationers found!");
+                    reject("No probationers");
+                    return;
+                }
+                
+                const probationers = snapshot.val();
+                
+                // Look for probationer with matching officer
+                for (const key in probationers) {
+                    const probationer = probationers[key];
+                    const officerName = probationer.officerInCharge;
+                    
+                    if (officerName && officerName.trim() === window.currentUserFullName.trim()) {
+                        console.log("✓ Found probationer:", key);
+                        resolve(key);
+                        return;
+                    }
+                }
+                
+                alert(`❌ No probationer assigned to ${window.currentUserFullName}`);
+                reject("No matching probationer");
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Error loading probationers");
+                reject(error);
+            });
+    });
 }
 
 // 2. Save boundary to Firebase
-async function saveProbationArea(type, data) {
+function saveProbationArea(type, data) {
     console.log("Saving boundary...");
     
-    const key = await getProbationerKey();
-    if (!key) return;
-    
-    try {
-        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
-        
-        const areaData = {
-            type: type,
-            ...data,
-            savedAt: new Date().toISOString()
-        };
-        
-        await window.firebaseSet(areaRef, areaData);
-        console.log("Saved successfully!");
-        alert("Boundary saved!");
-        
-    } catch (error) {
-        console.error("Error saving:", error);
-        alert("Failed to save");
-    }
+    getProbationerKey()
+        .then(key => {
+            const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+            
+            const areaData = {
+                type: type,
+                ...data,
+                savedAt: new Date().toISOString(),
+                savedBy: window.currentUserFullName
+            };
+            
+            return window.firebaseSet(areaRef, areaData);
+        })
+        .then(() => {
+            console.log("✓ Boundary saved!");
+            alert("✓ Boundary saved successfully!");
+        })
+        .catch(error => {
+            if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
+                // These errors already showed alerts
+                return;
+            }
+            console.error("Save error:", error);
+            alert("❌ Failed to save boundary");
+        });
 }
 
 // 3. Clear boundary from Firebase
-async function clearProbationArea() {
+function clearProbationArea() {
     console.log("Clearing boundary...");
     
-    const key = await getProbationerKey();
-    if (!key) return;
-    
-    try {
-        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
-        await window.firebaseSet(areaRef, null);
-        console.log("Cleared successfully!");
-        alert("Boundary cleared!");
-        
-    } catch (error) {
-        console.error("Error clearing:", error);
-        alert("Failed to clear");
-    }
+    getProbationerKey()
+        .then(key => {
+            const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+            return window.firebaseSet(areaRef, null);
+        })
+        .then(() => {
+            console.log("✓ Boundary cleared!");
+            alert("✓ Boundary cleared!");
+        })
+        .catch(error => {
+            if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
+                // These errors already showed alerts
+                return;
+            }
+            console.error("Clear error:", error);
+            alert("❌ Failed to clear boundary");
+        });
 }
 
 // 4. Test function (for debugging)
-async function testProbationerKey() {
+function testProbationerKey() {
     console.log("=== TESTING ===");
     console.log("Username in localStorage:", localStorage.getItem('emprobUsername'));
     console.log("Full name in window:", window.currentUserFullName);
     
-    const key = await getProbationerKey();
-    console.log("Found probationer key:", key);
-    
-    if (key) {
-        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
-        const areaSnapshot = await window.firebaseGet(areaRef);
-        console.log("Existing boundary:", areaSnapshot.val());
-    }
+    getProbationerKey()
+        .then(key => {
+            console.log("✓ Found probationer key:", key);
+            
+            const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
+            return window.firebaseGet(areaRef);
+        })
+        .then(snapshot => {
+            if (snapshot.exists()) {
+                console.log("Existing boundary:", snapshot.val());
+            } else {
+                console.log("No existing boundary");
+            }
+        })
+        .catch(error => {
+            console.log("Test failed:", error);
+        });
 }
 
 // Make test function available in browser console
 window.testProbationerKey = testProbationerKey;
-
-        // Clear probation area from Firebase
-        function clearProbationArea() {
-            const key = getProbationerKey();
-            if (!key) return;
-
-            const areaRef = ref(database, `probationers/${key}/probationArea`);
-
-            try {
-             set(areaRef, null);
-                console.log("Probation area cleared from database.");
-            } catch (error) {
-                console.error("Error clearing probation area:", error);
-            }
-        }
+window.getProbationerKey = getProbationerKey;
+window.saveProbationArea = saveProbationArea;
+window.clearProbationArea = clearProbationArea;
         // ===== END PROBATION AREA FUNCTIONS =====
     </script>
 </body>
