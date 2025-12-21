@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Device Location Tracker</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #0f172a;
+            color: #f1f5f9;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #334155;
+        }
+        
+        h1 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+        
+        .status-card {
+            background-color: #1e293b;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #38bdf8;
+        }
+        
+        .card-title i {
+            font-size: 1.5rem;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .coordinates, .debug-info, .map-container {
+            background-color: #1e293b;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .data-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .data-label {
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .data-value {
+            font-size: 1.2rem;
+            color: #60a5fa;
+            word-break: break-all;
+        }
+        
+        .timestamp {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .primary-btn {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background-color: #2563eb;
+        }
+        
+        .secondary-btn {
+            background-color: #475569;
+            color: white;
+        }
+        
+        .secondary-btn:hover {
+            background-color: #334155;
+        }
+        
+        .danger-btn {
+            background-color: #dc2626;
+            color: white;
+        }
+        
+        .danger-btn:hover {
+            background-color: #b91c1c;
+        }
+        
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #334155;
+        }
+        
+        .logs {
+            background-color: #1e293b;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .log-title {
+            color: #38bdf8;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .log-container {
+            background-color: #0f172a;
+            border-radius: 6px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .log-time {
+            color: #94a3b8;
+        }
+        
+        .log-info {
+            color: #60a5fa;
+        }
+        
+        .log-error {
+            color: #f87171;
+        }
+        
+        .log-success {
+            color: #4ade80;
+        }
+        
+        .permission-denied {
+            color: #f87171;
+            background-color: rgba(220, 38, 38, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #dc2626;
+        }
+        
+        .icon {
+            display: inline-block;
+            width: 24px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-satellite"></i> Real-time Device Location Tracker</h1>
+            <p class="subtitle">Tracking your device location every second with comprehensive debug information</p>
+        </header>
+        
+        <div class="status-card">
+            <h2 class="card-title"><i class="fas fa-info-circle"></i> Status</h2>
+            <div id="status-message">Click "Start Tracking" to begin location tracking</div>
+            <div class="buttons">
+                <button id="start-btn" class="primary-btn"><i class="fas fa-play"></i> Start Tracking</button>
+                <button id="stop-btn" class="secondary-btn" disabled><i class="fas fa-stop"></i> Stop Tracking</button>
+                <button id="clear-logs-btn" class="secondary-btn"><i class="fas fa-trash"></i> Clear Logs</button>
+                <button id="simulate-btn" class="secondary-btn"><i class="fas fa-location-crosshairs"></i> Simulate Movement</button>
+            </div>
+        </div>
+        
+        <div class="data-grid">
+            <div class="coordinates">
+                <h2 class="card-title"><i class="fas fa-map-marker-alt"></i> Current Coordinates</h2>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-globe"></i> Latitude</div>
+                    <div id="latitude" class="data-value">--</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-globe"></i> Longitude</div>
+                    <div id="longitude" class="data-value">--</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-arrows-alt-v"></i> Accuracy</div>
+                    <div id="accuracy" class="data-value">--</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-tachometer-alt"></i> Speed</div>
+                    <div id="speed" class="data-value">--</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-compass"></i> Heading</div>
+                    <div id="heading" class="data-value">--</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-clock"></i> Last Updated</div>
+                    <div id="timestamp" class="timestamp">--</div>
+                </div>
+            </div>
+            
+            <div class="debug-info">
+                <h2 class="card-title"><i class="fas fa-bug"></i> Debug Information</h2>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-sync-alt"></i> Update Frequency</div>
+                    <div id="frequency" class="data-value">1000 ms (1 second)</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-history"></i> Total Updates</div>
+                    <div id="update-count" class="data-value">0</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-microchip"></i> Geolocation Support</div>
+                    <div id="geolocation-support" class="data-value">Checking...</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-shield-alt"></i> Permission Status</div>
+                    <div id="permission-status" class="data-value">Not requested</div>
+                </div>
+                <div class="data-item">
+                    <div class="data-label"><i class="fas fa-map"></i> Map Integration</div>
+                    <div id="map-status" class="data-value">Ready</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <h2 class="card-title"><i class="fas fa-map"></i> Location Map</h2>
+            <div id="map"></div>
+        </div>
+        
+        <div class="logs">
+            <h2 class="log-title"><i class="fas fa-clipboard-list"></i> Debug Logs</h2>
+            <div class="log-container" id="log-container">
+                <div class="log-entry">
+                    <span class="log-time">[System]</span>
+                    <span class="log-info">Location tracker initialized. Click "Start Tracking" to begin.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        const state = {
+            isTracking: false,
+            watchId: null,
+            updateCount: 0,
+            currentPosition: null,
+            logEntries: [],
+            map: null,
+            marker: null,
+            isSimulation: false,
+            simulationInterval: null,
+            simulationPosition: {
+                lat: 40.7128,
+                lng: -74.0060,
+                heading: 0
+            }
+        };
+        
+        // DOM Elements
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const clearLogsBtn = document.getElementById('clear-logs-btn');
+        const simulateBtn = document.getElementById('simulate-btn');
+        const latitudeEl = document.getElementById('latitude');
+        const longitudeEl = document.getElementById('longitude');
+        const accuracyEl = document.getElementById('accuracy');
+        const speedEl = document.getElementById('speed');
+        const headingEl = document.getElementById('heading');
+        const timestampEl = document.getElementById('timestamp');
+        const statusMessageEl = document.getElementById('status-message');
+        const updateCountEl = document.getElementById('update-count');
+        const geolocationSupportEl = document.getElementById('geolocation-support');
+        const permissionStatusEl = document.getElementById('permission-status');
+        const mapStatusEl = document.getElementById('map-status');
+        const logContainer = document.getElementById('log-container');
+        
+        // Initialize the application
+        function init() {
+            checkGeolocationSupport();
+            setupEventListeners();
+            initMap();
+            addLog('Application initialized', 'info');
+        }
+        
+        // Check if geolocation is supported
+        function checkGeolocationSupport() {
+            if ('geolocation' in navigator) {
+                geolocationSupportEl.textContent = 'Supported';
+                geolocationSupportEl.style.color = '#4ade80';
+                addLog('Geolocation API is supported by this browser', 'info');
+            } else {
+                geolocationSupportEl.textContent = 'Not Supported';
+                geolocationSupportEl.style.color = '#f87171';
+                addLog('Geolocation API is NOT supported by this browser', 'error');
+                statusMessageEl.innerHTML = '<div class="permission-denied">Geolocation is not supported by your browser. Please use a modern browser.</div>';
+                startBtn.disabled = true;
+            }
+        }
+        
+        // Initialize the map
+        function initMap() {
+            try {
+                // Create a simple map using Leaflet.js CDN (included in script at bottom)
+                state.map = L.map('map').setView([40.7128, -74.0060], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(state.map);
+                
+                // Add initial marker
+                state.marker = L.marker([40.7128, -74.0060])
+                    .addTo(state.map)
+                    .bindPopup('Initial location')
+                    .openPopup();
+                    
+                mapStatusEl.textContent = 'Map loaded successfully';
+                mapStatusEl.style.color = '#4ade80';
+                addLog('Map initialized with OpenStreetMap tiles', 'info');
+            } catch (error) {
+                mapStatusEl.textContent = 'Failed to load map';
+                mapStatusEl.style.color = '#f87171';
+                addLog(`Failed to initialize map: ${error.message}`, 'error');
+            }
+        }
+        
+        // Update the map with new coordinates
+        function updateMap(lat, lng) {
+            if (!state.map) return;
+            
+            try {
+                // Update map view
+                state.map.setView([lat, lng], state.map.getZoom());
+                
+                // Update or create marker
+                if (state.marker) {
+                    state.marker.setLatLng([lat, lng]);
+                } else {
+                    state.marker = L.marker([lat, lng]).addTo(state.map);
+                }
+                
+                // Update marker popup
+                state.marker.bindPopup(`Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`).openPopup();
+                
+                addLog(`Map updated to coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`, 'info');
+            } catch (error) {
+                addLog(`Failed to update map: ${error.message}`, 'error');
+            }
+        }
+        
+        // Start tracking location
+        function startTracking() {
+            if (state.isTracking) return;
+            
+            if (!('geolocation' in navigator)) {
+                addLog('Cannot start tracking: Geolocation not supported', 'error');
+                return;
+            }
+            
+            addLog('Requesting location tracking permission...', 'info');
+            
+            // Request permission and start watching position
+            navigator.geolocation.getCurrentPosition(
+                // Success callback
+                (position) => {
+                    permissionStatusEl.textContent = 'Granted';
+                    permissionStatusEl.style.color = '#4ade80';
+                    
+                    state.isTracking = true;
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    simulateBtn.disabled = true;
+                    
+                    addLog('Location permission granted', 'success');
+                    
+                    // Start watching position with high accuracy
+                    state.watchId = navigator.geolocation.watchPosition(
+                        handlePositionUpdate,
+                        handlePositionError,
+                        {
+                            enableHighAccuracy: true,
+                            maximumAge: 0,
+                            timeout: 5000
+                        }
+                    );
+                    
+                    statusMessageEl.innerHTML = '<span style="color:#4ade80">Tracking active - updating location every second</span>';
+                    addLog('Started watching position with 1-second updates', 'success');
+                    
+                    // Also update with the initial position
+                    handlePositionUpdate(position);
+                },
+                // Error callback for permission
+                (error) => {
+                    handlePositionError(error);
+                    permissionStatusEl.textContent = 'Denied';
+                    permissionStatusEl.style.color = '#f87171';
+                    
+                    if (error.code === error.PERMISSION_DENIED) {
+                        statusMessageEl.innerHTML = '<div class="permission-denied">Location permission denied. Please enable location services in your browser settings.</div>';
+                    }
+                }
+            );
+        }
+        
+        // Handle position updates
+        function handlePositionUpdate(position) {
+            state.currentPosition = position;
+            state.updateCount++;
+            
+            // Update UI with position data
+            latitudeEl.textContent = position.coords.latitude.toFixed(6);
+            longitudeEl.textContent = position.coords.longitude.toFixed(6);
+            accuracyEl.textContent = `${position.coords.accuracy ? position.coords.accuracy.toFixed(2) + ' meters' : 'N/A'}`;
+            speedEl.textContent = `${position.coords.speed ? (position.coords.speed * 3.6).toFixed(2) + ' km/h' : 'N/A'}`;
+            headingEl.textContent = `${position.coords.heading ? position.coords.heading.toFixed(2) + '°' : 'N/A'}`;
+            
+            const now = new Date();
+            timestampEl.textContent = now.toLocaleTimeString() + '.' + now.getMilliseconds().toString().padStart(3, '0');
+            
+            updateCountEl.textContent = state.updateCount;
+            
+            // Update the map
+            updateMap(position.coords.latitude, position.coords.longitude);
+            
+            // Log the update
+            addLog(`Position updated: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`, 'info');
+        }
+        
+        // Handle position errors
+        function handlePositionError(error) {
+            let errorMessage;
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "Location permission denied by user";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "Location information is unavailable";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "Location request timed out";
+                    break;
+                default:
+                    errorMessage = "An unknown error occurred";
+                    break;
+            }
+            
+            addLog(`Geolocation error: ${errorMessage}`, 'error');
+            statusMessageEl.innerHTML = `<span style="color:#f87171">Error: ${errorMessage}</span>`;
+        }
+        
+        // Stop tracking location
+        function stopTracking() {
+            if (state.isTracking && state.watchId) {
+                navigator.geolocation.clearWatch(state.watchId);
+                state.watchId = null;
+            }
+            
+            if (state.isSimulation) {
+                stopSimulation();
+            }
+            
+            state.isTracking = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            simulateBtn.disabled = false;
+            
+            statusMessageEl.innerHTML = 'Tracking stopped';
+            addLog('Location tracking stopped', 'info');
+        }
+        
+        // Start simulation mode
+        function startSimulation() {
+            if (state.isTracking) {
+                stopTracking();
+            }
+            
+            state.isSimulation = true;
+            state.isTracking = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            simulateBtn.disabled = true;
+            
+            // Update status
+            statusMessageEl.innerHTML = '<span style="color:#fbbf24">Simulation mode active - generating mock location data</span>';
+            addLog('Started simulation mode with mock location data', 'info');
+            
+            // Generate initial simulated position
+            const simulatedPosition = {
+                coords: {
+                    latitude: state.simulationPosition.lat,
+                    longitude: state.simulationPosition.lng,
+                    accuracy: 10,
+                    altitude: null,
+                    altitudeAccuracy: null,
+                    heading: state.simulationPosition.heading,
+                    speed: 5
+                },
+                timestamp: Date.now()
+            };
+            
+            handlePositionUpdate(simulatedPosition);
+            
+            // Update simulation every second
+            state.simulationInterval = setInterval(() => {
+                // Move the position slightly (simulate movement)
+                state.simulationPosition.lat += (Math.random() - 0.5) * 0.001;
+                state.simulationPosition.lng += (Math.random() - 0.5) * 0.001;
+                state.simulationPosition.heading = (state.simulationPosition.heading + (Math.random() * 10)) % 360;
+                
+                const simulatedPosition = {
+                    coords: {
+                        latitude: state.simulationPosition.lat,
+                        longitude: state.simulationPosition.lng,
+                        accuracy: 5 + Math.random() * 10,
+                        altitude: null,
+                        altitudeAccuracy: null,
+                        heading: state.simulationPosition.heading,
+                        speed: 3 + Math.random() * 10
+                    },
+                    timestamp: Date.now()
+                };
+                
+                handlePositionUpdate(simulatedPosition);
+            }, 1000);
+        }
+        
+        // Stop simulation mode
+        function stopSimulation() {
+            if (state.simulationInterval) {
+                clearInterval(state.simulationInterval);
+                state.simulationInterval = null;
+            }
+            state.isSimulation = false;
+        }
+        
+        // Add a log entry
+        function addLog(message, type = 'info') {
+            const now = new Date();
+            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            let typeClass;
+            switch(type) {
+                case 'error': typeClass = 'log-error'; break;
+                case 'success': typeClass = 'log-success'; break;
+                default: typeClass = 'log-info'; break;
+            }
+            
+            logEntry.innerHTML = `<span class="log-time">${timeString}</span> <span class="${typeClass}">${message}</span>`;
+            
+            logContainer.appendChild(logEntry);
+            state.logEntries.push({time: now, message, type});
+            
+            // Auto-scroll to bottom
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Clear all logs
+        function clearLogs() {
+            logContainer.innerHTML = '';
+            state.logEntries = [];
+            addLog('Logs cleared', 'info');
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            startBtn.addEventListener('click', startTracking);
+            stopBtn.addEventListener('click', stopTracking);
+            clearLogsBtn.addEventListener('click', clearLogs);
+            simulateBtn.addEventListener('click', startSimulation);
+            
+            // Check permission status on load
+            if ('permissions' in navigator) {
+                navigator.permissions.query({name: 'geolocation'})
+                    .then(permissionStatus => {
+                        permissionStatusEl.textContent = permissionStatus.state;
+                        permissionStatusEl.style.color = permissionStatus.state === 'granted' ? '#4ade80' : 
+                                                       permissionStatus.state === 'prompt' ? '#fbbf24' : '#f87171';
+                        
+                        // Listen for permission changes
+                        permissionStatus.onchange = function() {
+                            permissionStatusEl.textContent = this.state;
+                            permissionStatusEl.style.color = this.state === 'granted' ? '#4ade80' : 
+                                                           this.state === 'prompt' ? '#fbbf24' : '#f87171';
+                            addLog(`Permission status changed to: ${this.state}`, 'info');
+                        };
+                    })
+                    .catch(error => {
+                        addLog(`Failed to check permission status: ${error.message}`, 'error');
+                    });
+            }
+        }
+        
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+    
+    <!-- Leaflet.js for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+</body>
+</html>
