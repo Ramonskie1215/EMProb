@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Location Tracker</title>
+    <title>Auto-Retry Location Tracker</title>
     <style>
         * {
             margin: 0;
@@ -16,36 +16,52 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 500px;
+            width: 100%;
             background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
         
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            font-size: 24px;
         }
         
         .subtitle {
             text-align: center;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
         
         .status {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-align: center;
             border: 2px solid #e9ecef;
+            font-weight: 500;
+            min-height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-getting {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
         }
         
         .status-active {
@@ -60,48 +76,57 @@
             color: #721c24;
         }
         
+        .status-retry {
+            background: #cce5ff;
+            border-color: #b8daff;
+            color: #004085;
+        }
+        
         .location-box {
             background: #f8f9fa;
-            padding: 25px;
+            padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .coordinate {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
             border-bottom: 1px solid #dee2e6;
         }
         
         .coordinate:last-child {
             margin-bottom: 0;
+            padding-bottom: 0;
             border-bottom: none;
         }
         
         .label {
             font-weight: 600;
             color: #495057;
+            font-size: 14px;
         }
         
         .value {
             color: #007bff;
             font-weight: 500;
+            font-size: 14px;
         }
         
         .buttons {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
         button {
             flex: 1;
-            padding: 16px;
+            padding: 14px;
             border: none;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -132,83 +157,68 @@
         
         .debug {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
-            margin-top: 20px;
         }
         
         .debug h3 {
             color: #333;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            font-size: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         
         .log {
-            max-height: 200px;
+            height: 120px;
             overflow-y: auto;
             padding: 10px;
             background: white;
             border-radius: 5px;
             border: 1px solid #dee2e6;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .log-entry {
-            padding: 5px 0;
+            padding: 4px 0;
             border-bottom: 1px solid #f1f3f5;
         }
         
         .log-time {
             color: #6c757d;
-            font-size: 12px;
         }
         
         .log-message {
             color: #333;
         }
         
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #dee2e6;
-        }
-        
-        .stat-item {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #007bff;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-        
         .loading {
             color: #6c757d;
             font-style: italic;
+        }
+        
+        .retry-count {
+            color: #007bff;
+            font-weight: bold;
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📍 Simple Location Tracker</h1>
-        <p class="subtitle">Get your location every second</p>
+        <h1>📍 Location Tracker</h1>
+        <p class="subtitle">Auto-retry if location takes time</p>
         
         <div id="status" class="status">
             Ready to start tracking
@@ -216,7 +226,7 @@
         
         <div class="buttons">
             <button id="startBtn" class="start-btn">Start Tracking</button>
-            <button id="stopBtn" class="stop-btn" disabled>Stop Tracking</button>
+            <button id="stopBtn" class="stop-btn" disabled>Stop</button>
         </div>
         
         <div class="location-box">
@@ -233,44 +243,37 @@
                 <span id="accuracy" class="value loading">--</span>
             </div>
             <div class="coordinate">
+                <span class="label">Retry Count:</span>
+                <span id="retryCount" class="value">0</span>
+            </div>
+            <div class="coordinate">
                 <span class="label">Last Update:</span>
                 <span id="timestamp" class="value loading">--</span>
             </div>
         </div>
         
-        <div class="stats">
-            <div class="stat-item">
-                <div id="updateCount" class="stat-value">0</div>
-                <div class="stat-label">Updates</div>
-            </div>
-            <div class="stat-item">
-                <div id="frequency" class="stat-value">1s</div>
-                <div class="stat-label">Frequency</div>
-            </div>
-            <div class="stat-item">
-                <div id="support" class="stat-value">✓</div>
-                <div class="stat-label">Supported</div>
-            </div>
-        </div>
-        
         <div class="debug">
-            <h3>📝 Debug Log</h3>
+            <h3>📝 Activity Log</h3>
             <div id="log" class="log">
                 <div class="log-entry">
-                    <span class="log-time">[System]:</span>
-                    <span class="log-message">Location tracker loaded</span>
+                    <span class="log-time">[System]</span>
+                    <span class="log-message">Tracker ready</span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Simple state management
+        // State management
         let isTracking = false;
         let watchId = null;
         let updateCount = 0;
+        let retryCount = 0;
+        let maxRetries = 5;
+        let retryDelay = 2000; // 2 seconds between retries
+        let currentRetryTimer = null;
         
-        // Get DOM elements
+        // DOM elements
         const statusEl = document.getElementById('status');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
@@ -278,28 +281,56 @@
         const longitudeEl = document.getElementById('longitude');
         const accuracyEl = document.getElementById('accuracy');
         const timestampEl = document.getElementById('timestamp');
-        const updateCountEl = document.getElementById('updateCount');
+        const retryCountEl = document.getElementById('retryCount');
         const logEl = document.getElementById('log');
-        const supportEl = document.getElementById('support');
         
         // Check if geolocation is supported
         function checkSupport() {
             if (!navigator.geolocation) {
-                statusEl.textContent = "Geolocation not supported by your browser";
+                statusEl.textContent = "❌ Geolocation not supported";
                 statusEl.className = "status status-error";
                 startBtn.disabled = true;
-                supportEl.textContent = "✗";
-                supportEl.style.color = "#dc3545";
-                addLog("Error: Geolocation not supported");
+                addLog("Error: Geolocation not supported by browser", "error");
                 return false;
             }
-            addLog("Geolocation is supported");
             return true;
         }
         
-        // Update the display with position data
+        // Add message to log
+        function addLog(message, type = "info") {
+            const now = new Date();
+            const time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            let color = "#333";
+            if (type === "error") color = "#dc3545";
+            if (type === "success") color = "#28a745";
+            if (type === "retry") color = "#007bff";
+            
+            logEntry.innerHTML = `
+                <span class="log-time">[${time}]</span>
+                <span class="log-message" style="color: ${color}">${message}</span>
+            `;
+            
+            logEl.appendChild(logEntry);
+            
+            // Keep only last 8 logs
+            while (logEl.children.length > 8) {
+                logEl.removeChild(logEl.firstChild);
+            }
+            
+            // Auto-scroll
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        // Update display with position data
         function updateDisplay(position) {
-            updateCount++;
+            // Reset retry count on success
+            retryCount = 0;
+            retryCountEl.textContent = retryCount;
+            retryCountEl.style.color = "#007bff";
             
             // Update coordinates
             latitudeEl.textContent = position.coords.latitude.toFixed(6);
@@ -310,97 +341,173 @@
             const now = new Date();
             timestampEl.textContent = now.toLocaleTimeString();
             
-            // Update counter
-            updateCountEl.textContent = updateCount;
+            updateCount++;
+            
+            // Clear loading styles
+            [latitudeEl, longitudeEl, accuracyEl, timestampEl].forEach(el => {
+                el.classList.remove("loading");
+            });
             
             return now;
         }
         
-        // Start tracking location
-        function startTracking() {
-            if (!checkSupport()) return;
+        // Show loading state
+        function showLoading() {
+            statusEl.textContent = "⌛ Getting location...";
+            statusEl.className = "status status-getting pulse";
+            addLog("Attempting to get location...", "info");
+        }
+        
+        // Clear any pending retry timer
+        function clearRetryTimer() {
+            if (currentRetryTimer) {
+                clearTimeout(currentRetryTimer);
+                currentRetryTimer = null;
+            }
+        }
+        
+        // Attempt to get location with retry logic
+        function attemptLocationWithRetry() {
+            if (!isTracking) return;
             
-            if (isTracking) return;
+            clearRetryTimer();
+            showLoading();
             
-            addLog("Starting location tracking...");
-            statusEl.textContent = "Getting initial location...";
+            // Clear previous loading states
+            [latitudeEl, longitudeEl, accuracyEl, timestampEl].forEach(el => {
+                el.classList.add("loading");
+                if (el.id !== 'timestamp') el.textContent = "--";
+            });
             
-            // First get immediate position
+            // Get current position with timeout
             navigator.geolocation.getCurrentPosition(
+                // Success callback
                 (position) => {
-                    // Got initial position - show it immediately
-                    const timestamp = updateDisplay(position);
-                    addLog(`Initial location: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
-                    
-                    // Now start continuous tracking
-                    isTracking = true;
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                    
-                    // Start watching position for updates
-                    watchId = navigator.geolocation.watchPosition(
-                        (pos) => {
-                            const time = updateDisplay(pos);
-                            // Log only every 3 updates to avoid spam
-                            if (updateCount % 3 === 0) {
-                                addLog(`Update #${updateCount}: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
-                            }
-                        },
-                        handleError,
-                        {
-                            enableHighAccuracy: true,
-                            maximumAge: 0,
-                            timeout: 10000  // 10 second timeout
-                        }
-                    );
-                    
-                    statusEl.textContent = "📍 Tracking active - Updating every second";
+                    const time = updateDisplay(position);
+                    statusEl.textContent = "📍 Tracking active";
                     statusEl.className = "status status-active";
-                    addLog("Continuous tracking started");
+                    addLog(`Location found: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`, "success");
+                    
+                    // Start continuous tracking after initial success
+                    startContinuousTracking();
                 },
+                // Error callback
                 (error) => {
-                    // Permission denied or error getting initial position
-                    handleError(error);
-                    addLog("Failed to get initial position");
+                    handleLocationError(error);
                 },
+                // Options
                 {
                     enableHighAccuracy: true,
-                    timeout: 15000,  // 15 second timeout for initial position
+                    timeout: 10000,  // 10 second timeout
                     maximumAge: 0
                 }
             );
         }
         
-        // Handle errors
-        function handleError(error) {
-            let message = "";
+        // Handle location errors with auto-retry
+        function handleLocationError(error) {
+            let errorMsg = "";
             
             switch(error.code) {
                 case 1: // PERMISSION_DENIED
-                    message = "Location permission denied. Please enable location access in your browser settings.";
-                    break;
+                    errorMsg = "Permission denied. Please enable location access.";
+                    statusEl.textContent = "❌ " + errorMsg;
+                    statusEl.className = "status status-error";
+                    addLog("Error: Location permission denied", "error");
+                    stopTracking();
+                    return;
+                    
                 case 2: // POSITION_UNAVAILABLE
-                    message = "Location information unavailable. Make sure location services are enabled on your device.";
+                    errorMsg = "Location unavailable. Retrying...";
                     break;
+                    
                 case 3: // TIMEOUT
-                    message = "Location request timed out. Please try again.";
+                    errorMsg = "Location request timed out. Retrying...";
                     break;
+                    
                 default:
-                    message = "Unknown error getting location.";
+                    errorMsg = "Unknown error. Retrying...";
             }
             
-            statusEl.textContent = `Error: ${message}`;
-            statusEl.className = "status status-error";
-            addLog(`Error: ${message} (Code: ${error.code})`);
+            retryCount++;
+            retryCountEl.textContent = retryCount;
             
-            // Stop tracking if there's an error
-            if (isTracking) {
-                stopTracking();
+            // Change color based on retry count
+            if (retryCount >= 3) {
+                retryCountEl.style.color = "#ffc107"; // Yellow warning
             }
+            if (retryCount >= maxRetries) {
+                retryCountEl.style.color = "#dc3545"; // Red error
+            }
+            
+            // Check if we should stop retrying
+            if (retryCount >= maxRetries) {
+                statusEl.textContent = "❌ Failed after " + maxRetries + " retries";
+                statusEl.className = "status status-error";
+                addLog(`Failed after ${maxRetries} retries. Please check location services.`, "error");
+                return;
+            }
+            
+            // Show retry status
+            statusEl.textContent = `🔄 ${errorMsg} (${retryCount}/${maxRetries})`;
+            statusEl.className = "status status-retry";
+            addLog(`${errorMsg} Attempt ${retryCount}/${maxRetries}`, "retry");
+            
+            // Schedule retry
+            currentRetryTimer = setTimeout(() => {
+                if (isTracking) {
+                    attemptLocationWithRetry();
+                }
+            }, retryDelay);
+        }
+        
+        // Start continuous tracking after initial location is found
+        function startContinuousTracking() {
+            if (!isTracking || watchId) return;
+            
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const time = updateDisplay(position);
+                    // Log occasional updates (every 5th)
+                    if (updateCount % 5 === 0) {
+                        addLog(`Update: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+                    }
+                },
+                (error) => {
+                    // If continuous tracking fails, try to get single position again
+                    addLog("Continuous tracking interrupted, retrying...", "retry");
+                    attemptLocationWithRetry();
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 3000, // Accept positions up to 3 seconds old
+                    timeout: 15000
+                }
+            );
+            
+            addLog("Continuous tracking started", "success");
+        }
+        
+        // Start tracking
+        function startTracking() {
+            if (!checkSupport() || isTracking) return;
+            
+            isTracking = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            updateCount = 0;
+            retryCount = 0;
+            retryCountEl.textContent = "0";
+            retryCountEl.style.color = "#007bff";
+            
+            addLog("Starting location tracking with auto-retry...", "info");
+            attemptLocationWithRetry();
         }
         
         // Stop tracking
         function stopTracking() {
+            clearRetryTimer();
+            
             if (watchId) {
                 navigator.geolocation.clearWatch(watchId);
                 watchId = null;
@@ -412,37 +519,25 @@
             
             statusEl.textContent = "Tracking stopped";
             statusEl.className = "status";
-            addLog("Tracking stopped");
+            addLog("Tracking stopped", "info");
         }
-        
-        // Add message to debug log
-        function addLog(message) {
-            const now = new Date();
-            const time = now.toLocaleTimeString();
-            
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            logEntry.innerHTML = `<span class="log-time">[${time}]:</span> <span class="log-message">${message}</span>`;
-            
-            logEl.appendChild(logEntry);
-            
-            // Keep only last 10 logs
-            while (logEl.children.length > 10) {
-                logEl.removeChild(logEl.firstChild);
-            }
-            
-            // Scroll to bottom
-            logEl.scrollTop = logEl.scrollHeight;
-        }
-        
-        // Set up event listeners
-        startBtn.addEventListener('click', startTracking);
-        stopBtn.addEventListener('click', stopTracking);
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             checkSupport();
-            addLog("Ready to start tracking");
+            
+            // Event listeners
+            startBtn.addEventListener('click', startTracking);
+            stopBtn.addEventListener('click', stopTracking);
+            
+            // Handle page visibility changes
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    addLog("Page hidden", "info");
+                } else if (isTracking) {
+                    addLog("Page visible again", "info");
+                }
+            });
         });
     </script>
 </body>
