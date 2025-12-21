@@ -1597,18 +1597,69 @@ map.on('dblclick', function(e) {
         // This is a safe way since we can't directly access currentUser from here
 
         // ===== PATCH: Capture fullName after user data loads =====
-        const originalInit = initApplication;
-        initApplication = async function() {
-            await originalInit();
-            // After successful login and userData loaded
-            const username = localStorage.getItem('emprobUsername');
-            if (username) {
-                const userData = await getUserData(username);
-                if (userData && userData.fullName) {
-                    currentUserFullName = userData.fullName;
-                }
+// ===== PROBATION AREA SAVE FUNCTIONS =====
+let currentUserFullName = null;
+
+// Function to set the full name from user data
+function setCurrentUserFullName(fullName) {
+    currentUserFullName = fullName;
+}
+
+// In the Firebase module, after getting user data, call setCurrentUserFullName
+// Look for this section in the Firebase module script and modify it:
+
+// IN THE FIREBASE MODULE SCRIPT (around line 320-340):
+async function initApplication() {
+    const username = checkAuth();
+    
+    if (!username) {
+        return;
+    }
+
+    try {
+        // Authenticate anonymously with Firebase
+        await signInAnonymously(auth);
+        console.log("Anonymous authentication successful");
+
+        // Get user data from Firebase
+        const userData = await getUserData(username);
+        currentUser = userData;
+        
+        if (userData) {
+            // Update UI with user data
+            document.getElementById('usernameDisplay').textContent = userData.username;
+            document.getElementById('emailDisplay').textContent = userData.email;
+            
+            // Update avatar with profile picture or initials
+            updateAvatar(userData);
+            
+            // SET THE FULL NAME FOR PROBATION AREA FUNCTIONS
+            if (userData.fullName) {
+                setCurrentUserFullName(userData.fullName);
             }
-        };
+            
+            // Show the main interface
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainHeader').style.display = 'flex';
+            document.getElementById('mapContainer').style.display = 'block';
+            
+            // Initialize the map
+            initializeMap();
+        } else {
+            // If user data not found, redirect to login
+            localStorage.removeItem('emprobUsername');
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error("Initialization error:", error);
+        document.getElementById('loadingScreen').innerHTML = `
+            <div style="text-align: center; color: #ff6b6b;">
+                <h3>Error Loading Application</h3>
+                <p>Please refresh the page or try again later.</p>
+            </div>
+        `;
+    }
+}
 
         // Get probationer key assigned to current officer
         function getProbationerKey() {
