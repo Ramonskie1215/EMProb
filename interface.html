@@ -1208,10 +1208,10 @@ const showLocationBtn = document.getElementById('showLocationBtn');
                 document.getElementById('locationAddress').textContent = address;
             });
 
-                setTimeout(() => {
-             loadProbationers();
-         loadAndPlotSavedBoundary(map);
-    }, 1000);
+         /   setTimeout(() => {
+            loadProbationers();
+      // loadAndPlotSavedBoundary(map);
+   }, 1000);
             
             // Map Controls hide/show functionality
 
@@ -1859,55 +1859,55 @@ function getProbationerKey() {
     });
 }
 
-// 2. Save boundary to Firebase
+// 2. Save boundary to Firebase (modified to use selected probationer)
 function saveProbationArea(type, data) {
     console.log("Saving boundary...");
     
-    getProbationerKey()
-        .then(key => {
-            const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
-            
-            const areaData = {
-                type: type,
-                ...data,
-                savedAt: new Date().toISOString(),
-                savedBy: window.currentUserFullName
-            };
-            
-            return window.firebaseSet(areaRef, areaData);
-        })
-.then(() => {
-    console.log("✓ Boundary saved!");
-  //  alert("✓ Boundary saved successfully!");
+    // Check if a probationer is selected
+    if (!selectedProbationer) {
+        console.log("❌ Please select a probationer first from the probationers panel!");
+        return;
+    }
     
-    // Plot the shape immediately after saving
-    plotBoundaryOnMap({
+    const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${selectedProbationer}/probationArea`);
+    
+    const areaData = {
         type: type,
         ...data,
-        savedAt: new Date().toISOString()
-    }, map);  // Add map parameter here
-})
+        savedAt: new Date().toISOString(),
+        savedBy: window.currentUserFullName
+    };
+    
+    window.firebaseSet(areaRef, areaData)
+        .then(() => {
+            console.log("✓ Boundary saved for probationer:", selectedProbationer);
+            alert("✓ Boundary saved successfully for selected probationer!");
+            
+            // Plot the shape immediately after saving
+            plotBoundaryOnMap(areaData, map);
+        })
         .catch(error => {
-            if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
-                return;
-            }
             console.error("Save error:", error);
-            alert("❌ Failed to save boundary");
+            console.log("❌ Failed to save boundary");
         });
 }
 
-// 3. Clear boundary from Firebase
+// 3. Clear boundary from Firebase (modified to use selected probationer)
 function clearProbationArea() {
     console.log("Clearing boundary...");
     
-    getProbationerKey()
-        .then(key => {
-            const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${key}/probationArea`);
-            return window.firebaseSet(areaRef, null);
-        })
+    // Check if a probationer is selected
+    if (!selectedProbationer) {
+        alert("❌ Please select a probationer first from the probationers panel!");
+        return;
+    }
+    
+    const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${selectedProbationer}/probationArea`);
+    
+    window.firebaseSet(areaRef, null)
         .then(() => {
-            console.log("✓ Boundary cleared!");
-          //  alert("✓ Boundary cleared!");
+            console.log("✓ Boundary cleared for probationer:", selectedProbationer);
+            alert("✓ Boundary cleared for selected probationer!");
             
             // Remove from map
             if (window.currentShape && map.hasLayer(window.currentShape)) {
@@ -1916,9 +1916,6 @@ function clearProbationArea() {
             }
         })
         .catch(error => {
-            if (error === "No full name" || error === "No probationers" || error === "No matching probationer") {
-                return;
-            }
             console.error("Clear error:", error);
             alert("❌ Failed to clear boundary");
         });
@@ -2245,6 +2242,7 @@ probationerSelect.addEventListener('change', async function() {
         
         // Plot probationer on map if coordinates are available
         plotProbationerOnMap(probationer);
+        loadAndPlotSavedBoundaryForProbationer(selectedKey);
         
     } catch (error) {
         console.error('Error loading probationer details:', error);
@@ -2340,6 +2338,39 @@ function plotProbationerOnMap(probationer) {
     }
 }
 
+// Load and plot saved boundary for a specific probationer
+async function loadAndPlotSavedBoundaryForProbationer(probationerKey) {
+    console.log("Loading boundary for probationer:", probationerKey);
+    
+    try {
+        const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${probationerKey}/probationArea`);
+        const snapshot = await window.firebaseGet(areaRef);
+        
+        if (snapshot.exists()) {
+            const boundaryData = snapshot.val();
+            console.log("Found saved boundary for probationer:", boundaryData);
+            
+            // Clear any existing boundary
+            if (window.currentShape && map.hasLayer(window.currentShape)) {
+                map.removeLayer(window.currentShape);
+                window.currentShape = null;
+            }
+            
+            // Plot the boundary
+            plotBoundaryOnMap(boundaryData, map);
+        } else {
+            console.log("No saved boundary found for this probationer");
+            // Clear any existing boundary
+            if (window.currentShape && map.hasLayer(window.currentShape)) {
+                map.removeLayer(window.currentShape);
+                window.currentShape = null;
+            }
+        }
+    } catch (error) {
+        console.error("Error loading boundary for probationer:", error);
+    }
+}
+        
 // Add a marker for probationer
 function addProbationerMarker(lat, lng, probationer) {
     // Create a custom marker for probationer
