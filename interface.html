@@ -2217,6 +2217,11 @@ probationerSelect.addEventListener('change', async function() {
             map.removeLayer(probationerMarkers[selectedProbationer]);
             delete probationerMarkers[selectedProbationer];
         }
+        // Also remove any existing boundary
+        if (window.currentShape && map.hasLayer(window.currentShape)) {
+            map.removeLayer(window.currentShape);
+            window.currentShape = null;
+        }
         selectedProbationer = null;
         return;
     }
@@ -2225,6 +2230,12 @@ probationerSelect.addEventListener('change', async function() {
     probationerDetails.style.display = 'none';
     
     try {
+        // ============ CLEAR PREVIOUS PROBATIONER'S MARKER ============
+        if (selectedProbationer && probationerMarkers[selectedProbationer]) {
+            map.removeLayer(probationerMarkers[selectedProbationer]);
+            delete probationerMarkers[selectedProbationer];
+        }
+        
         // Get probationer data
         const probRef = window.firebaseRef(window.firebaseDatabase, `probationers/${selectedKey}`);
         const snapshot = await window.firebaseGet(probRef);
@@ -2242,7 +2253,9 @@ probationerSelect.addEventListener('change', async function() {
         
         // Plot probationer on map if coordinates are available
         plotProbationerOnMap(probationer);
-        loadAndPlotSavedBoundaryForProbationer(selectedKey);
+        
+        // Load saved boundary for this probationer
+        await loadAndPlotSavedBoundaryForProbationer(selectedKey);
         
     } catch (error) {
         console.error('Error loading probationer details:', error);
@@ -2342,6 +2355,12 @@ function plotProbationerOnMap(probationer) {
 async function loadAndPlotSavedBoundaryForProbationer(probationerKey) {
     console.log("Loading boundary for probationer:", probationerKey);
     
+    // ============ IMPORTANT: ALWAYS CLEAR EXISTING BOUNDARY FIRST ============
+    if (window.currentShape && map.hasLayer(window.currentShape)) {
+        map.removeLayer(window.currentShape);
+        window.currentShape = null;
+    }
+    
     try {
         const areaRef = window.firebaseRef(window.firebaseDatabase, `probationers/${probationerKey}/probationArea`);
         const snapshot = await window.firebaseGet(areaRef);
@@ -2350,24 +2369,19 @@ async function loadAndPlotSavedBoundaryForProbationer(probationerKey) {
             const boundaryData = snapshot.val();
             console.log("Found saved boundary for probationer:", boundaryData);
             
-            // Clear any existing boundary
-            if (window.currentShape && map.hasLayer(window.currentShape)) {
-                map.removeLayer(window.currentShape);
-                window.currentShape = null;
-            }
-            
             // Plot the boundary
             plotBoundaryOnMap(boundaryData, map);
         } else {
             console.log("No saved boundary found for this probationer");
-            // Clear any existing boundary
-            if (window.currentShape && map.hasLayer(window.currentShape)) {
-                map.removeLayer(window.currentShape);
-                window.currentShape = null;
-            }
+            // No boundary to plot, and we've already cleared any existing one above
         }
     } catch (error) {
         console.error("Error loading boundary for probationer:", error);
+        // Even if there's an error, make sure previous boundary is cleared
+        if (window.currentShape && map.hasLayer(window.currentShape)) {
+            map.removeLayer(window.currentShape);
+            window.currentShape = null;
+        }
     }
 }
         
