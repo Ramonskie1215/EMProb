@@ -1104,8 +1104,17 @@
         // Your current coordinates
         const currentLat = 14.7596;
         const currentLng = 120.9633;
+const mapControls = document.getElementById('mapControls');
+// === END OF NEW BLOCK ===
+const hideControlsBtn = document.getElementById('hideControlsBtn');
+const showControlsBtn = document.getElementById('showControlsBtn');
 
-                    function updateMapPadding() {
+// Location info hide/show functionality - ADD THIS CODE RIGHT HERE
+const locationInfo = document.querySelector('.location-info');
+const hideLocationBtn = document.getElementById('hideLocationBtn');
+const showLocationBtn = document.getElementById('showLocationBtn');
+
+   function updateMapPadding() {
     let leftPadding = 100;   // Small space when controls hidden
     let rightPadding = 100;  // Small space when probationer controls hidden
     let bottomPadding = 100; // Small space when location info hidden
@@ -1205,18 +1214,6 @@
     }, 1000);
             
             // Map Controls hide/show functionality
-const mapControls = document.getElementById('mapControls');
-
-
-            
-// === END OF NEW BLOCK ===
-const hideControlsBtn = document.getElementById('hideControlsBtn');
-const showControlsBtn = document.getElementById('showControlsBtn');
-
-// Location info hide/show functionality - ADD THIS CODE RIGHT HERE
-const locationInfo = document.querySelector('.location-info');
-const hideLocationBtn = document.getElementById('hideLocationBtn');
-const showLocationBtn = document.getElementById('showLocationBtn');
 
 // Hide location info by default if you want, or keep it visible
   locationInfo.style.display = 'none';
