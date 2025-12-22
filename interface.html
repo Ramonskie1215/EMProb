@@ -566,6 +566,63 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+
+    /* ================= PROBATIONER CONTROLS CSS START ================= */
+/* Probationer Controls */
+.probationer-controls {
+    max-width: 320px;
+    left: auto !important;
+    right: 20px;
+}
+
+.probationer-controls.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.control-static {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #495057;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-indicator.online {
+    background-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.status-indicator.offline {
+    background-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+.status-indicator.warning {
+    background-color: #ffc107;
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+/* Show/Hide buttons positioning */
+#showProbationerBtn {
+    left: auto;
+    right: 20px;
+}
+/* ================= PROBATIONER CONTROLS CSS END ================= */
+    
     .header {
         padding: 12px 20px;
         height: 70px;
@@ -629,6 +686,24 @@
     .location-title {
         font-size: 16px;
     }
+
+    /* Probationer Controls Responsive */
+    .probationer-controls {
+        max-width: 280px;
+        right: 10px;
+    }
+    
+    #showProbationerBtn {
+        right: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .probationer-controls {
+        max-width: 250px;
+    }
+}
+    
 }
     /* Special handling for landscape orientation */
 @media (max-height: 600px) and (orientation: landscape) {
@@ -821,6 +896,74 @@
 </div>
 
 <button class="show-controls-btn" id="showLocationBtn" style="right: 20px; left: auto; bottom: 20px; top: auto;">Show Location</button>
+
+<!-- ================= PROBATIONER CONTROLS HTML START ================= -->
+<!-- Probationer Controls Panel -->
+<div class="map-controls probationer-controls hidden" id="probationerControls" style="top: 20px; right: 20px; left: auto;">
+    <div class="controls-header">
+        <div class="control-title">Probationers</div>
+        <button class="hide-controls-btn hide-probationer-btn">Hide</button>
+    </div>
+    
+    <div class="control-group">
+        <label class="control-label">Select Probationer</label>
+        <select class="control-input" id="probationerSelect">
+            <option value="">-- Choose a probationer --</option>
+            <!-- Options will be loaded dynamically -->
+        </select>
+    </div>
+    
+    <div class="probationer-details" id="probationerDetails" style="display: none;">
+        <div class="control-group">
+            <label class="control-label">Name</label>
+            <div class="control-static" id="probationerName">-</div>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label">Assigned ID</label>
+            <div class="control-static" id="probationerId">-</div>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label">Status</label>
+            <div class="control-static" id="probationerStatus">
+                <span class="status-indicator offline"></span> Offline
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label">Last Updated</label>
+            <div class="control-static" id="probationerUpdated">-</div>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label">Battery</label>
+            <div class="control-static" id="probationerBattery">-</div>
+        </div>
+        
+        <div class="control-group">
+            <label class="control-label">Current Location</label>
+            <div class="control-static" id="probationerLocation">-</div>
+        </div>
+        
+        <div class="control-group" style="display: flex; gap: 10px;">
+            <button class="control-btn secondary" id="trackProbationerBtn" style="flex: 1;">
+                Track Location
+            </button>
+            <button class="control-btn secondary" id="viewProfileBtn" style="flex: 1;">
+                View Profile
+            </button>
+        </div>
+    </div>
+    
+    <div class="spinner" id="probationerSpinner" style="display: none;"></div>
+</div>
+
+<button class="show-controls-btn" id="showProbationerBtn" style="top: 20px; right: 20px; left: auto; display: block;">
+    Show Probationers
+</button>
+<!-- ================= PROBATIONER CONTROLS HTML END ================= -->
+        
     </div>
 
 <script type="module">
@@ -1034,10 +1177,10 @@
             
             // Map Controls hide/show functionality
 const mapControls = document.getElementById('mapControls');
-            // === ADD THIS ENTIRE BLOCK ===
-// Function to automatically adjust map view when panels open/close
-function updateMapPadding() {
+
+            function updateMapPadding() {
     let leftPadding = 100;   // Small space when controls hidden
+    let rightPadding = 100;  // Small space when probationer controls hidden
     let bottomPadding = 100; // Small space when location info hidden
 
     // If left controls are visible, need more space
@@ -1045,18 +1188,24 @@ function updateMapPadding() {
         leftPadding = 340;
     }
 
+    // If probationer controls are visible, need more space on right
+    if (!probationerControls.classList.contains('hidden')) {
+        rightPadding = 340;
+    }
+
     // If location info is visible, need more space at bottom
     if (locationInfo.style.display !== 'none') {
         bottomPadding = 220;
     }
 
-    // Tell Leaflet to adjust the view with padding (this auto-zooms out a bit)
+    // Tell Leaflet to adjust the view with padding
     map.setView(map.getCenter(), map.getZoom(), {
         paddingTopLeft: [leftPadding, 90],     // 90px for header
-        paddingBottomRight: [20, bottomPadding],
+        paddingBottomRight: [rightPadding, bottomPadding],
         animate: true
     });
 }
+            
 // === END OF NEW BLOCK ===
 const hideControlsBtn = document.getElementById('hideControlsBtn');
 const showControlsBtn = document.getElementById('showControlsBtn');
@@ -1958,6 +2107,323 @@ window.clearProbationArea = clearProbationArea;
 window.loadAndPlotSavedBoundary = loadAndPlotSavedBoundary;
 window.plotBoundaryOnMap = plotBoundaryOnMap;
         // ===== END PROBATION AREA FUNCTIONS =====
+    // ================= PROBATIONER CONTROLS JAVASCRIPT START =================
+// Get references to probationer controls
+const probationerControls = document.getElementById('probationerControls');
+const showProbationerBtn = document.getElementById('showProbationerBtn');
+const hideProbationerBtn = document.querySelector('.hide-probationer-btn');
+const probationerSelect = document.getElementById('probationerSelect');
+const probationerDetails = document.getElementById('probationerDetails');
+const probationerSpinner = document.getElementById('probationerSpinner');
+const trackProbationerBtn = document.getElementById('trackProbationerBtn');
+const viewProfileBtn = document.getElementById('viewProfileBtn');
+
+// Store probationer data
+let probationerMarkers = {};
+let selectedProbationer = null;
+
+// Show/hide probationer controls
+showProbationerBtn.addEventListener('click', () => {
+    probationerControls.classList.remove('hidden');
+    showProbationerBtn.style.display = 'none';
+    loadProbationers(); // Load probationers when panel opens
+    updateMapPadding();
+});
+
+hideProbationerBtn.addEventListener('click', () => {
+    probationerControls.classList.add('hidden');
+    showProbationerBtn.style.display = 'block';
+    updateMapPadding();
+});
+
+// Load probationers assigned to current officer
+async function loadProbationers() {
+    probationerSelect.innerHTML = '<option value="">-- Choose a probationer --</option>';
+    probationerDetails.style.display = 'none';
+    probationerSpinner.style.display = 'block';
+    
+    try {
+        // Get all probationers
+        const probRef = window.firebaseRef(window.firebaseDatabase, 'probationers');
+        const snapshot = await window.firebaseGet(probRef);
+        
+        if (!snapshot.exists()) {
+            probationerSelect.innerHTML = '<option value="">No probationers found</option>';
+            return;
+        }
+        
+        const probationers = snapshot.val();
+        const officerName = window.currentUserFullName;
+        
+        // Filter probationers assigned to current officer
+        const assignedProbationers = [];
+        
+        for (const key in probationers) {
+            const probationer = probationers[key];
+            
+            // Check if officerInCharge matches current user's full name
+            if (probationer.officerInCharge && 
+                probationer.officerInCharge.trim() === officerName.trim()) {
+                
+                assignedProbationers.push({
+                    key: key,
+                    ...probationer
+                });
+            }
+        }
+        
+        // Populate dropdown
+        if (assignedProbationers.length === 0) {
+            probationerSelect.innerHTML = '<option value="">No probationers assigned to you</option>';
+        } else {
+            assignedProbationers.forEach(prob => {
+                const option = document.createElement('option');
+                option.value = prob.key;
+                option.textContent = prob.fullName + (prob.assignedId ? ` (${prob.assignedId})` : '');
+                probationerSelect.appendChild(option);
+            });
+            
+            // Store probationer data globally for easy access
+            window.assignedProbationers = assignedProbationers;
+        }
+        
+    } catch (error) {
+        console.error('Error loading probationers:', error);
+        probationerSelect.innerHTML = '<option value="">Error loading probationers</option>';
+    } finally {
+        probationerSpinner.style.display = 'none';
+    }
+}
+
+// When a probationer is selected from dropdown
+probationerSelect.addEventListener('change', async function() {
+    const selectedKey = this.value;
+    
+    if (!selectedKey) {
+        probationerDetails.style.display = 'none';
+        // Remove any existing probationer marker
+        if (selectedProbationer && probationerMarkers[selectedProbationer]) {
+            map.removeLayer(probationerMarkers[selectedProbationer]);
+            delete probationerMarkers[selectedProbationer];
+        }
+        selectedProbationer = null;
+        return;
+    }
+    
+    probationerSpinner.style.display = 'block';
+    probationerDetails.style.display = 'none';
+    
+    try {
+        // Get probationer data
+        const probRef = window.firebaseRef(window.firebaseDatabase, `probationers/${selectedKey}`);
+        const snapshot = await window.firebaseGet(probRef);
+        
+        if (!snapshot.exists()) {
+            alert('Probationer data not found!');
+            return;
+        }
+        
+        const probationer = snapshot.val();
+        selectedProbationer = selectedKey;
+        
+        // Update UI with probationer details
+        updateProbationerDetails(probationer);
+        
+        // Plot probationer on map if coordinates are available
+        plotProbationerOnMap(probationer);
+        
+    } catch (error) {
+        console.error('Error loading probationer details:', error);
+        alert('Failed to load probationer details');
+    } finally {
+        probationerSpinner.style.display = 'none';
+        probationerDetails.style.display = 'block';
+    }
+});
+
+// Update probationer details in the UI
+function updateProbationerDetails(probationer) {
+    // Basic info
+    document.getElementById('probationerName').textContent = probationer.fullName || '-';
+    document.getElementById('probationerId').textContent = probationer.assignedId || '-';
+    
+    // Status
+    const statusIndicator = document.querySelector('#probationerStatus .status-indicator');
+    const statusText = document.getElementById('probationerStatus').querySelector('span:last-child');
+    
+    if (probationer.deviceStatus === 'tampered' || probationer.deviceStatus === 'offline') {
+        statusIndicator.className = 'status-indicator warning';
+        statusText.textContent = ' Tampered/Alert';
+    } else if (probationer.currentCoordinates && probationer.currentCoordinates !== 'N/A') {
+        statusIndicator.className = 'status-indicator online';
+        statusText.textContent = ' Online';
+    } else {
+        statusIndicator.className = 'status-indicator offline';
+        statusText.textContent = ' Offline';
+    }
+    
+    // Last updated
+    const updatedAt = probationer.updatedAt ? new Date(probationer.updatedAt) : new Date();
+    document.getElementById('probationerUpdated').textContent = 
+        updatedAt.toLocaleDateString() + ' ' + updatedAt.toLocaleTimeString();
+    
+    // Battery
+    const battery = probationer.batteryPercentage || 'N/A';
+    document.getElementById('probationerBattery').textContent = 
+        battery === 'N/A' ? 'N/A' : battery + '%';
+    
+    // Location
+    document.getElementById('probationerLocation').textContent = 
+        probationer.currentCoordinates || 'N/A';
+}
+
+// Plot probationer on map
+function plotProbationerOnMap(probationer) {
+    // Remove previous marker for this probationer
+    if (probationerMarkers[selectedProbationer]) {
+        map.removeLayer(probationerMarkers[selectedProbationer]);
+    }
+    
+    // Check if coordinates are available
+    if (!probationer.currentCoordinates || probationer.currentCoordinates === 'N/A') {
+        alert('No location data available for this probationer');
+        return;
+    }
+    
+    try {
+        // Parse coordinates (format: "45.5123° N, 73.5678° W")
+        const coordsStr = probationer.currentCoordinates;
+        const latMatch = coordsStr.match(/([\d.]+)°\s*([NS])/);
+        const lngMatch = coordsStr.match(/([\d.]+)°\s*([EW])/);
+        
+        if (!latMatch || !lngMatch) {
+            // Try alternative format (from watch device)
+            const watchMatch = coordsStr.match(/([\d.]+),\s*([\d.]+)/);
+            if (watchMatch) {
+                const lat = parseFloat(watchMatch[1]);
+                const lng = parseFloat(watchMatch[2]);
+                
+                addProbationerMarker(lat, lng, probationer);
+                return;
+            }
+            
+            alert('Could not parse coordinates');
+            return;
+        }
+        
+        let lat = parseFloat(latMatch[1]);
+        let lng = parseFloat(lngMatch[1]);
+        
+        // Adjust for hemisphere
+        if (latMatch[2] === 'S') lat = -lat;
+        if (lngMatch[2] === 'W') lng = -lng;
+        
+        addProbationerMarker(lat, lng, probationer);
+        
+    } catch (error) {
+        console.error('Error plotting probationer:', error);
+        alert('Error displaying probationer location');
+    }
+}
+
+// Add a marker for probationer
+function addProbationerMarker(lat, lng, probationer) {
+    // Create a custom marker for probationer
+    const probationerIcon = L.divIcon({
+        html: `<div style="
+            background: #E74C3C;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        ">P</div>`,
+        iconSize: [30, 30],
+        className: 'probationer-marker'
+    });
+    
+    // Create marker
+    const marker = L.marker([lat, lng], { icon: probationerIcon })
+        .addTo(map)
+        .bindPopup(`
+            <b>Probationer: ${probationer.fullName}</b><br>
+            ID: ${probationer.assignedId || 'N/A'}<br>
+            Status: ${probationer.deviceStatus || 'N/A'}<br>
+            Battery: ${probationer.batteryPercentage || 'N/A'}<br>
+            Last Update: ${new Date(probationer.updatedAt || Date.now()).toLocaleString()}
+        `);
+    
+    // Store marker reference
+    probationerMarkers[selectedProbationer] = marker;
+    
+    // Zoom to probationer location
+    map.setView([lat, lng], 15);
+    marker.openPopup();
+}
+
+// Track button functionality
+trackProbationerBtn.addEventListener('click', function() {
+    if (!selectedProbationer) {
+        alert('Please select a probationer first');
+        return;
+    }
+    
+    // Reload and plot probationer location
+    loadProbationerDetails(selectedProbationer);
+});
+
+// View profile button
+viewProfileBtn.addEventListener('click', function() {
+    if (!selectedProbationer) {
+        alert('Please select a probationer first');
+        return;
+    }
+    
+    // In a real app, this would open a profile page
+    // For now, show an alert with basic info
+    const probationer = window.assignedProbationers?.find(p => p.key === selectedProbationer);
+    if (probationer) {
+        alert(
+            `Probationer Profile:\n\n` +
+            `Name: ${probationer.fullName}\n` +
+            `ID: ${probationer.assignedId || 'N/A'}\n` +
+            `Email: ${probationer.email || 'N/A'}\n` +
+            `Phone: ${probationer.phone || 'N/A'}\n` +
+            `Address: ${probationer.address || 'N/A'}\n` +
+            `Officer: ${probationer.officerInCharge || 'N/A'}`
+        );
+    }
+});
+
+// Helper function to load probationer details
+async function loadProbationerDetails(probationerKey) {
+    probationerSpinner.style.display = 'block';
+    
+    try {
+        const probRef = window.firebaseRef(window.firebaseDatabase, `probationers/${probationerKey}`);
+        const snapshot = await window.firebaseGet(probRef);
+        
+        if (snapshot.exists()) {
+            const probationer = snapshot.val();
+            updateProbationerDetails(probationer);
+            plotProbationerOnMap(probationer);
+        }
+    } catch (error) {
+        console.error('Error reloading probationer:', error);
+        alert('Failed to update probationer location');
+    } finally {
+        probationerSpinner.style.display = 'none';
+    }
+}
+// ================= PROBATIONER CONTROLS JAVASCRIPT END =================
+        
+        
     </script>
 </body>
 </html>
