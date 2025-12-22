@@ -1104,6 +1104,34 @@
         // Your current coordinates
         const currentLat = 14.7596;
         const currentLng = 120.9633;
+
+                    function updateMapPadding() {
+    let leftPadding = 100;   // Small space when controls hidden
+    let rightPadding = 100;  // Small space when probationer controls hidden
+    let bottomPadding = 100; // Small space when location info hidden
+
+    // If left controls are visible, need more space
+    if (!mapControls.classList.contains('hidden')) {
+        leftPadding = 340;
+    }
+
+    // If probationer controls are visible, need more space on right
+    if (!probationerControls.classList.contains('hidden')) {
+        rightPadding = 340;
+    }
+
+    // If location info is visible, need more space at bottom
+    if (locationInfo.style.display !== 'none') {
+        bottomPadding = 220;
+    }
+
+    // Tell Leaflet to adjust the view with padding
+    map.setView(map.getCenter(), map.getZoom(), {
+        paddingTopLeft: [leftPadding, 90],     // 90px for header
+        paddingBottomRight: [rightPadding, bottomPadding],
+        animate: true
+    });
+}
         
         // Map initialization function
         function initializeMap() {
@@ -1179,33 +1207,7 @@
             // Map Controls hide/show functionality
 const mapControls = document.getElementById('mapControls');
 
-            function updateMapPadding() {
-    let leftPadding = 100;   // Small space when controls hidden
-    let rightPadding = 100;  // Small space when probationer controls hidden
-    let bottomPadding = 100; // Small space when location info hidden
 
-    // If left controls are visible, need more space
-    if (!mapControls.classList.contains('hidden')) {
-        leftPadding = 340;
-    }
-
-    // If probationer controls are visible, need more space on right
-    if (!probationerControls.classList.contains('hidden')) {
-        rightPadding = 340;
-    }
-
-    // If location info is visible, need more space at bottom
-    if (locationInfo.style.display !== 'none') {
-        bottomPadding = 220;
-    }
-
-    // Tell Leaflet to adjust the view with padding
-    map.setView(map.getCenter(), map.getZoom(), {
-        paddingTopLeft: [leftPadding, 90],     // 90px for header
-        paddingBottomRight: [rightPadding, bottomPadding],
-        animate: true
-    });
-}
             
 // === END OF NEW BLOCK ===
 const hideControlsBtn = document.getElementById('hideControlsBtn');
