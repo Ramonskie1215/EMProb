@@ -1172,6 +1172,7 @@
             });
 
                 setTimeout(() => {
+             loadProbationers();
          loadAndPlotSavedBoundary(map);
     }, 1000);
             
@@ -2185,6 +2186,20 @@ async function loadProbationers() {
             
             // Store probationer data globally for easy access
             window.assignedProbationers = assignedProbationers;
+            
+            // ============= AUTO-SELECT FIRST PROBATIONER =============
+            // Auto-select the first probationer in the list
+            setTimeout(() => {
+                if (assignedProbationers.length > 0) {
+                    const firstProbationerKey = assignedProbationers[0].key;
+                    probationerSelect.value = firstProbationerKey;
+                    
+                    // Trigger the change event to load details
+                    const event = new Event('change');
+                    probationerSelect.dispatchEvent(event);
+                }
+            }, 500); // Small delay to ensure DOM is ready
+            // ============= END AUTO-SELECT =============
         }
         
     } catch (error) {
