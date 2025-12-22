@@ -2301,7 +2301,7 @@ function plotProbationerOnMap(probationer) {
     
     // Check if coordinates are available
     if (!probationer.currentCoordinates || probationer.currentCoordinates === 'N/A') {
-        alert('No location data available for this probationer');
+        console.log('No location data available for this probationer');
         return;
     }
     
