@@ -2003,70 +2003,77 @@ async function getWatchDetails(watchId) {
         }
 
                 // Save probationer to Firebase under /probationers path
-        async function saveProbationer(probationerData) {
-            try {
-                // Use assigned ID as the Firebase ID, or existing ID if editing
-                let id;
-                if (editingId) {
-                    // If editing, keep the same ID
-                    id = editingId;
-                } else {
-                    // For new probationers, use the assigned ID
-                    // Clean it up: remove spaces, make lowercase, replace special chars
-                    const cleanId = probationerData.assignedId
-                        .trim()
-                        .toLowerCase()
-                        .replace(/\s+/g, '_')  // Replace spaces with underscores
-                        .replace(/[^a-z0-9_]/g, ''); // Remove special characters
-                    
-                    if (!cleanId) {
-                        throw new Error('Assigned ID is required and cannot be empty');
-                    }
-                    
-                    id = `probationer_${cleanId}`;
-                    
-                    // Check if this ID already exists
-                    const existingRef = ref(database, `probationers/${id}`);
-                    const snapshot = await get(existingRef);
-                    
-                    if (snapshot.exists()) {
-                        showNotification('This ID already exists. Please use a different ID.', 'error');
-                        return false;
-                    }
-                }
-                
-                // Add metadata
-                probationerData.createdAt = new Date().toISOString();
-                if (!probationerData.updatedAt) {
-                    probationerData.updatedAt = new Date().toISOString();
-                }
-                
-                // Set default values for new probationers
-                if (!editingId) {
-                    probationerData.deviceStatus = 'N/A';
-                    probationerData.batteryPercentage = 'N/A';
-                    probationerData.violations = [];
-                    probationerData.currentCoordinates = 'N/A';
-                    probationerData.announcements = [];
-                }
-                
-                // Save to /probationers/{id}
-                const probationerRef = ref(database, `probationers/${id}`);
-                await set(probationerRef, probationerData);
-                
-                return true;
-            } catch (error) {
-                console.error('Error saving probationer:', error);
-                
-                if (error.message.includes('Assigned ID is required')) {
-                    showNotification('Assigned ID is required', 'error');
-                } else {
-                    showNotification('Failed to save probationer. Please try again.', 'error');
-                }
-                
+async function saveProbationer(probationerData) {
+    try {
+        // Use assigned ID as the Firebase ID, or existing ID if editing
+        let id;
+        if (editingId) {
+            // If editing, keep the same ID
+            id = editingId;
+        } else {
+            // For new probationers, use the assigned ID
+            // Clean it up: remove spaces, make lowercase, replace special chars
+            const cleanId = probationerData.assignedId
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '_')  // Replace spaces with underscores
+                .replace(/[^a-z0-9_]/g, ''); // Remove special characters
+            
+            if (!cleanId) {
+                throw new Error('Assigned ID is required and cannot be empty');
+            }
+            
+            id = `probationer_${cleanId}`;
+            
+            // Check if this ID already exists
+            const existingRef = ref(database, `probationers/${id}`);
+            const snapshot = await get(existingRef);
+            
+            if (snapshot.exists()) {
+                showNotification('This ID already exists. Please use a different ID.', 'error');
                 return false;
             }
         }
+        
+        // Add metadata
+        probationerData.updatedAt = new Date().toISOString();
+        if (!probationerData.createdAt) {
+            probationerData.createdAt = new Date().toISOString();
+        }
+        
+        // Set default values for new probationers
+        if (!editingId) {
+            probationerData.deviceStatus = 'N/A';
+            probationerData.batteryPercentage = 'N/A';
+            probationerData.violations = [];
+            probationerData.currentCoordinates = 'N/A';
+            probationerData.announcements = [];
+        }
+        
+        // Save to /probationers/{id}
+        const probationerRef = ref(database, `probationers/${id}`);
+        
+        if (editingId) {
+            // Use update() to merge changes with existing data
+            await update(probationerRef, probationerData);
+        } else {
+            // Use set() for new records
+            await set(probationerRef, probationerData);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error saving probationer:', error);
+        
+        if (error.message.includes('Assigned ID is required')) {
+            showNotification('Assigned ID is required', 'error');
+        } else {
+            showNotification('Failed to save probationer. Please try again.', 'error');
+        }
+        
+        return false;
+    }
+}
 
 // RELIABLE VERSION: Always uses latest probationer data
 async function updateWatchAssignment(probationerId, newWatchId) {
@@ -2669,141 +2676,146 @@ document.getElementById('assignedId').disabled = false;
             fileReader.readAsDataURL(file);
         }
 
-        // Save probationer from modal
-        async function saveProbationerFromModal() {
-            const fullName = document.getElementById('fullName').value.trim();
-            const assignedId = document.getElementById('assignedId').value.trim();
-            
-            if (!fullName || !assignedId) {
-                showNotification('Full name and assigned ID are required', 'error');
-                return;
-            }
-            
-            const saveBtn = document.getElementById('saveBtn');
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
-            
-            const probationerData = {
-                fullName,
-                assignedId,
-                email: document.getElementById('email').value.trim(),
-                phone: document.getElementById('phone').value.trim(),
-                address: document.getElementById('address').value.trim(),
-                dob: document.getElementById('dob').value,
-                startDate: document.getElementById('startDate').value,
-                endDate: document.getElementById('endDate').value, 
-                officerInCharge: document.getElementById('officerInCharge').value.trim() || 'Not Assigned',
-                watch: document.getElementById('assignedWatch').value,
-                updatedAt: new Date().toISOString()
-            };
-            
-            // Add profile picture if available
-            if (fileReader && fileReader.result) {
-                probationerData.profilePicture = fileReader.result;
-            } else if (editingId) {
-                // Keep existing profile picture if editing and not changed
-                const existingProbationer = probationers.find(p => p.id === editingId);
-                if (existingProbationer && existingProbationer.profilePicture) {
-                    probationerData.profilePicture = existingProbationer.profilePicture;
-                }
-            }
-            
-            // Preserve existing device data if editing
-            if (editingId) {
-                const existingProbationer = probationers.find(p => p.id === editingId);
-                if (existingProbationer) {
-                    probationerData.deviceStatus = existingProbationer.deviceStatus || 'N/A';
-                    probationerData.batteryPercentage = existingProbationer.batteryPercentage || 'N/A';
-                    probationerData.violations = existingProbationer.violations || [];
-                    probationerData.currentCoordinates = existingProbationer.currentCoordinates || existingProbationer.coordinates || 'N/A';
-                    probationerData.announcements = existingProbationer.announcements || [];
-                    probationerData.createdAt = existingProbationer.createdAt;
-                }
-            }
-            
-const success = await saveProbationer(probationerData);
+async function saveProbationerFromModal() {
+    const fullName = document.getElementById('fullName').value.trim();
+    const assignedId = document.getElementById('assignedId').value.trim();
+    
+    if (!fullName || !assignedId) {
+        showNotification('Full name and assigned ID are required', 'error');
+        return;
+    }
+    
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    
+    // Start with existing data if editing
+    let probationerData = {};
+    
+    if (editingId) {
+        // Get the existing probationer data
+        const existingProbationer = probationers.find(p => p.id === editingId);
+        if (existingProbationer) {
+            probationerData = {...existingProbationer};
+        }
+    }
+    
+    // Update only the fields that are in the form
+    probationerData.fullName = fullName;
+    probationerData.assignedId = assignedId;
+    probationerData.email = document.getElementById('email').value.trim();
+    probationerData.phone = document.getElementById('phone').value.trim();
+    probationerData.address = document.getElementById('address').value.trim();
+    probationerData.dob = document.getElementById('dob').value;
+    probationerData.startDate = document.getElementById('startDate').value;
+    probationerData.endDate = document.getElementById('endDate').value; 
+    probationerData.officerInCharge = document.getElementById('officerInCharge').value.trim() || 'Not Assigned';
+    probationerData.watch = document.getElementById('assignedWatch').value;
+    probationerData.updatedAt = new Date().toISOString();
+    
+    // Handle profile picture
+    if (fileReader && fileReader.result) {
+        probationerData.profilePicture = fileReader.result;
+    } else if (editingId && !probationerData.profilePicture) {
+        // Ensure we don't lose existing profile picture if not changed
+        const existingProbationer = probationers.find(p => p.id === editingId);
+        if (existingProbationer && existingProbationer.profilePicture) {
+            probationerData.profilePicture = existingProbationer.profilePicture;
+        }
+    }
+    
+    // Ensure critical fields exist for new probationers
+    if (!editingId) {
+        probationerData.deviceStatus = probationerData.deviceStatus || 'N/A';
+        probationerData.batteryPercentage = probationerData.batteryPercentage || 'N/A';
+        probationerData.violations = probationerData.violations || [];
+        probationerData.currentCoordinates = probationerData.currentCoordinates || 'N/A';
+        probationerData.announcements = probationerData.announcements || [];
+        probationerData.createdAt = new Date().toISOString();
+    }
+    
+    const success = await saveProbationer(probationerData);
 
-if (success) {
-    const newWatchId = document.getElementById('assignedWatch').value;
+    if (success) {
+        const newWatchId = document.getElementById('assignedWatch').value;
 
-    // Reconstruct probationer ID
-    const cleanAssignedId = probationerData.assignedId
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^a-z0-9_]/g, '');
-    const probationerFinalId = editingId || `probationer_${cleanAssignedId}`;
+        // Reconstruct probationer ID
+        const cleanAssignedId = probationerData.assignedId
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '');
+        const probationerFinalId = editingId || `probationer_${cleanAssignedId}`;
 
-    // CLEAN ID used in watches (without "probationer_" prefix)
-    const cleanProbationerId = cleanAssignedId;  // e.g., "123445"
+        // CLEAN ID used in watches (without "probationer_" prefix)
+        const cleanProbationerId = cleanAssignedId;  // e.g., "123445"
 
-    try {
-        // STEP 1: If setting to "none", or changing watches → CLEAR ALL watches that have this ID
-        if (newWatchId === 'none' || editingId) {
-            // Get ALL watches
-            const watchesSnapshot = await get(ref(database, 'watch'));
-            if (watchesSnapshot.exists()) {
-                const watches = watchesSnapshot.val();
+        try {
+            // STEP 1: If setting to "none", or changing watches → CLEAR ALL watches that have this ID
+            if (newWatchId === 'none' || editingId) {
+                // Get ALL watches
+                const watchesSnapshot = await get(ref(database, 'watch'));
+                if (watchesSnapshot.exists()) {
+                    const watches = watchesSnapshot.val();
 
-                // Loop through every watch and clear if it has this probationer
-                const clearPromises = [];
-                for (const watchId in watches) {
-                    if (watches[watchId].probationer === cleanProbationerId) {
-                        clearPromises.push(
-                            set(ref(database, `watch/${watchId}/probationer`), "none")
-                        );
-                        console.log(`Clearing probationer ${cleanProbationerId} from watch: ${watchId}`);
+                    // Loop through every watch and clear if it has this probationer
+                    const clearPromises = [];
+                    for (const watchId in watches) {
+                        if (watches[watchId].probationer === cleanProbationerId) {
+                            clearPromises.push(
+                                set(ref(database, `watch/${watchId}/probationer`), "none")
+                            );
+                            console.log(`Clearing probationer ${cleanProbationerId} from watch: ${watchId}`);
+                        }
+                    }
+                    // Wait for all clears to finish
+                    if (clearPromises.length > 0) {
+                        await Promise.all(clearPromises);
                     }
                 }
-                // Wait for all clears to finish
-                if (clearPromises.length > 0) {
-                    await Promise.all(clearPromises);
+            }
+
+            // STEP 2: Only if assigning to a real watch → assign it
+            if (newWatchId !== 'none') {
+                const watchSnapshot = await get(ref(database, `watch/${newWatchId}`));
+                if (!watchSnapshot.exists()) {
+                    showNotification('Selected watch does not exist', 'error');
+                } else {
+                    const watchData = watchSnapshot.val();
+                    // Only block if the watch is assigned to SOMEONE ELSE
+                    if (watchData.probationer && 
+                        watchData.probationer !== "none" && 
+                        watchData.probationer !== cleanProbationerId) {
+                        
+                        showNotification('This watch is already assigned to another probationer!', 'error');
+                        // Optionally: you could revert the dropdown here, but not required
+                    } else {
+                        // Safe to assign (either free or already assigned to THIS probationer)
+                        await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
+                        console.log(`Assigned (or re-confirmed) ${cleanProbationerId} to ${newWatchId}`);
+                    }
                 }
             }
+
+            showNotification(editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!', 'success');
+            closeModal();
+
+        } catch (error) {
+            console.error('Watch cleanup/assignment failed:', error);
+            showNotification('Saved, but watch update failed. Check console.', 'error');
+            closeModal();
         }
 
-        // STEP 2: Only if assigning to a real watch → assign it
-        if (newWatchId !== 'none') {
-            const watchSnapshot = await get(ref(database, `watch/${newWatchId}`));
-            if (!watchSnapshot.exists()) {
-                showNotification('Selected watch does not exist', 'error');
-            } else {
-                const watchData = watchSnapshot.val();
-// Only block if the watch is assigned to SOMEONE ELSE
-if (watchData.probationer && 
-    watchData.probationer !== "none" && 
-    watchData.probationer !== cleanProbationerId) {
-    
-    showNotification('This watch is already assigned to another probationer!', 'error');
-    // Optionally: you could revert the dropdown here, but not required
-} else {
-    // Safe to assign (either free or already assigned to THIS probationer)
-    await set(ref(database, `watch/${newWatchId}/probationer`), cleanProbationerId);
-    console.log(`Assigned (or re-confirmed) ${cleanProbationerId} to ${newWatchId}`);
-}
-            }
-        }
-
-        showNotification(editingId ? 'Probationer updated successfully!' : 'Probationer added successfully!', 'success');
-        closeModal();
-
-    } catch (error) {
-        console.error('Watch cleanup/assignment failed:', error);
-        showNotification('Saved, but watch update failed. Check console.', 'error');
-        closeModal();
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Probationer';
+        return;
+    } else {
+        showNotification('Failed to save probationer. Please try again.', 'error');
     }
-
+    
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save Probationer';
-    return;
-} else {
-    showNotification('Failed to save probationer. Please try again.', 'error');
 }
-// END ADD: Update watch assignment
-            
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Save Probationer';
-        }
 
         // Edit probationer
         window.editProbationer = function(id) {
