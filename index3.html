@@ -1166,154 +1166,218 @@ function updateGPSIcon(status) {
     }
 }
 
+// ============================================
+// GEOLOCATION TRACKER (FIXED VERSION)
+// ============================================
+
 class GeolocationTracker {
     constructor() {
-        this.isTracking = false;
         this.watchId = null;
+        this.isTracking = false;
+        this.currentCoords = null;
         this.retryCount = 0;
         this.maxRetries = 10;
         this.retryDelay = 5000; // 5 seconds
-        this.currentCoords = null;
-        this.lastUpdateTime = null;
-        this.updateInterval = null;
-        this.isGeolocationAvailable = 'geolocation' in navigator;
-        this.activeIcon = null; // Store which icon we're using
+        this.isAvailable = 'geolocation' in navigator;
+        this.permissionGranted = false;
+        this.lastError = null;
+        
+        console.log("GeolocationTracker created. Available:", this.isAvailable);
     }
     
-    // Initialize geolocation tracking
-    async init() {
-        if (!this.isGeolocationAvailable) {
-            console.log("Geolocation not available in this browser");
+    // Initialize GPS tracking
+    async start() {
+        if (!this.isAvailable) {
+            console.error("Geolocation not available in this browser");
             updateGPSIcon('error');
-            return;
+            return false;
         }
-        
-        // Test which GPS icon works on this browser
-        this.activeIcon = testAndSetGPSIcon();
         
         console.log("Starting GPS tracking...");
         updateGPSIcon('searching');
         
-        // Ask for permission and start watching
+        // Test permissions first
+        const hasPermission = await this.checkPermission();
+        if (!hasPermission) {
+            console.log("Waiting for user to grant permission...");
+            // We'll try anyway - browser will prompt
+        }
+        
+        // Start watching position
+        return this.startWatching();
+    }
+    
+    // Check if we have permission
+    async checkPermission() {
+        if (!navigator.permissions || !navigator.permissions.query) {
+            console.log("Permission API not available, will rely on browser prompt");
+            return true; // Assume we can ask
+        }
+        
+        try {
+            const permission = await navigator.permissions.query({ name: 'geolocation' });
+            console.log("Current permission state:", permission.state);
+            
+            this.permissionGranted = permission.state === 'granted';
+            
+            // Listen for permission changes
+            permission.onchange = () => {
+                console.log("Permission changed to:", permission.state);
+                this.permissionGranted = permission.state === 'granted';
+                
+                if (this.permissionGranted && !this.isTracking) {
+                    console.log("Permission granted, restarting GPS...");
+                    this.startWatching();
+                } else if (!this.permissionGranted) {
+                    console.log("Permission revoked, stopping GPS...");
+                    this.stop();
+                    updateGPSIcon('error');
+                }
+            };
+            
+            return this.permissionGranted;
+        } catch (error) {
+            console.log("Error checking permissions:", error);
+            return true; // Assume we can ask
+        }
+    }
+    
+    // Start watching position
+    startWatching() {
+        if (this.watchId !== null) {
+            console.log("GPS already watching, clearing old watch");
+            this.stop();
+        }
+        
         const options = {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
+            enableHighAccuracy: true,  // Use GPS if available
+            timeout: 10000,            // Maximum time to wait (10 seconds)
+            maximumAge: 0              // Don't use cached position
         };
         
         try {
             this.watchId = navigator.geolocation.watchPosition(
-                (position) => this.handleSuccess(position),
-                (error) => this.handleError(error),
+                (position) => this.handlePositionSuccess(position),
+                (error) => this.handlePositionError(error),
                 options
             );
             
             this.isTracking = true;
-            console.log("GPS watch started with ID:", this.watchId);
+            this.retryCount = 0; // Reset retry count
+            console.log("GPS watch started successfully. Watch ID:", this.watchId);
             
+            return true;
         } catch (error) {
             console.error("Failed to start GPS watch:", error);
             updateGPSIcon('error');
-            this.scheduleRetry('searching');
+            return false;
         }
     }
     
     // Handle successful position
-    async handleSuccess(position) {
+    async handlePositionSuccess(position) {
+        console.log("GPS position acquired!");
+        
         const coords = position.coords;
         this.currentCoords = {
             lat: coords.latitude.toFixed(6),
             lng: coords.longitude.toFixed(6),
             accuracy: coords.accuracy ? Math.round(coords.accuracy) : null,
-            altitude: coords.altitude ? coords.altitude.toFixed(1) : null,
-            heading: coords.heading ? Math.round(coords.heading) : null,
-            speed: coords.speed ? coords.speed.toFixed(1) : null,
-            timestamp: new Date().toISOString()
+            altitude: coords.altitude,
+            heading: coords.heading,
+            speed: coords.speed,
+            timestamp: new Date(position.timestamp).toISOString()
         };
         
-        console.log(`GPS acquired: ${this.currentCoords.lat}, ${this.currentCoords.lng} (Accuracy: ${this.currentCoords.accuracy}m)`);
+        console.log(`Location: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
+        console.log(`Accuracy: ${this.currentCoords.accuracy} meters`);
         
         // Update UI
         updateGPSIcon('connected');
-        this.retryCount = 0; // Reset retry counter
+        this.retryCount = 0; // Reset retry count on success
         
         // Save to Firebase
         await this.saveToFirebase();
         
-        this.lastUpdateTime = Date.now();
+        // Update status indicator briefly
+        const statusIndicator = document.getElementById('statusIndicator');
+        if (statusIndicator) {
+            const originalText = statusIndicator.textContent;
+            statusIndicator.textContent = `GPS: ${this.currentCoords.accuracy}m`;
+            statusIndicator.style.color = '#259FDE';
+            
+            setTimeout(() => {
+                statusIndicator.textContent = originalText;
+                statusIndicator.style.color = '#5E5E5E';
+            }, 2000);
+        }
     }
     
-    // Handle GPS errors
-    handleError(error) {
+    // Handle position errors
+    handlePositionError(error) {
         console.error("GPS Error:", error.message || error);
+        this.lastError = error;
         
-        let status = 'error';
         switch(error.code) {
             case error.PERMISSION_DENIED:
-                console.log("GPS permission denied by user");
+                console.error("User denied geolocation permission");
                 updateGPSIcon('error');
-                this.showPermissionHelp();
+                this.showPermissionAlert();
                 break;
                 
             case error.POSITION_UNAVAILABLE:
-                console.log("GPS position unavailable (no signal)");
-                status = 'searching';
-                this.scheduleRetry('searching');
+                console.error("Location information unavailable");
+                this.scheduleRetry();
                 break;
                 
             case error.TIMEOUT:
-                console.log("GPS request timeout");
-                status = 'searching';
-                this.scheduleRetry('searching');
+                console.error("Location request timed out");
+                this.scheduleRetry();
                 break;
                 
             default:
-                console.log("Unknown GPS error");
+                console.error("Unknown geolocation error");
                 updateGPSIcon('error');
-        }
-        
-        if (status === 'searching') {
-            updateGPSIcon('searching');
         }
     }
     
-    // Schedule retry if GPS not available
-    scheduleRetry(status) {
+    // Schedule a retry
+    scheduleRetry() {
         if (this.retryCount >= this.maxRetries) {
-            console.log("Max GPS retries reached (" + this.maxRetries + ")");
+            console.error(`Max retries reached (${this.maxRetries}). Stopping GPS.`);
             updateGPSIcon('error');
             return;
         }
         
         this.retryCount++;
-        const timeLeft = this.retryDelay * (this.maxRetries - this.retryCount);
         console.log(`GPS retry ${this.retryCount}/${this.maxRetries}. Next retry in ${this.retryDelay/1000}s`);
         
-        // Show searching status
-        updateGPSIcon(status);
+        updateGPSIcon('searching');
         
-        // Wait and retry
+        // Clear current watch and retry
+        if (this.watchId) {
+            navigator.geolocation.clearWatch(this.watchId);
+            this.watchId = null;
+        }
+        
         setTimeout(() => {
             if (this.isTracking) {
-                console.log("Retrying GPS acquisition...");
-                this.init(); // Restart the GPS watch
+                console.log("Retrying GPS...");
+                this.startWatching();
             }
         }, this.retryDelay);
     }
     
-    // Show help for permission issues
-    showPermissionHelp() {
-        console.log("To enable GPS:");
-        console.log("1. Check browser settings");
-        console.log("2. Allow location access for this site");
-        console.log("3. Make sure device location is turned on");
+    // Show permission alert
+    showPermissionAlert() {
+        console.log("GPS permission denied. User needs to enable location services.");
         
-        // Optional: You could show a small notification
+        // You could show a message to the user here
         const statusIndicator = document.getElementById('statusIndicator');
         if (statusIndicator) {
             const originalText = statusIndicator.textContent;
-            statusIndicator.textContent = "GPS Permission Needed";
-            statusIndicator.style.color = '#FFA500';
+            statusIndicator.textContent = "Enable Location";
+            statusIndicator.style.color = '#DE3725';
             
             setTimeout(() => {
                 statusIndicator.textContent = originalText;
@@ -1327,62 +1391,37 @@ class GeolocationTracker {
         try {
             const uptimeTracker = window.uptimeTracker;
             if (!uptimeTracker || !uptimeTracker.deviceId || !this.currentCoords) {
-                console.log("Cannot save GPS: Missing device ID or coordinates");
+                console.error("Cannot save: Missing device ID or coordinates");
                 return;
             }
             
-            // Format coordinates
-            const coordString = `${this.currentCoords.lat},${this.currentCoords.lng}`;
-            
-            // Reference to database
             const coordsRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/coordinates`);
             
-            // Prepare data
             const gpsData = {
-                value: coordString,
+                value: `${this.currentCoords.lat},${this.currentCoords.lng}`,
                 accuracy: this.currentCoords.accuracy,
-                altitude: this.currentCoords.altitude,
-                heading: this.currentCoords.heading,
-                speed: this.currentCoords.speed,
                 timestamp: this.currentCoords.timestamp,
                 updated: new Date().toISOString(),
-                deviceId: uptimeTracker.deviceId
+                source: 'gps'
             };
             
-            // Save data
             await set(coordsRef, gpsData);
-            
-            console.log(`GPS saved to Firebase: ${coordString} (${this.currentCoords.accuracy}m accuracy)`);
-            
-            // Also update the lastSeen timestamp in the main watch data
-            const watchRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/lastSeen`);
-            await set(watchRef, new Date().toISOString());
+            console.log("GPS coordinates saved to Firebase");
             
         } catch (error) {
             console.error("Error saving GPS to Firebase:", error);
-            
-            // Try a simpler save if the detailed one fails
-            try {
-                const uptimeTracker = window.uptimeTracker;
-                if (uptimeTracker && uptimeTracker.deviceId && this.currentCoords) {
-                    const coordString = `${this.currentCoords.lat},${this.currentCoords.lng}`;
-                    const coordsRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/coordinates`);
-                    await set(coordsRef, {
-                        value: coordString,
-                        timestamp: new Date().toISOString()
-                    });
-                    console.log("GPS saved with basic data");
-                }
-            } catch (simpleError) {
-                console.error("Even basic GPS save failed:", simpleError);
-            }
         }
     }
     
-    // Get current position once (for testing)
-    async getCurrentPosition() {
+    // Get current coordinates
+    getCurrentCoordinates() {
+        return this.currentCoords;
+    }
+    
+    // Get a single position (for testing)
+    getCurrentPosition() {
         return new Promise((resolve, reject) => {
-            if (!this.isGeolocationAvailable) {
+            if (!this.isAvailable) {
                 reject(new Error("Geolocation not available"));
                 return;
             }
@@ -1393,63 +1432,37 @@ class GeolocationTracker {
                 maximumAge: 0
             };
             
-            navigator.geolocation.getCurrentPosition(
-                (position) => resolve(position),
-                (error) => reject(error),
-                options
-            );
+            navigator.geolocation.getCurrentPosition(resolve, reject, options);
         });
     }
     
     // Stop tracking
     stop() {
-        if (this.watchId) {
+        if (this.watchId !== null) {
             navigator.geolocation.clearWatch(this.watchId);
             this.watchId = null;
-            console.log("GPS watch cleared");
+            console.log("GPS watch stopped");
         }
         
         this.isTracking = false;
-        
-        if (this.updateInterval) {
-            clearInterval(this.updateInterval);
-            this.updateInterval = null;
-        }
-        
         updateGPSIcon('disabled');
-        console.log("GPS tracking stopped");
     }
     
-    // Get current coordinates
-    getCoordinates() {
-        return this.currentCoords;
-    }
-    
-    // Check if GPS is available
-    isAvailable() {
-        return this.isGeolocationAvailable;
-    }
-    
-    // Get GPS status
+    // Get status
     getStatus() {
-        if (!this.isGeolocationAvailable) return "unavailable";
-        if (!this.isTracking) return "stopped";
-        if (this.currentCoords) return "connected";
-        if (this.retryCount > 0) return "searching";
-        return "initializing";
-    }
-    
-    // Get retry info
-    getRetryInfo() {
         return {
-            count: this.retryCount,
-            max: this.maxRetries,
-            nextRetry: this.retryCount < this.maxRetries ? this.retryDelay : 0
+            isAvailable: this.isAvailable,
+            isTracking: this.isTracking,
+            permissionGranted: this.permissionGranted,
+            retryCount: this.retryCount,
+            maxRetries: this.maxRetries,
+            currentCoords: this.currentCoords,
+            lastError: this.lastError
         };
     }
 }
 
-// Create global GPS tracker instance
+// Create global instance
 const gpsTracker = new GeolocationTracker();
         
         // ============================================
@@ -1781,6 +1794,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
