@@ -998,7 +998,7 @@ async function handleTamperingDetection() {
             coordinates: coordinates,
             battery: batteryInfo,
             deviceId: uptimeTracker.deviceId,
-            timestamp: new Date().toISOString(),
+            time: new Date().toISOString(),
             severity: "high",
             status: "pending_review"
         };
@@ -1035,7 +1035,7 @@ async function handleTamperingDetection() {
             type: "violation_tampering",
             message: `Device tampering detected for ${probationerKey}`,
             violation: violation,
-            timestamp: new Date().toISOString(),
+            time: new Date().toISOString(),
             acknowledged: false
         };
         
@@ -1288,7 +1288,7 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
             type: "battery_low",
             message: `Device battery is low: ${batteryPercentage}%`,
             batteryLevel: batteryPercentage,
-            timestamp: new Date().toISOString(),
+            time: new Date().toISOString(),
             acknowledged: false
         };
         
@@ -2061,6 +2061,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
