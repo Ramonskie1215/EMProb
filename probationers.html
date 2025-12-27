@@ -2197,85 +2197,97 @@ if (newWatchId !== 'none') {
             }
         }
 
-        // Open violations modal
-        function openViolationsModal(probationerId) {
-            const probationer = probationers.find(p => p.id === probationerId);
-            if (!probationer) return;
-            
-            currentViewingViolationsId = probationerId;
-            const violations = probationer.violations || [];
-            const sortedViolations = sortViolationsByTime([...violations]);
-            
-            // Update modal title and count
-            document.getElementById('violationsModalTitle').textContent = `Violations - ${probationer.fullName}`;
-            document.getElementById('violationCountText').textContent = `${violations.length} violation${violations.length !== 1 ? 's' : ''} found`;
-            
-            // Clear and populate violations list
-            const violationsList = document.getElementById('violationsListModal');
-            violationsList.innerHTML = '';
-            
-            if (sortedViolations.length === 0) {
-                violationsList.innerHTML = '<div class="no-violations">No violations recorded</div>';
-            } else {
-                                sortedViolations.forEach((violation, index) => {
-    const originalIndex = originalViolations.findIndex(v => 
-        v.time === violation.time && 
-        v.type === violation.type
-    );
+// Open violations modal
+function openViolationsModal(probationerId) {
+    const probationer = probationers.find(p => p.id === probationerId);
+    if (!probationer) return;
     
-    const violationElement = document.createElement('div');
-    violationElement.className = 'violation-item-modal';
-    violationElement.dataset.index = originalIndex !== -1 ? originalIndex : displayIndex;  // Store ORIGINAL index
-    violationElement.dataset.probationerId = probationerId;
-                    violationElement.innerHTML = `
-                        <div class="violation-header-modal">
-                            <div class="violation-id">VIOLATION #${sortedViolations.length - index}</div>
-                            <div class="violation-time-modal">${formatDateTime(violation.time)}</div>
-                        </div>
-                        <div class="violation-type-modal">${violation.type || 'Unknown violation'}</div>
-                        ${violation.details ? `<div style="font-size: 12px; color: #848484; margin-top: 5px;">${violation.details}</div>` : ''}
-                        ${violation.location ? `<div style="font-size: 11px; color: #259FDE; margin-top: 3px;">📍 ${violation.location}</div>` : ''}
-                        <div style="font-size: 10px; color: #848484; margin-top: 5px; font-style: italic;">
-                            Long press to delete
-                        </div>
-                    `;
-
-                    // Add long-press detection
-                    let pressTimer;
-                    violationElement.addEventListener('touchstart', function(e) {
-                        e.preventDefault();
-                        pressTimer = setTimeout(() => {
-                                const originalIndex = parseInt(violationElement.dataset.index);
-    showDeleteViolationModal(probationerId, originalIndex, violation);
-                        }, 1000);
-                    });
-
-                    violationElement.addEventListener('touchend', function(e) {
-                        clearTimeout(pressTimer);
-                    });
-
-                    violationElement.addEventListener('mousedown', function(e) {
-                        pressTimer = setTimeout(() => {
-                                const originalIndex = parseInt(violationElement.dataset.index);
-    showDeleteViolationModal(probationerId, originalIndex, violation);
-                        }, 1000);
-                    });
-
-                    violationElement.addEventListener('mouseup', function(e) {
-                        clearTimeout(pressTimer);
-                    });
-
-                    violationElement.addEventListener('mouseleave', function(e) {
-                        clearTimeout(pressTimer);
-                    });
-
-                    violationsList.appendChild(violationElement);
-                });
+    currentViewingViolationsId = probationerId;
+    const violations = probationer.violations || [];
+    const sortedViolations = sortViolationsByTime([...violations]);
+    
+    // Store the original violations for reference
+    const originalViolations = probationer.violations || [];
+    
+    // Update modal title and count
+    document.getElementById('violationsModalTitle').textContent = `Violations - ${probationer.fullName}`;
+    document.getElementById('violationCountText').textContent = `${violations.length} violation${violations.length !== 1 ? 's' : ''} found`;
+    
+    // Clear and populate violations list
+    const violationsList = document.getElementById('violationsListModal');
+    violationsList.innerHTML = '';
+    
+    if (sortedViolations.length === 0) {
+        violationsList.innerHTML = '<div class="no-violations">No violations recorded</div>';
+    } else {
+        sortedViolations.forEach((violation, displayIndex) => {
+            // Find the original index
+            let originalIndex = -1;
+            if (originalViolations.length > 0) {
+                originalIndex = originalViolations.findIndex(v => 
+                    v.time === violation.time && 
+                    v.type === violation.type
+                );
             }
             
-            // Show modal
-            document.getElementById('violationsModal').style.display = 'flex';
-        }
+            // If we can't find a match, use the display index
+            const indexToUse = originalIndex !== -1 ? originalIndex : displayIndex;
+            
+            const violationElement = document.createElement('div');
+            violationElement.className = 'violation-item-modal';
+            violationElement.dataset.index = indexToUse;  // Store the index to use
+            violationElement.dataset.probationerId = probationerId;
+            violationElement.innerHTML = `
+                <div class="violation-header-modal">
+                    <div class="violation-id">VIOLATION #${sortedViolations.length - displayIndex}</div>
+                    <div class="violation-time-modal">${formatDateTime(violation.time)}</div>
+                </div>
+                <div class="violation-type-modal">${violation.type || 'Unknown violation'}</div>
+                ${violation.details ? `<div style="font-size: 12px; color: #848484; margin-top: 5px;">${violation.details}</div>` : ''}
+                ${violation.location ? `<div style="font-size: 11px; color: #259FDE; margin-top: 3px;">📍 ${violation.location}</div>` : ''}
+                <div style="font-size: 10px; color: #848484; margin-top: 5px; font-style: italic;">
+                    Long press to delete
+                </div>
+            `;
+
+            // Add long-press detection
+            let pressTimer;
+            violationElement.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                pressTimer = setTimeout(() => {
+                    // Get the index from dataset
+                    const originalIndex = parseInt(this.dataset.index);
+                    showDeleteViolationModal(probationerId, originalIndex, violation);
+                }, 1000);
+            });
+
+            violationElement.addEventListener('touchend', function(e) {
+                clearTimeout(pressTimer);
+            });
+
+            violationElement.addEventListener('mousedown', function(e) {
+                pressTimer = setTimeout(() => {
+                    // Get the index from dataset
+                    const originalIndex = parseInt(this.dataset.index);
+                    showDeleteViolationModal(probationerId, originalIndex, violation);
+                }, 1000);
+            });
+
+            violationElement.addEventListener('mouseup', function(e) {
+                clearTimeout(pressTimer);
+            });
+
+            violationElement.addEventListener('mouseleave', function(e) {
+                clearTimeout(pressTimer);
+            });
+
+            violationsList.appendChild(violationElement);
+        });
+    }
+    
+    // Show modal
+    document.getElementById('violationsModal').style.display = 'flex';
+}
 
         // Open announcements modal
         function openAnnouncementsModal(probationerId) {
@@ -3147,26 +3159,11 @@ async function initApplication() {
             toggleAnnouncementData = null;
         }
 
-function showDeleteViolationModal(probationerId, displayIndex, violation) {
-    const probationer = probationers.find(p => p.id === probationerId);
-    if (!probationer) return;
-    
-    // Get the original violations array (not sorted)
-    const originalViolations = probationer.violations || [];
-    
-    // Find the original index by matching the violation object
-    // We need to find which index in the original array corresponds to this violation
-    const originalIndex = originalViolations.findIndex(v => 
-        v.time === violation.time && 
-        v.type === violation.type
-    );
-    
-    // If we can't find it, fall back to the display index (less accurate)
-    const actualIndex = originalIndex !== -1 ? originalIndex : displayIndex;
-    
+// Show delete violation modal
+function showDeleteViolationModal(probationerId, violationIndex, violation) {
     deleteViolationData = {
         probationerId,
-        violationIndex: actualIndex,  // Use the ORIGINAL index
+        violationIndex,  // This should now be the ORIGINAL index
         violation
     };
     
