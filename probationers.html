@@ -1997,36 +1997,47 @@ async function loadProbationers() {
                         ...data[key]
                     };
                     
-                    // If probationer has a watch assigned (not "none"), get battery info
-                    if (probationer.watch && probationer.watch !== "none") {
-                        const watchId = probationer.watch;
-                        
-                        if (watchesData[watchId]) {
-                            const watch = watchesData[watchId];
-                            
-                            // Update device status and battery from watch
-                            probationer.deviceStatus = watch.online ? 'active' : 'offline';
-                            
-                            // Get battery percentage from watch data
-                            if (watch.battery && watch.battery.p !== undefined) {
-                                probationer.batteryPercentage = watch.battery.p;
-                            } else {
-                                probationer.batteryPercentage = 'N/A';
-                            }
-                            
-                            // Get coordinates from watch if available
-                            if (watch.coordinates && watch.coordinates.value) {
-                                probationer.currentCoordinates = watch.coordinates.value;
-                            } else if (probationer.currentCoordinates === 'N/A') {
-                                // Keep as N/A if no coordinates in watch
-                                probationer.currentCoordinates = 'N/A';
-                            }
-                        } else {
-                            // Watch not found in database
-                            probationer.deviceStatus = 'offline';
-                            probationer.batteryPercentage = 'N/A';
-                        }
-                    } else {
+    // If probationer has a watch assigned (not "none"), get battery info
+if (probationer.watch && probationer.watch !== "none") {
+    const watchId = probationer.watch;
+    
+    if (watchesData[watchId]) {
+        const watch = watchesData[watchId];
+        const currentTime = new Date().getTime();
+        
+        // Calculate online status based on lastSeen
+        let isOnline = false;
+        
+        if (watch.lastSeen) {
+            const lastSeenTime = new Date(watch.lastSeen).getTime();
+            const timeDifference = currentTime - lastSeenTime;
+            const oneMinuteInMillis = 60 * 1000;
+            
+            isOnline = timeDifference < oneMinuteInMillis;
+        }
+        
+        // Update device status based on lastSeen calculation
+        probationer.deviceStatus = isOnline ? 'active' : 'offline';
+        
+        // Get battery percentage from watch data
+        if (watch.battery && watch.battery.p !== undefined) {
+            probationer.batteryPercentage = watch.battery.p;
+        } else {
+            probationer.batteryPercentage = 'N/A';
+        }
+        
+        // Get coordinates from watch if available
+        if (watch.coordinates && watch.coordinates.value) {
+            probationer.currentCoordinates = watch.coordinates.value;
+        } else if (probationer.currentCoordinates === 'N/A') {
+            probationer.currentCoordinates = 'N/A';
+        }
+    } else {
+        // Watch not found in database
+        probationer.deviceStatus = 'offline';
+        probationer.batteryPercentage = 'N/A';
+    }
+} else {
                         // No watch assigned - ensure default values
                         if (!probationer.deviceStatus) probationer.deviceStatus = 'N/A';
                         if (!probationer.batteryPercentage) probationer.batteryPercentage = 'N/A';
@@ -2059,6 +2070,7 @@ function setupWatchListeners() {
         if (!snapshot.exists()) return;
         
         const watchesData = snapshot.val();
+        const currentTime = new Date().getTime();
         
         // Update each probationer that has a watch assigned
         probationers.forEach((probationer, index) => {
@@ -2068,8 +2080,23 @@ function setupWatchListeners() {
                 if (watchesData[watchId]) {
                     const watch = watchesData[watchId];
                     
+                    // Calculate if device is online based on lastSeen timestamp
+                    let isOnline = false;
+                    
+                    if (watch.lastSeen) {
+                        const lastSeenTime = new Date(watch.lastSeen).getTime();
+                        const timeDifference = currentTime - lastSeenTime;
+                        const oneMinuteInMillis = 60 * 1000; // 1 minute in milliseconds
+                        
+                        // Device is online if lastSeen was less than 1 minute ago
+                        isOnline = timeDifference < oneMinuteInMillis;
+                    } else {
+                        // If no lastSeen timestamp, assume offline
+                        isOnline = false;
+                    }
+                    
                     // Update probationer data from watch
-                    probationer.deviceStatus = watch.online ? 'active' : 'offline';
+                    probationer.deviceStatus = isOnline ? 'active' : 'offline';
                     
                     // Update battery percentage
                     if (watch.battery && watch.battery.p !== undefined) {
@@ -2086,6 +2113,9 @@ function setupWatchListeners() {
                     
                     // Update the probationers array
                     probationers[index] = probationer;
+                    
+                    // Optional: Log for debugging
+                    console.log(`Watch ${watchId}: lastSeen=${watch.lastSeen}, online=${isOnline}`);
                 }
             }
         });
@@ -2093,7 +2123,7 @@ function setupWatchListeners() {
         // Re-render probationers with updated data
         renderProbationers();
     });
-}        
+}
 
                 // Save probationer to Firebase under /probationers path
 async function saveProbationer(probationerData) {
