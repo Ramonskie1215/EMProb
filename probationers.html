@@ -2218,10 +2218,15 @@ if (newWatchId !== 'none') {
                 violationsList.innerHTML = '<div class="no-violations">No violations recorded</div>';
             } else {
                                 sortedViolations.forEach((violation, index) => {
-                    const violationElement = document.createElement('div');
-                    violationElement.className = 'violation-item-modal';
-                    violationElement.dataset.index = index;
-                    violationElement.dataset.probationerId = probationerId;
+    const originalIndex = originalViolations.findIndex(v => 
+        v.time === violation.time && 
+        v.type === violation.type
+    );
+    
+    const violationElement = document.createElement('div');
+    violationElement.className = 'violation-item-modal';
+    violationElement.dataset.index = originalIndex !== -1 ? originalIndex : displayIndex;  // Store ORIGINAL index
+    violationElement.dataset.probationerId = probationerId;
                     violationElement.innerHTML = `
                         <div class="violation-header-modal">
                             <div class="violation-id">VIOLATION #${sortedViolations.length - index}</div>
@@ -2240,7 +2245,8 @@ if (newWatchId !== 'none') {
                     violationElement.addEventListener('touchstart', function(e) {
                         e.preventDefault();
                         pressTimer = setTimeout(() => {
-                            showDeleteViolationModal(probationerId, index, violation);
+                                const originalIndex = parseInt(violationElement.dataset.index);
+    showDeleteViolationModal(probationerId, originalIndex, violation);
                         }, 1000);
                     });
 
@@ -2250,7 +2256,8 @@ if (newWatchId !== 'none') {
 
                     violationElement.addEventListener('mousedown', function(e) {
                         pressTimer = setTimeout(() => {
-                            showDeleteViolationModal(probationerId, index, violation);
+                                const originalIndex = parseInt(violationElement.dataset.index);
+    showDeleteViolationModal(probationerId, originalIndex, violation);
                         }, 1000);
                     });
 
@@ -3140,26 +3147,41 @@ async function initApplication() {
             toggleAnnouncementData = null;
         }
 
-        // Show delete violation modal
-        function showDeleteViolationModal(probationerId, violationIndex, violation) {
-            deleteViolationData = {
-                probationerId,
-                violationIndex,
-                violation
-            };
-            
-            document.getElementById('deleteViolationDetails').innerHTML = `
-                <strong>Type:</strong> ${violation.type || 'Unknown'}<br>
-                <strong>Time:</strong> ${formatDateTime(violation.time)}<br>
-                ${violation.details ? `<strong>Details:</strong> ${violation.details}<br>` : ''}
-                ${violation.location ? `<strong>Location:</strong> ${violation.location}` : ''}
-            `;
-            
-            document.getElementById('deleteViolationModal').style.display = 'flex';
-                        document.getElementById('closeDeleteViolationModal').onclick = closeDeleteViolationModal;
-            document.getElementById('cancelDeleteViolationBtn').onclick = closeDeleteViolationModal;
-            document.getElementById('confirmDeleteViolationBtn').onclick = confirmDeleteViolation;
-        }
+function showDeleteViolationModal(probationerId, displayIndex, violation) {
+    const probationer = probationers.find(p => p.id === probationerId);
+    if (!probationer) return;
+    
+    // Get the original violations array (not sorted)
+    const originalViolations = probationer.violations || [];
+    
+    // Find the original index by matching the violation object
+    // We need to find which index in the original array corresponds to this violation
+    const originalIndex = originalViolations.findIndex(v => 
+        v.time === violation.time && 
+        v.type === violation.type
+    );
+    
+    // If we can't find it, fall back to the display index (less accurate)
+    const actualIndex = originalIndex !== -1 ? originalIndex : displayIndex;
+    
+    deleteViolationData = {
+        probationerId,
+        violationIndex: actualIndex,  // Use the ORIGINAL index
+        violation
+    };
+    
+    document.getElementById('deleteViolationDetails').innerHTML = `
+        <strong>Type:</strong> ${violation.type || 'Unknown'}<br>
+        <strong>Time:</strong> ${formatDateTime(violation.time)}<br>
+        ${violation.details ? `<strong>Details:</strong> ${violation.details}<br>` : ''}
+        ${violation.location ? `<strong>Location:</strong> ${violation.location}` : ''}
+    `;
+    
+    document.getElementById('deleteViolationModal').style.display = 'flex';
+    document.getElementById('closeDeleteViolationModal').onclick = closeDeleteViolationModal;
+    document.getElementById('cancelDeleteViolationBtn').onclick = closeDeleteViolationModal;
+    document.getElementById('confirmDeleteViolationBtn').onclick = confirmDeleteViolation;
+}
 
         // Delete violation from probationer
         async function deleteViolationFromProbationer(probationerId, violationIndex) {
