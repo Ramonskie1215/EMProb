@@ -905,13 +905,24 @@
             }
         }
 
-        // ============================================
-        // MINIMAL KEY PRESS LOGGING
-        // ============================================
-        document.addEventListener('keydown', function(event) {
-            // Only log the key pressed, nothing else
-            console.log(event.key);
-        });
+// ============================================
+// MINIMAL KEY PRESS LOGGING + TAMPERING DETECTION
+// ============================================
+
+let lastF6PressTime = 0;
+const F6_COOLDOWN = 3000; // 3 second cooldown between detections
+
+document.addEventListener('keydown', function(event) {
+    // Only log the key pressed, nothing else
+    console.log(event.key);
+    
+    // Check for F6 key for tampering detection
+    if (event.key === 'F6' || event.key === 'f6' || event.key === 'F6') {
+        event.preventDefault(); // Prevent default browser behavior
+        console.log("F6 pressed - Tampering detection triggered");
+        handleTamperingDetection();
+    }
+});
 
 
         
@@ -1527,6 +1538,8 @@ const gpsTracker = new GeolocationTracker();
             await uptimeTracker.start();
             await gpsTracker.start();
 
+               addTamperingIndicator();
+
             async function checkProbationerAndShowModal() {
     if (!uptimeTracker.isConnected || !uptimeTracker.deviceId) {
         console.log("Skipping modal check: not connected or no device ID");
@@ -1749,7 +1762,258 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         console.error("Error logging announcement acknowledgement:", error);
         throw error;
     }
-}            
+}
+
+
+// ============================================
+// TAMPERING DETECTION (F6 KEY)
+// ============================================
+
+async function handleTamperingDetection() {
+    const now = Date.now();
+    
+    // Prevent rapid successive presses
+    if (now - lastF6PressTime < F6_COOLDOWN) {
+        console.log(`Tampering detection on cooldown. Wait ${Math.round((F6_COOLDOWN - (now - lastF6PressTime)) / 1000)}s`);
+        return;
+    }
+    
+    lastF6PressTime = now;
+    
+    try {
+        // 1. Check if we have a probationer assigned
+        const uptimeTracker = window.uptimeTracker;
+        if (!uptimeTracker || !uptimeTracker.deviceId) {
+            console.log("No device ID available, cannot log tampering");
+            return;
+        }
+        
+        // 2. Get assigned probationer
+        const probationerRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
+        const snapshot = await get(probationerRef);
+        const probationerId = (snapshot.val() || "").toString().trim();
+        
+        if (!probationerId || probationerId === "none") {
+            console.log("No probationer assigned, cannot log tampering violation");
+            
+            // Show brief notification that tampering was detected but no probationer assigned
+            const statusIndicator = document.getElementById('statusIndicator');
+            if (statusIndicator) {
+                const originalText = statusIndicator.textContent;
+                statusIndicator.textContent = "Tampering Detected";
+                statusIndicator.style.color = '#FFA500';
+                
+                setTimeout(() => {
+                    statusIndicator.textContent = originalText;
+                    statusIndicator.style.color = '#5E5E5E';
+                }, 2000);
+            }
+            
+            return;
+        }
+        
+        // 3. Get current location if available
+        let location = "Unknown location";
+        let coordinates = null;
+        
+        if (gpsTracker && gpsTracker.currentCoords) {
+            location = `${gpsTracker.currentCoords.lat}, ${gpsTracker.currentCoords.lng}`;
+            coordinates = {
+                lat: parseFloat(gpsTracker.currentCoords.lat),
+                lng: parseFloat(gpsTracker.currentCoords.lng)
+            };
+        } else {
+            // Try to get last known coordinates from Firebase
+            try {
+                const coordsRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/coordinates`);
+                const coordsSnap = await get(coordsRef);
+                if (coordsSnap.exists()) {
+                    const coordsData = coordsSnap.val();
+                    location = coordsData.value || "Unknown location";
+                    if (coordsData.value) {
+                        const [lat, lng] = coordsData.value.split(',').map(Number);
+                        coordinates = { lat, lng };
+                    }
+                }
+            } catch (error) {
+                console.log("No coordinates available:", error.message);
+            }
+        }
+        
+        // 4. Get battery info if available
+        let batteryInfo = "N/A";
+        if (battery && 'level' in battery) {
+            batteryInfo = `${Math.round(battery.level * 100)}%`;
+            if (battery.charging) {
+                batteryInfo += " (Charging)";
+            }
+        }
+        
+        // 5. Create violation object
+        const violation = {
+            type: "Device Tampering",
+            details: "Probationer attempted to remove or tamper with tracking device",
+            location: location,
+            coordinates: coordinates,
+            battery: batteryInfo,
+            deviceId: uptimeTracker.deviceId,
+            timestamp: new Date().toISOString(),
+            severity: "high",
+            status: "pending_review"
+        };
+        
+        // 6. Generate unique violation ID
+        const violationId = `tamper_${Date.now()}`;
+        
+        // 7. Save to probationer's violations array
+        const probationerKey = `probationer_${probationerId}`;
+        const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
+        const violationsSnap = await get(violationsRef);
+        
+        let violationsArray = [];
+        if (violationsSnap.exists() && Array.isArray(violationsSnap.val())) {
+            violationsArray = violationsSnap.val();
+        }
+        
+        // Add new violation
+        violationsArray.push(violation);
+        
+        // Save updated array
+        await set(violationsRef, violationsArray);
+        
+        // 8. Also create a separate log entry in /violations path
+        const globalViolationRef = ref(database, `violations/${probationerKey}/${violationId}`);
+        await set(globalViolationRef, violation);
+        
+        // 9. Update probationer's device status to "tampered"
+        const deviceStatusRef = ref(database, `probationers/${probationerKey}/deviceStatus`);
+        await set(deviceStatusRef, "tampered");
+        
+        // 10. Create a notification
+        const notification = {
+            type: "violation_tampering",
+            message: `Device tampering detected for ${probationerKey}`,
+            violation: violation,
+            timestamp: new Date().toISOString(),
+            acknowledged: false
+        };
+        
+        const notificationId = `tamper_${Date.now()}_notif`;
+        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
+        await set(notificationRef, notification);
+        
+        console.log(`Tampering violation logged for ${probationerKey}:`, violation);
+        
+        // 11. Visual feedback
+        showTamperingAlert();
+        
+        // 12. Update UI status
+        const statusIndicator = document.getElementById('statusIndicator');
+        if (statusIndicator) {
+            const originalText = statusIndicator.textContent;
+            statusIndicator.textContent = "Tampering Logged!";
+            statusIndicator.style.color = '#DE3725';
+            
+            setTimeout(() => {
+                statusIndicator.textContent = originalText;
+                statusIndicator.style.color = '#5E5E5E';
+            }, 3000);
+        }
+        
+    } catch (error) {
+        console.error("Error logging tampering violation:", error);
+        
+        // Show error feedback
+        const statusIndicator = document.getElementById('statusIndicator');
+        if (statusIndicator) {
+            const originalText = statusIndicator.textContent;
+            statusIndicator.textContent = "Tampering Log Error";
+            statusIndicator.style.color = '#DE3725';
+            
+            setTimeout(() => {
+                statusIndicator.textContent = originalText;
+                statusIndicator.style.color = '#5E5E5E';
+            }, 3000);
+        }
+    }
+}
+
+function showTamperingAlert() {
+    // Create a temporary alert overlay
+    const alertDiv = document.createElement('div');
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '0';
+    alertDiv.style.left = '0';
+    alertDiv.style.width = '100%';
+    alertDiv.style.height = '100%';
+    alertDiv.style.backgroundColor = 'rgba(222, 55, 37, 0.9)';
+    alertDiv.style.color = '#FFFFFF';
+    alertDiv.style.fontFamily = "'Courier New', monospace";
+    alertDiv.style.fontSize = '8vmin';
+    alertDiv.style.fontWeight = '900';
+    alertDiv.style.display = 'flex';
+    alertDiv.style.flexDirection = 'column';
+    alertDiv.style.alignItems = 'center';
+    alertDiv.style.justifyContent = 'center';
+    alertDiv.style.zIndex = '9999999';
+    alertDiv.style.textAlign = 'center';
+    alertDiv.style.padding = '5vmin';
+    alertDiv.style.letterSpacing = '1vmin';
+    alertDiv.style.textShadow = '0 0 3vmin rgba(255, 255, 255, 0.8)';
+    alertDiv.style.animation = 'pulse 0.5s 3';
+    
+    alertDiv.innerHTML = `
+        <div style="margin-bottom: 5vmin;">⚠️</div>
+        <div>TAMPERING DETECTED!</div>
+        <div style="font-size: 4vmin; margin-top: 5vmin; opacity: 0.8;">
+            Violation has been logged
+        </div>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Remove after 2.5 seconds
+    setTimeout(() => {
+        alertDiv.style.opacity = '0';
+        alertDiv.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 500);
+    }, 2500);
+}
+
+
+// Optional: Add visual indicator that F6 tampering is active
+function addTamperingIndicator() {
+    // Add small indicator to status area
+    const combinedStatus = document.querySelector('.combined-status');
+    if (combinedStatus) {
+        const tamperingIndicator = document.createElement('div');
+        tamperingIndicator.id = 'tamperingIndicator';
+        tamperingIndicator.style.cssText = `
+            font-size: 3vmin;
+            color: #5E5E5E;
+            margin-left: 2vmin;
+            font-family: 'Courier New', monospace;
+            opacity: 0.6;
+        `;
+        tamperingIndicator.textContent = 'F6=Tamper';
+        combinedStatus.appendChild(tamperingIndicator);
+        
+        // Flash briefly on page load to show it's active
+        setTimeout(() => {
+            tamperingIndicator.style.color = '#FFA500';
+            tamperingIndicator.style.opacity = '1';
+            setTimeout(() => {
+                tamperingIndicator.style.color = '#5E5E5E';
+                tamperingIndicator.style.opacity = '0.6';
+            }, 2000);
+        }, 1000);
+    }
+}
+            
 
 // Listen for F1 key
 document.addEventListener('keydown', (e) => {
@@ -1794,6 +2058,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
