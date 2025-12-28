@@ -1023,8 +1023,8 @@ async function handleTamperingDetection() {
         await set(violationsRef, violationsArray);
         
         // 8. Also create a separate log entry in /violations path
-        const globalViolationRef = ref(database, `violations/${probationerKey}/${violationId}`);
-        await set(globalViolationRef, violation);
+        //const globalViolationRef = ref(database, `violations/${probationerKey}/${violationId}`);
+       // await set(globalViolationRef, violation);
         
         // 9. Update probationer's device status to "tampered"
         const deviceStatusRef = ref(database, `probationers/${probationerKey}/deviceStatus`);
@@ -2061,6 +2061,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
