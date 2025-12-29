@@ -941,7 +941,7 @@ async function getOfficerUsernameByFullName(fullName) {
 // END: HELPER - Find Officer's Username by Full Name
 // ============================================
 
-        // ============================================
+// ============================================
 // START: FUNCTION - Log Notification to Officer's Credentials
 // ============================================
 async function logNotificationToOfficer(probationerKey, probationerId, notification, notificationId) {
@@ -964,20 +964,32 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
             return;
         }
         
-        // 3. Create officer notification object
+        // 3. Create officer notification object with timestamp
         const officerNotification = {
             ...notification,
             directedTo: "officer",
             officerUsername: officerUsername,
             officerFullName: officerFullName,
-            source: "device_tracking"
+            source: "device_tracking",
+            timestamp: new Date().toISOString() // ← ADD THIS LINE
         };
+        
+        // REMOVE "time" if it exists to avoid duplication
+        if (officerNotification.time) {
+            delete officerNotification.time;
+        }
         
         // 4. Save to officer's notifications path
         const officerNotificationRef = ref(database, `credentials/${officerUsername}/notifications/${notificationId}`);
         await set(officerNotificationRef, officerNotification);
         
-        console.log(`Notification also logged to officer: ${officerUsername}`);
+        console.log(`Notification logged to officer: ${officerUsername} with timestamp`);
+        
+        // 5. ALSO SAVE TO LATEST NOTIFICATION PATH ← ADD THIS SECTION
+        const latestNotificationRef = ref(database, `credentials/${officerUsername}/latestnotification`);
+        await set(latestNotificationRef, officerNotification);
+        
+        console.log(`Latest notification updated for officer: ${officerUsername}`);
         
     } catch (error) {
         console.error("Error logging to officer's notifications:", error);
@@ -987,7 +999,7 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
 // END: FUNCTION - Log Notification to Officer's Credentials
 // ============================================
 
-
+        
 // ============================================
 // TAMPERING DETECTION (F6 KEY)
 // ============================================
@@ -1113,13 +1125,13 @@ async function handleTamperingDetection() {
         await set(deviceStatusRef, "tampered");
         
         // 10. Create a notification
-        const notification = {
-            type: "violation_tampering",
-            message: `Device tampering detected for ${probationerKey}`,
-            violation: violation,
-            time: new Date().toISOString(),
-            acknowledged: false
-        };
+     const notification = {
+    type: "violation_tampering",
+    message: `Device tampering detected for ${probationerKey}`,
+    violation: violation,
+    timestamp: new Date().toISOString(), // ← CHANGED TO timestamp
+    acknowledged: false
+};
         
         const notificationId = `tamper_${Date.now()}_notif`;
         const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
@@ -1366,12 +1378,12 @@ async function getAssignedProbationerId() {
 // Function to log low battery notification
 async function logLowBatteryNotification(probationerId, batteryPercentage) {
     try {
-        // Create notification object
+        // Create notification object with timestamp
         const notification = {
             type: "battery_low",
             message: `Device battery is low: ${batteryPercentage}%`,
             batteryLevel: batteryPercentage,
-            time: new Date().toISOString(),
+            timestamp: new Date().toISOString(), // ← CHANGE FROM "time" TO "timestamp"
             acknowledged: false
         };
         
@@ -1386,7 +1398,9 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
         
         console.log(`Low battery notification logged for probationer_${probationerId}`);
         
-          await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
+        // Get the probationer key for officer lookup
+        const probationerKey = `probationer_${probationerId}`;
+        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         
     } catch (error) {
         console.error("Error logging low battery notification:", error);
@@ -1394,6 +1408,7 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
     }
 }
 
+        
 // ============================================
 // GEOLOCATION TRACKING SYSTEM
 // ============================================
@@ -2042,7 +2057,7 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         // Extract probationer ID from key (probationer_12345 -> 12345)
         const probationerId = probationerKey.replace('probationer_', '');
         
-        // Create notification object
+        // Create notification object with timestamp
         const notification = {
             type: "announcement_acknowledged",
             subject: announcement.subject || "No Subject",
@@ -2050,7 +2065,7 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
             announcementTime: announcement.time || new Date().toISOString(),
             acknowledgedAt: new Date().toISOString(),
             acknowledged: true,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString() // ← ADD THIS LINE
         };
         
         // Generate a unique ID for this notification
@@ -2061,7 +2076,10 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         
         // Save the notification
         await set(notificationRef, notification);
-         await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
+        
+        // Also update officer's latest notification
+        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
+        
         console.log(`Announcement acknowledgement logged for ${probationerKey}`);
         console.log(`Subject: ${notification.subject}`);
         
@@ -2146,6 +2164,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
