@@ -905,6 +905,88 @@
             }
         }
 
+        // ============================================
+// START: HELPER - Find Officer's Username by Full Name
+// ============================================
+async function getOfficerUsernameByFullName(fullName) {
+    try {
+        // Get all credentials
+        const credentialsRef = ref(database, 'credentials');
+        const snapshot = await get(credentialsRef);
+        
+        if (!snapshot.exists()) {
+            console.log("No credentials found");
+            return null;
+        }
+        
+        const credentials = snapshot.val();
+        
+        // Search for user with matching fullName
+        for (const [username, userData] of Object.entries(credentials)) {
+            if (userData.fullName === fullName) {
+                console.log(`Found officer: ${username} (${fullName})`);
+                return username;
+            }
+        }
+        
+        console.log(`No officer found with name: ${fullName}`);
+        return null;
+        
+    } catch (error) {
+        console.error("Error finding officer username:", error);
+        return null;
+    }
+}
+// ============================================
+// END: HELPER - Find Officer's Username by Full Name
+// ============================================
+
+        // ============================================
+// START: FUNCTION - Log Notification to Officer's Credentials
+// ============================================
+async function logNotificationToOfficer(probationerKey, probationerId, notification, notificationId) {
+    try {
+        // 1. Get the probationer's officerInCharge
+        const probationerRef = ref(database, `probationers/${probationerKey}/officerInCharge`);
+        const officerSnap = await get(probationerRef);
+        const officerFullName = officerSnap.val();
+        
+        if (!officerFullName) {
+            console.log(`No officer assigned for ${probationerKey}`);
+            return;
+        }
+        
+        // 2. Find officer's username
+        const officerUsername = await getOfficerUsernameByFullName(officerFullName);
+        
+        if (!officerUsername) {
+            console.log(`Could not find username for officer: ${officerFullName}`);
+            return;
+        }
+        
+        // 3. Create officer notification object
+        const officerNotification = {
+            ...notification,
+            directedTo: "officer",
+            officerUsername: officerUsername,
+            officerFullName: officerFullName,
+            source: "device_tracking"
+        };
+        
+        // 4. Save to officer's notifications path
+        const officerNotificationRef = ref(database, `credentials/${officerUsername}/notifications/${notificationId}`);
+        await set(officerNotificationRef, officerNotification);
+        
+        console.log(`Notification also logged to officer: ${officerUsername}`);
+        
+    } catch (error) {
+        console.error("Error logging to officer's notifications:", error);
+    }
+}
+// ============================================
+// END: FUNCTION - Log Notification to Officer's Credentials
+// ============================================
+
 
 // ============================================
 // TAMPERING DETECTION (F6 KEY)
@@ -1042,6 +1124,7 @@ async function handleTamperingDetection() {
         const notificationId = `tamper_${Date.now()}_notif`;
         const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
         await set(notificationRef, notification);
+        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         
         console.log(`Tampering violation logged for ${probationerKey}:`, violation);
         
@@ -1302,6 +1385,8 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
         await set(notificationRef, notification);
         
         console.log(`Low battery notification logged for probationer_${probationerId}`);
+        
+          await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         
     } catch (error) {
         console.error("Error logging low battery notification:", error);
@@ -1976,7 +2061,7 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         
         // Save the notification
         await set(notificationRef, notification);
-        
+         await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         console.log(`Announcement acknowledgement logged for ${probationerKey}`);
         console.log(`Subject: ${notification.subject}`);
         
@@ -2061,6 +2146,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
