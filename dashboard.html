@@ -742,6 +742,7 @@
                 const userData = await getUserData(username);
                 
                 if (userData) {
+                    console.log("Logged in user:", userData.username);
                     // Update UI with user data
                     document.getElementById('usernameDisplay').textContent = userData.username;
                     document.getElementById('emailDisplay').textContent = userData.email;
