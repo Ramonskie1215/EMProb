@@ -2290,9 +2290,15 @@ function updateProbationerDetails(probationer) {
     const statusIndicator = document.querySelector('#probationerStatus .status-indicator');
     const statusText = document.getElementById('probationerStatus').querySelector('span:last-child');
     
+    // Check if probationer has watch
+    const hasWatch = probationer.watch && probationer.watch !== "none";
+    
     if (probationer.deviceStatus === 'tampered' || probationer.deviceStatus === 'offline') {
         statusIndicator.className = 'status-indicator warning';
         statusText.textContent = ' Tampered/Alert';
+    } else if (hasWatch && probationer.currentCoordinates) {
+        statusIndicator.className = 'status-indicator online';
+        statusText.textContent = ' Online (Watch)';
     } else if (probationer.currentCoordinates && probationer.currentCoordinates !== 'N/A') {
         statusIndicator.className = 'status-indicator online';
         statusText.textContent = ' Online';
@@ -2311,9 +2317,26 @@ function updateProbationerDetails(probationer) {
     document.getElementById('probationerBattery').textContent = 
         battery === 'N/A' ? 'N/A' : battery + '%';
     
-    // Location
-    document.getElementById('probationerLocation').textContent = 
-        probationer.currentCoordinates || 'N/A';
+    // Location - show watch coordinates if available
+    if (probationer.currentCoordinates) {
+        // Format coordinates for display
+        const coords = probationer.currentCoordinates;
+        if (coords.includes(',')) {
+            const parts = coords.split(',');
+            const lat = parseFloat(parts[0].trim());
+            const lng = parseFloat(parts[1].trim());
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                document.getElementById('probationerLocation').textContent = 
+                    `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                return;
+            }
+        }
+        
+        document.getElementById('probationerLocation').textContent = coords;
+    } else {
+        document.getElementById('probationerLocation').textContent = 'No location data';
+    }
 }
 
 // Plot probationer on map
@@ -2323,7 +2346,64 @@ function plotProbationerOnMap(probationer) {
         map.removeLayer(probationerMarkers[selectedProbationer]);
     }
     
-    // Check if coordinates are available
+    // Check if probationer has an assigned watch
+    const watchId = probationer.watch;
+    
+    if (watchId && watchId !== "none") {
+        console.log("Probationer has watch, loading watch data:", watchId);
+        
+        // Load watch data to get coordinates
+        loadWatchData(watchId, probationer);
+        return;
+    }
+    
+    // If no watch, check old coordinates field
+    checkOldCoordinates(probationer);
+}
+
+// Load watch data
+async function loadWatchData(watchId, probationer) {
+    try {
+        const watchRef = window.firebaseRef(window.firebaseDatabase, `watch/${watchId}`);
+        const snapshot = await window.firebaseGet(watchRef);
+        
+        if (snapshot.exists()) {
+            const watchData = snapshot.val();
+            
+            // Get coordinates from watch
+            if (watchData.coordinates && watchData.coordinates.value) {
+                const coordsStr = watchData.coordinates.value; // Format: "14.766223,120.955646"
+                
+                // Parse coordinates
+                const parts = coordsStr.split(',');
+                if (parts.length >= 2) {
+                    const lat = parseFloat(parts[0].trim());
+                    const lng = parseFloat(parts[1].trim());
+                    
+                    // Validate
+                    if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        addProbationerMarker(lat, lng, probationer);
+                        return;
+                    }
+                }
+            }
+            
+            // If no coordinates in watch, try old coordinates
+            checkOldCoordinates(probationer);
+            
+        } else {
+            console.log("Watch not found:", watchId);
+            checkOldCoordinates(probationer);
+        }
+    } catch (error) {
+        console.error('Error loading watch data:', error);
+        checkOldCoordinates(probationer);
+    }
+}
+
+// Check old coordinates field as fallback
+function checkOldCoordinates(probationer) {
+    // Check if coordinates are available in old field
     if (!probationer.currentCoordinates || probationer.currentCoordinates === 'N/A') {
         console.log('No location data available for this probationer');
         return;
@@ -2333,15 +2413,13 @@ function plotProbationerOnMap(probationer) {
         let lat, lng;
         const coordsStr = probationer.currentCoordinates;
         
-        // ===================== HANDLE WATCH FORMAT (lat,lng) =====================
+        // Handle watch format (lat,lng)
         if (coordsStr.includes(',') && !coordsStr.includes('°')) {
-            // Likely watch format: "14.651234,120.987654"
             const parts = coordsStr.split(',');
             if (parts.length >= 2) {
                 lat = parseFloat(parts[0].trim());
                 lng = parseFloat(parts[1].trim());
                 
-                // Validate
                 if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
                     addProbationerMarker(lat, lng, probationer);
                     return;
@@ -2349,7 +2427,7 @@ function plotProbationerOnMap(probationer) {
             }
         }
         
-        // ===================== HANDLE DEGREE FORMAT =====================
+        // Handle degree format
         const latMatch = coordsStr.match(/([\d.]+)°\s*([NS])/);
         const lngMatch = coordsStr.match(/([\d.]+)°\s*([EW])/);
         
@@ -2366,11 +2444,10 @@ function plotProbationerOnMap(probationer) {
         }
         
         // If we get here, couldn't parse coordinates
-        alert('Could not parse coordinates: ' + coordsStr);
+        console.log('Could not parse coordinates:', coordsStr);
         
     } catch (error) {
         console.error('Error plotting probationer:', error);
-        alert('Error displaying probationer location');
     }
 }
 
@@ -2461,6 +2538,7 @@ function addProbationerMarker(lat, lng, probationer) {
         
 // ===================== REAL-TIME COORDINATES LISTENER =====================
 let probationerListener = null;
+let watchListener = null;
 let probationerUpdateInterval = null;
 
 // Start real-time tracking for a probationer
@@ -2472,21 +2550,106 @@ function startRealTimeTracking(probationerKey) {
     
     console.log("Starting real-time tracking for probationer:", probationerKey);
     
-    // Set up Firebase real-time listener
+    // Step 1: Get probationer data to find assigned watch
     const probationerRef = window.firebaseRef(window.firebaseDatabase, `probationers/${probationerKey}`);
     
     probationerListener = window.firebaseOnValue(probationerRef, (snapshot) => {
         if (snapshot.exists()) {
             const probationer = snapshot.val();
-            updateProbationerCoordinates(probationer);
+            
+            // Step 2: Get the watch ID assigned to this probationer
+            const watchId = probationer.watch;
+            
+            if (watchId && watchId !== "none") {
+                console.log("Probationer has watch:", watchId);
+                
+                // Stop any existing watch listener
+                if (watchListener) {
+                    watchListener();
+                }
+                
+                // Step 3: Listen to watch coordinates in real-time
+                startWatchTracking(watchId, probationer);
+            } else {
+                console.log("Probationer has no assigned watch");
+                // No watch assigned, use probationer data directly
+                updateProbationerDetails(probationer);
+            }
         }
     });
     
-    // Also set up interval for backup updates (every 5 seconds)
+    // Set up interval for backup updates (every 10 seconds)
     probationerUpdateInterval = setInterval(() => {
         // Force refresh probationer data
         loadProbationerDetails(probationerKey);
-    }, 5000);
+    }, 10000);
+}
+
+// Start tracking watch coordinates
+function startWatchTracking(watchId, probationer) {
+    console.log("Starting watch tracking for:", watchId);
+    
+    const watchRef = window.firebaseRef(window.firebaseDatabase, `watch/${watchId}`);
+    
+    watchListener = window.firebaseOnValue(watchRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const watchData = snapshot.val();
+            updateProbationerFromWatch(watchData, probationer);
+        }
+    });
+}
+
+// Update probationer from watch data
+function updateProbationerFromWatch(watchData, probationer) {
+    if (!selectedProbationer) return;
+    
+    // Update probationer details with watch data
+    const updatedProbationer = {
+        ...probationer,
+        batteryPercentage: watchData.battery?.p || probationer.batteryPercentage,
+        updatedAt: watchData.lastSeen || probationer.updatedAt
+    };
+    
+    // Get coordinates from watch
+    if (watchData.coordinates && watchData.coordinates.value) {
+        const coords = watchData.coordinates.value; // Format: "14.766223,120.955646"
+        
+        // Update probationer with coordinates
+        updatedProbationer.currentCoordinates = coords;
+        
+        // Update marker position
+        updateMarkerFromWatch(coords, updatedProbationer);
+        
+        // Update UI
+        updateProbationerDetails(updatedProbationer);
+    } else {
+        // No coordinates in watch, update other details
+        updateProbationerDetails(updatedProbationer);
+    }
+}
+
+// Update marker position from watch coordinates
+function updateMarkerFromWatch(coordsStr, probationer) {
+    if (!selectedProbationer) return;
+    
+    try {
+        // Parse watch coordinates (format: "lat,lng")
+        const parts = coordsStr.split(',');
+        if (parts.length >= 2) {
+            const lat = parseFloat(parts[0].trim());
+            const lng = parseFloat(parts[1].trim());
+            
+            // Validate coordinates
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                console.warn("Invalid coordinates from watch:", coordsStr);
+                return;
+            }
+            
+            updateMarkerPosition(lat, lng, probationer);
+        }
+    } catch (error) {
+        console.error('Error parsing watch coordinates:', error);
+    }
 }
 
 // Stop real-time tracking
@@ -2494,6 +2657,11 @@ function stopRealTimeTracking() {
     if (probationerListener) {
         probationerListener(); // Unsubscribe from Firebase
         probationerListener = null;
+    }
+    
+    if (watchListener) {
+        watchListener(); // Unsubscribe from watch
+        watchListener = null;
     }
     
     if (probationerUpdateInterval) {
@@ -2642,8 +2810,40 @@ async function loadProbationerDetails(probationerKey) {
         
         if (snapshot.exists()) {
             const probationer = snapshot.val();
-            updateProbationerDetails(probationer);
-            plotProbationerOnMap(probationer);
+            
+            // Check if probationer has watch
+            const watchId = probationer.watch;
+            
+            if (watchId && watchId !== "none") {
+                // Load watch data
+                const watchRef = window.firebaseRef(window.firebaseDatabase, `watch/${watchId}`);
+                const watchSnapshot = await window.firebaseGet(watchRef);
+                
+                if (watchSnapshot.exists()) {
+                    const watchData = watchSnapshot.val();
+                    
+                    // Merge watch data with probationer data
+                    const updatedProbationer = {
+                        ...probationer,
+                        batteryPercentage: watchData.battery?.p || probationer.batteryPercentage,
+                        updatedAt: watchData.lastSeen || probationer.updatedAt
+                    };
+                    
+                    // Get coordinates from watch
+                    if (watchData.coordinates && watchData.coordinates.value) {
+                        updatedProbationer.currentCoordinates = watchData.coordinates.value;
+                    }
+                    
+                    updateProbationerDetails(updatedProbationer);
+                    plotProbationerOnMap(updatedProbationer);
+                } else {
+                    updateProbationerDetails(probationer);
+                    plotProbationerOnMap(probationer);
+                }
+            } else {
+                updateProbationerDetails(probationer);
+                plotProbationerOnMap(probationer);
+            }
         }
     } catch (error) {
         console.error('Error reloading probationer:', error);
