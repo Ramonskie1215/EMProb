@@ -30,6 +30,13 @@
             height: 80px;
         }
 
+
+.right-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
         .left-section {
             display: flex;
             align-items: center;
@@ -142,7 +149,6 @@
         /* Notification Styles */
 .notification-container {
     position: relative;
-    margin-right: 15px;
 }
 
 .notification-btn {
@@ -758,24 +764,26 @@
         </div>
 
     <!-- Notification Button -->
-<div class="notification-container" id="notificationContainer">
-    <button class="notification-btn" id="notificationBtn">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-        </svg>
-        <span class="notification-badge" id="notificationBadge">0</span>
-    </button>
-    <div class="notification-dropdown" id="notificationDropdown">
-        <div class="notification-header">
-            <h3>Notifications</h3>
-            <button class="mark-all-read" id="markAllReadBtn">Mark all as read</button>
-        </div>
-        <div class="notification-list" id="notificationList">
-            <!-- Notifications will be loaded here -->
-            <div class="notification-empty">No notifications</div>
+<div class="right-section">
+    <!-- Notification Button -->
+    <div class="notification-container" id="notificationContainer">
+        <button class="notification-btn" id="notificationBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+            </svg>
+            <span class="notification-badge" id="notificationBadge">0</span>
+        </button>
+        <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-header">
+                <h3>Notifications</h3>
+                <button class="mark-all-read" id="markAllReadBtn">Mark all as read</button>
+            </div>
+            <div class="notification-list" id="notificationList">
+                <!-- Notifications will be loaded here -->
+                <div class="notification-empty">No notifications</div>
+            </div>
         </div>
     </div>
-</div>
 
         
         <!-- Right Section: User Profile -->
@@ -1265,16 +1273,30 @@ function initializeEventListeners() {
         profileDropdown.classList.toggle('active');
     });
     
-    // Notification dropdown functionality
-    const notificationBtn = document.getElementById('notificationBtn');
-    const notificationDropdown = document.getElementById('notificationDropdown');
+// Notification dropdown functionality
+const notificationBtn = document.getElementById('notificationBtn');
+const notificationDropdown = document.getElementById('notificationDropdown');
+
+notificationBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    notificationDropdown.classList.toggle('active');
     
-    notificationBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        notificationDropdown.classList.toggle('active');
-        profileDropdown.classList.remove('active'); // Close profile dropdown if open
-    });
+    // Close profile dropdown if it's open
+    if (profileDropdown.classList.contains('active')) {
+        profileDropdown.classList.remove('active');
+    }
+});
+
+// Profile dropdown functionality
+userProfile.addEventListener('click', function(e) {
+    e.stopPropagation();
+    profileDropdown.classList.toggle('active');
     
+    // Close notification dropdown if it's open
+    if (notificationDropdown.classList.contains('active')) {
+        notificationDropdown.classList.remove('active');
+    }
+});
     // Mark all as read button
     const markAllReadBtn = document.getElementById('markAllReadBtn');
     if (markAllReadBtn) {
