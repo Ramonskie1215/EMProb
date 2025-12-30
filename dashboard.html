@@ -1452,12 +1452,34 @@ function initializeEventListeners() {
             notificationDropdown.classList.remove('active'); // Close dropdown
         });
     }
+
+document.addEventListener('click', function(e) {
+    // Check if click is on notification button or inside notification dropdown
+    const notificationBtn = document.getElementById('notificationBtn');
+    const notificationDropdown = document.getElementById('notificationDropdown');
     
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function() {
-        profileDropdown.classList.remove('active');
-        notificationDropdown.classList.remove('active');
-    });
+    if (notificationBtn && notificationDropdown) {
+        const isNotificationClick = notificationBtn.contains(e.target) || 
+                                   notificationDropdown.contains(e.target);
+        
+        if (!isNotificationClick) {
+            notificationDropdown.classList.remove('active');
+        }
+    }
+    
+    // Check if click is on user profile or inside profile dropdown
+    const userProfile = document.getElementById('userProfile');
+    const profileDropdown = document.getElementById('profileDropdown');
+    
+    if (userProfile && profileDropdown) {
+        const isProfileClick = userProfile.contains(e.target) || 
+                              profileDropdown.contains(e.target);
+        
+        if (!isProfileClick) {
+            profileDropdown.classList.remove('active');
+        }
+    }
+});
     
     // Close dropdowns when pressing Escape key
     document.addEventListener('keydown', function(e) {
