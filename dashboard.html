@@ -1290,7 +1290,7 @@ html += `
     
 // Add click handlers for notifications
 document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', async function() {
+    item.addEventListener('click', function() {
         const notificationId = this.getAttribute('data-id');
         const isUnread = this.classList.contains('unread');
         
@@ -1298,8 +1298,11 @@ document.querySelectorAll('.notification-item').forEach(item => {
             return; // Already read, don't do anything
         }
         
-        // Show loading state
+        // Store references for later use
+        const itemElement = this;
         const originalHTML = this.innerHTML;
+        
+        // Show spinner for 200ms
         this.innerHTML = `
             <div style="text-align: center; padding: 10px; color: #7F8C8D;">
                 <div class="spinner-small"></div>
@@ -1308,14 +1311,22 @@ document.querySelectorAll('.notification-item').forEach(item => {
         `;
         this.style.cursor = 'wait';
         
-        try {
-            await markAsRead(currentUsername, notificationId);
-        } catch (error) {
-            // Restore original content on error
-            this.innerHTML = originalHTML;
-            this.style.cursor = 'pointer';
-            console.error('Error marking as read:', error);
-        }
+        // Disable further clicks while processing
+        this.style.pointerEvents = 'none';
+        
+        // Mark as read after showing spinner for 200ms
+        setTimeout(async () => {
+            try {
+                await markAsRead(currentUsername, notificationId);
+                // markAsRead will update the UI with read status
+            } catch (error) {
+                // On error, restore to original state
+                itemElement.innerHTML = originalHTML;
+                itemElement.style.cursor = 'pointer';
+                itemElement.style.pointerEvents = 'auto';
+                console.error('Error marking as read:', error);
+            }
+        }, 200);
     });
 });
 }
