@@ -758,6 +758,13 @@
         font-size: 12px;
     }
 }
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
+    50% { transform: scale(1.1); box-shadow: 0 0 25px rgba(231, 76, 60, 0.6); }
+    100% { transform: scale(1); box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
+}
+
     </style>
 </head>
 <body>
@@ -968,10 +975,9 @@
 
 <script type="module">
     // Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, get, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"; // <-- ADD onValue
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
     // Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBGONaynbM6GSdq4Ee46dD8tqfeCYx-w-M",
@@ -997,7 +1003,7 @@
     window.firebaseGet = get;
     window.firebaseSet = set;
     window.currentUserData = currentUserData;
-
+    window.firebaseOnValue = onValue;
     // Check if user is logged in
     function checkAuth() {
         const username = localStorage.getItem('emprobUsername');
@@ -1724,13 +1730,16 @@ map.on('dblclick', function(e) {
 
 // =================== BOUNDARY DRAWING CODE END ===================
             
-            // Logout functionality
-            document.getElementById('logoutBtn').addEventListener('click', function() {
-                if (confirm('Are you sure you want to logout?')) {
-                    localStorage.removeItem('emprobUsername');
-                    window.location.href = 'index.html';
-                }
-            });
+// Logout functionality
+document.getElementById('logoutBtn').addEventListener('click', function() {
+    if (confirm('Are you sure you want to logout?')) {
+        // Stop real-time tracking before logout
+        stopRealTimeTracking();
+        
+        localStorage.removeItem('emprobUsername');
+        window.location.href = 'index.html';
+    }
+});
             
             // Close search results when clicking outside
             document.addEventListener('click', function(event) {
@@ -2206,9 +2215,11 @@ async function loadProbationers() {
     }
 }
 
-// When a probationer is selected from dropdown
 probationerSelect.addEventListener('change', async function() {
     const selectedKey = this.value;
+    
+    // ===================== STOP PREVIOUS TRACKING =====================
+    stopRealTimeTracking();
     
     if (!selectedKey) {
         probationerDetails.style.display = 'none';
@@ -2253,6 +2264,9 @@ probationerSelect.addEventListener('change', async function() {
         
         // Plot probationer on map if coordinates are available
         plotProbationerOnMap(probationer);
+        
+        // ===================== START REAL-TIME TRACKING =====================
+        startRealTimeTracking(selectedKey);
         
         // Load saved boundary for this probationer
         await loadAndPlotSavedBoundaryForProbationer(selectedKey);
@@ -2316,34 +2330,43 @@ function plotProbationerOnMap(probationer) {
     }
     
     try {
-        // Parse coordinates (format: "45.5123° N, 73.5678° W")
+        let lat, lng;
         const coordsStr = probationer.currentCoordinates;
+        
+        // ===================== HANDLE WATCH FORMAT (lat,lng) =====================
+        if (coordsStr.includes(',') && !coordsStr.includes('°')) {
+            // Likely watch format: "14.651234,120.987654"
+            const parts = coordsStr.split(',');
+            if (parts.length >= 2) {
+                lat = parseFloat(parts[0].trim());
+                lng = parseFloat(parts[1].trim());
+                
+                // Validate
+                if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                    addProbationerMarker(lat, lng, probationer);
+                    return;
+                }
+            }
+        }
+        
+        // ===================== HANDLE DEGREE FORMAT =====================
         const latMatch = coordsStr.match(/([\d.]+)°\s*([NS])/);
         const lngMatch = coordsStr.match(/([\d.]+)°\s*([EW])/);
         
-        if (!latMatch || !lngMatch) {
-            // Try alternative format (from watch device)
-            const watchMatch = coordsStr.match(/([\d.]+),\s*([\d.]+)/);
-            if (watchMatch) {
-                const lat = parseFloat(watchMatch[1]);
-                const lng = parseFloat(watchMatch[2]);
-                
-                addProbationerMarker(lat, lng, probationer);
-                return;
-            }
+        if (latMatch && lngMatch) {
+            lat = parseFloat(latMatch[1]);
+            lng = parseFloat(lngMatch[1]);
             
-            alert('Could not parse coordinates');
+            // Adjust for hemisphere
+            if (latMatch[2] === 'S') lat = -lat;
+            if (lngMatch[2] === 'W') lng = -lng;
+            
+            addProbationerMarker(lat, lng, probationer);
             return;
         }
         
-        let lat = parseFloat(latMatch[1]);
-        let lng = parseFloat(lngMatch[1]);
-        
-        // Adjust for hemisphere
-        if (latMatch[2] === 'S') lat = -lat;
-        if (lngMatch[2] === 'W') lng = -lng;
-        
-        addProbationerMarker(lat, lng, probationer);
+        // If we get here, couldn't parse coordinates
+        alert('Could not parse coordinates: ' + coordsStr);
         
     } catch (error) {
         console.error('Error plotting probationer:', error);
@@ -2385,9 +2408,9 @@ async function loadAndPlotSavedBoundaryForProbationer(probationerKey) {
     }
 }
         
-// Add a marker for probationer
+// Add a marker for probationer with real-time styling
 function addProbationerMarker(lat, lng, probationer) {
-    // Create a custom marker for probationer
+    // Create a custom marker with pulsing effect for real-time updates
     const probationerIcon = L.divIcon({
         html: `<div style="
             background: #E74C3C;
@@ -2402,30 +2425,175 @@ function addProbationerMarker(lat, lng, probationer) {
             color: white;
             font-weight: bold;
             font-size: 12px;
+            animation: pulse 2s infinite;
         ">P</div>`,
         iconSize: [30, 30],
         className: 'probationer-marker'
     });
     
     // Create marker
-    const marker = L.marker([lat, lng], { icon: probationerIcon })
-        .addTo(map)
-        .bindPopup(`
-            <b>Probationer: ${probationer.fullName}</b><br>
-            ID: ${probationer.assignedId || 'N/A'}<br>
-            Status: ${probationer.deviceStatus || 'N/A'}<br>
-            Battery: ${probationer.batteryPercentage || 'N/A'}<br>
-            Last Update: ${new Date(probationer.updatedAt || Date.now()).toLocaleString()}
-        `);
+    const marker = L.marker([lat, lng], { 
+        icon: probationerIcon,
+        title: probationer.fullName
+    })
+    .addTo(map)
+    .bindPopup(`
+        <b>Probationer: ${probationer.fullName}</b><br>
+        ID: ${probationer.assignedId || 'N/A'}<br>
+        Status: ${probationer.deviceStatus || 'N/A'}<br>
+        Battery: ${probationer.batteryPercentage || 'N/A'}<br>
+        Last Update: ${new Date(probationer.updatedAt || Date.now()).toLocaleString()}<br>
+        <small>Real-time tracking: ACTIVE</small>
+    `);
     
     // Store marker reference
     probationerMarkers[selectedProbationer] = marker;
     
-    // Zoom to probationer location
+    // Zoom to probationer location (with padding for controls)
     map.setView([lat, lng], 15);
     marker.openPopup();
+    
+    console.log(`Marker created at: ${lat}, ${lng}`);
 }
 
+
+
+        
+// ===================== REAL-TIME COORDINATES LISTENER =====================
+let probationerListener = null;
+let probationerUpdateInterval = null;
+
+// Start real-time tracking for a probationer
+function startRealTimeTracking(probationerKey) {
+    // Clear any existing listeners/intervals
+    stopRealTimeTracking();
+    
+    if (!probationerKey) return;
+    
+    console.log("Starting real-time tracking for probationer:", probationerKey);
+    
+    // Set up Firebase real-time listener
+    const probationerRef = window.firebaseRef(window.firebaseDatabase, `probationers/${probationerKey}`);
+    
+    probationerListener = window.firebaseOnValue(probationerRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const probationer = snapshot.val();
+            updateProbationerCoordinates(probationer);
+        }
+    });
+    
+    // Also set up interval for backup updates (every 5 seconds)
+    probationerUpdateInterval = setInterval(() => {
+        // Force refresh probationer data
+        loadProbationerDetails(probationerKey);
+    }, 5000);
+}
+
+// Stop real-time tracking
+function stopRealTimeTracking() {
+    if (probationerListener) {
+        probationerListener(); // Unsubscribe from Firebase
+        probationerListener = null;
+    }
+    
+    if (probationerUpdateInterval) {
+        clearInterval(probationerUpdateInterval);
+        probationerUpdateInterval = null;
+    }
+    
+    console.log("Real-time tracking stopped");
+}
+
+// Update probationer coordinates on the map
+function updateProbationerCoordinates(probationer) {
+    if (!selectedProbationer || !probationer.currentCoordinates || probationer.currentCoordinates === 'N/A') {
+        return;
+    }
+    
+    try {
+        let lat, lng;
+        
+        // Parse coordinates - watch format is typically "lat,lng"
+        const coordsStr = probationer.currentCoordinates;
+        
+        // Try parsing as "lat,lng" format (from watch)
+        if (coordsStr.includes(',')) {
+            const parts = coordsStr.split(',');
+            if (parts.length >= 2) {
+                lat = parseFloat(parts[0].trim());
+                lng = parseFloat(parts[1].trim());
+                
+                // Validate coordinates
+                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    console.warn("Invalid coordinates:", coordsStr);
+                    return;
+                }
+                
+                updateMarkerPosition(lat, lng, probationer);
+                return;
+            }
+        }
+        
+        // Try parsing as "45.5123° N, 73.5678° W" format
+        const latMatch = coordsStr.match(/([\d.]+)°\s*([NS])/);
+        const lngMatch = coordsStr.match(/([\d.]+)°\s*([EW])/);
+        
+        if (latMatch && lngMatch) {
+            lat = parseFloat(latMatch[1]);
+            lng = parseFloat(lngMatch[1]);
+            
+            // Adjust for hemisphere
+            if (latMatch[2] === 'S') lat = -lat;
+            if (lngMatch[2] === 'W') lng = -lng;
+            
+            updateMarkerPosition(lat, lng, probationer);
+        }
+        
+    } catch (error) {
+        console.error('Error updating probationer coordinates:', error);
+    }
+}
+
+// Update existing marker position
+function updateMarkerPosition(lat, lng, probationer) {
+    const marker = probationerMarkers[selectedProbationer];
+    
+    if (marker) {
+        // Smooth transition to new position
+        marker.setLatLng([lat, lng]);
+        
+        // Update popup content with latest info
+        marker.getPopup().setContent(`
+            <b>Probationer: ${probationer.fullName}</b><br>
+            ID: ${probationer.assignedId || 'N/A'}<br>
+            Status: ${probationer.deviceStatus || 'N/A'}<br>
+            Battery: ${probationer.batteryPercentage || 'N/A'}<br>
+            Last Update: ${new Date(probationer.updatedAt || Date.now()).toLocaleString()}<br>
+            <small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
+        `);
+        
+        // Update location in probationer controls
+        document.getElementById('probationerLocation').textContent = 
+            `${lat.toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}, ${lng.toFixed(4)}° ${lng >= 0 ? 'E' : 'W'}`;
+        
+        // Update last updated time
+        const updatedAt = probationer.updatedAt ? new Date(probationer.updatedAt) : new Date();
+        document.getElementById('probationerUpdated').textContent = 
+            updatedAt.toLocaleDateString() + ' ' + updatedAt.toLocaleTimeString();
+        
+        // Update battery status
+        const battery = probationer.batteryPercentage || 'N/A';
+        document.getElementById('probationerBattery').textContent = 
+            battery === 'N/A' ? 'N/A' : battery + '%';
+            
+        console.log(`Updated position: ${lat}, ${lng} at ${new Date().toLocaleTimeString()}`);
+    } else {
+        // If marker doesn't exist, create it
+        addProbationerMarker(lat, lng, probationer);
+    }
+}
+// ===================== END REAL-TIME FUNCTIONS =====================
+        
 // Track button functionality
 trackProbationerBtn.addEventListener('click', function() {
     if (!selectedProbationer) {
@@ -2433,7 +2601,11 @@ trackProbationerBtn.addEventListener('click', function() {
         return;
     }
     
-    // Reload and plot probationer location
+    // Restart real-time tracking
+    stopRealTimeTracking();
+    startRealTimeTracking(selectedProbationer);
+    
+    // Also reload current location
     loadProbationerDetails(selectedProbationer);
 });
 
