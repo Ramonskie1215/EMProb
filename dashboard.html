@@ -312,7 +312,7 @@
     color: #3498DB;
 }
 
-.notification-type.tampering {
+.notification-type.violation {
     background: rgba(231, 76, 60, 0.1);
     color: #E74C3C;
 }
@@ -1199,13 +1199,56 @@ function updateNotificationList(notifications) {
             minute: '2-digit'
         });
         
-        // Determine notification type
-        const isTampering = notification.type && notification.type.includes('tamper');
-        const typeClass = isTampering ? 'tampering' : 'announcement';
-        const typeText = isTampering ? 'Tampering Alert' : 'Announcement';
+        // Determine notification type based on multiple criteria
+        let typeClass = 'announcement';
+        let typeText = 'Announcement';
+        
+        // Check for VIOLATION types
+        if (notification.type && (
+            notification.type.includes('tamper') || 
+            notification.type.includes('Tampering') ||
+            notification.type.includes('violation') ||
+            notification.type.includes('Violation')
+        )) {
+            typeClass = 'violation';
+            typeText = 'Violation';
+        } 
+        // Check for ANNOUNCEMENT types
+        else if (notification.type && (
+            notification.type.includes('announce') || 
+            notification.type.includes('Announcement') ||
+            notification.type.includes('acknowledged') ||
+            notification.type.includes('Acknowledged')
+        )) {
+            typeClass = 'announcement';
+            typeText = 'Announcement';
+        }
+        // Check if it has a violation object (tampering notification)
+        else if (notification.violation) {
+            typeClass = 'violation';
+            typeText = 'Violation';
+        }
+        // Check if it has announcement properties
+        else if (notification.announcementTime || notification.subject) {
+            typeClass = 'announcement';
+            typeText = 'Announcement';
+        }
         
         // Determine notification title
-        const title = notification.subject || notification.type || 'Notification';
+        let title = 'Notification';
+        if (notification.subject) {
+            title = notification.subject;
+        } else if (notification.type) {
+            // Format the type for display
+            title = notification.type
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        // Get the message
+        const message = notification.message || 
+                       notification.details || 
+                       'No message available';
         
         html += `
             <div class="notification-item ${notification.unread ? 'unread' : ''}" data-id="${notification.id}">
@@ -1213,7 +1256,7 @@ function updateNotificationList(notifications) {
                     <span>${title}</span>
                     <span class="time">${timeStr}</span>
                 </div>
-                <div class="notification-message">${notification.message || 'No message'}</div>
+                <div class="notification-message">${message}</div>
                 <span class="notification-type ${typeClass}">${typeText}</span>
             </div>
         `;
