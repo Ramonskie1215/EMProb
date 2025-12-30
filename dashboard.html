@@ -376,13 +376,15 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Stats Bar */
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 40px;
-        }
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);  /* Changed to 2 columns */
+    gap: 20px;
+    margin-bottom: 40px;
+    max-width: 600px;  /* Added to center the 2 cards */
+    margin-left: auto;
+    margin-right: auto;
+}
 
         .stat-card {
             background: white;
@@ -415,17 +417,25 @@
         }
 
         /* Responsive adjustments */
-        @media (max-width: 992px) {
-            .stats-bar {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+@media (max-width: 992px) {
+    .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 600px;
+    }
+}
 
-        @media (max-width: 768px) {
-            .header {
-                padding: 12px 20px;
-                height: 70px;
-            }
+@media (max-width: 768px) {
+    .stats-bar {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        max-width: 400px;
+    }
+}
+@media (max-width: 480px) {
+    .stats-bar {
+        max-width: 300px;
+    }
+}
             
             .left-section {
                 gap: 15px;
@@ -596,25 +606,17 @@
             </div>
         </div>
         
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-value" id="totalProbationers">0</div>
-                <div class="stat-label">Total Probationers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="activeCases">0</div>
-                <div class="stat-label">Active Cases</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="completedVisits">0</div>
-                <div class="stat-label">Visits This Month</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="alerts">0</div>
-                <div class="stat-label">Pending Alerts</div>
-            </div>
-        </div>
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="stat-value" id="totalProbationers">0</div>
+        <div class="stat-label">Total Probationers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="totalOfficers">0</div>
+        <div class="stat-label">Total Officers</div>
+    </div>
+</div>
         
         <!-- Dashboard Grid -->
         <div class="dashboard-grid">
@@ -803,19 +805,42 @@
             }
         }
 
-        // Load dashboard statistics
-        async function loadDashboardStats(username) {
-            try {
-                // You can fetch real stats from Firebase here
-                // For now, using placeholder data
-                document.getElementById('totalProbationers').textContent = '24';
-                document.getElementById('activeCases').textContent = '18';
-                document.getElementById('completedVisits').textContent = '47';
-                document.getElementById('alerts').textContent = '3';
-            } catch (error) {
-                console.error('Error loading stats:', error);
-            }
+// Load dashboard statistics
+async function loadDashboardStats(username) {
+    try {
+        // Fetch probationers count from Firebase
+        const probationersRef = ref(database, 'probationers');
+        const probationersSnapshot = await get(probationersRef);
+        
+        let probationersCount = 0;
+        if (probationersSnapshot.exists()) {
+            // Count the number of probationers
+            probationersCount = Object.keys(probationersSnapshot.val()).length;
         }
+        
+        // Fetch officers count from Firebase
+        const credentialsRef = ref(database, 'credentials');
+        const credentialsSnapshot = await get(credentialsRef);
+        
+        let officersCount = 0;
+        if (credentialsSnapshot.exists()) {
+            // Count the number of officers
+            officersCount = Object.keys(credentialsSnapshot.val()).length;
+        }
+        
+        // Update the UI with real counts
+        document.getElementById('totalProbationers').textContent = probationersCount;
+        document.getElementById('totalOfficers').textContent = officersCount;
+        
+        console.log(`Dashboard stats loaded: ${probationersCount} probationers, ${officersCount} officers`);
+        
+    } catch (error) {
+        console.error('Error loading stats:', error);
+        // Fallback to placeholder values if there's an error
+        document.getElementById('totalProbationers').textContent = '0';
+        document.getElementById('totalOfficers').textContent = '0';
+    }
+}
 
         // Initialize event listeners
         function initializeEventListeners() {
