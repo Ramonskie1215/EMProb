@@ -770,6 +770,17 @@
                 font-size: 24px;
             }
         }
+
+        /* Small spinner for notification loading */
+.spinner-small {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(37, 159, 222, 0.2);
+    border-top: 2px solid #259FDE;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px auto;
+}
     </style>
 </head>
 <body>
@@ -941,10 +952,11 @@
 
     <!-- Firebase SDK -->
     <script type="module">
+        let currentUsername = null;
         // Import the functions you need from the SDKs you need
-        import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js"; // Added update
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -1003,7 +1015,7 @@
         // Initialize the application
         async function initApplication() {
             const username = checkAuth();
-            
+            currentUsername = username;
             if (!username) {
                 return;
             }
@@ -1250,50 +1262,121 @@ function updateNotificationList(notifications) {
                        notification.details || 
                        'No message available';
         
-        html += `
-            <div class="notification-item ${notification.unread ? 'unread' : ''}" data-id="${notification.id}">
-                <div class="notification-title">
-                    <span>${title}</span>
-                    <span class="time">${timeStr}</span>
-                </div>
-                <div class="notification-message">${message}</div>
-                <span class="notification-type ${typeClass}">${typeText}</span>
-            </div>
-        `;
+   // Check if notification is already read
+const isRead = notification.read === true;
+const readTime = notification.readAt ? new Date(notification.readAt).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+}) : '';
+
+html += `
+    <div class="notification-item ${!isRead ? 'unread' : ''}" data-id="${notification.id}">
+        <div class="notification-title">
+            <span>${title}</span>
+            <span class="time">
+                ${isRead ? `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ` : ''}
+                ${timeStr}
+            </span>
+        </div>
+        <div class="notification-message">${message}</div>
+        <span class="notification-type ${typeClass}">${typeText}</span>
+    </div>
+`;
     });
     
     notificationList.innerHTML = html;
     
-    // Add click handlers for notifications
-    document.querySelectorAll('.notification-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const notificationId = this.getAttribute('data-id');
-            markAsRead(username, notificationId);
-        });
+// Add click handlers for notifications
+document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', async function() {
+        const notificationId = this.getAttribute('data-id');
+        const isUnread = this.classList.contains('unread');
+        
+        if (!isUnread) {
+            return; // Already read, don't do anything
+        }
+        
+        // Show loading state
+        const originalHTML = this.innerHTML;
+        this.innerHTML = `
+            <div style="text-align: center; padding: 10px; color: #7F8C8D;">
+                <div class="spinner-small"></div>
+                <div>Marking as read...</div>
+            </div>
+        `;
+        this.style.cursor = 'wait';
+        
+        try {
+            await markAsRead(currentUsername, notificationId);
+        } catch (error) {
+            // Restore original content on error
+            this.innerHTML = originalHTML;
+            this.style.cursor = 'pointer';
+            console.error('Error marking as read:', error);
+        }
     });
+});
 }
 
 // Mark a notification as read
 async function markAsRead(username, notificationId) {
     try {
-        const notificationRef = ref(database, 'credentials/' + username + '/notifications/' + notificationId + '/read');
-        // Update in Firebase
-        // Note: We'll implement this when we have write permissions
+        // Create the path to the notification
+        const notificationPath = `credentials/${username}/notifications/${notificationId}`;
+        const notificationRef = ref(database, notificationPath);
         
-        // For now, just update UI locally
+        // Check if the notification is already marked as read
+        const snapshot = await get(notificationRef);
+        if (!snapshot.exists()) {
+            console.error('Notification not found:', notificationId);
+            return;
+        }
+        
+        const notificationData = snapshot.val();
+        
+        // If already read, do nothing
+        if (notificationData.read === true) {
+            console.log('Notification already marked as read');
+            return;
+        }
+        
+        // Update in Firebase
+        const updates = {};
+        updates[`${notificationPath}/read`] = true;
+        updates[`${notificationPath}/readAt`] = new Date().toISOString();
+        
+        await update(ref(database), updates);
+        console.log('Notification marked as read:', notificationId);
+        
+        // Update UI
         const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
         if (item) {
             item.classList.remove('unread');
             
+            // Add read indicator
+            const timeSpan = item.querySelector('.time');
+            if (timeSpan) {
+                timeSpan.innerHTML = `<span style="color: #27AE60;">✓ Read</span> • ${timeSpan.textContent}`;
+            }
+            
             // Update badge count
-            const currentCount = parseInt(document.getElementById('notificationBadge').textContent);
+            const badge = document.getElementById('notificationBadge');
+            const currentCount = parseInt(badge.textContent);
             if (currentCount > 0) {
-                updateNotificationBadge(currentCount - 1);
+                const newCount = currentCount - 1;
+                badge.textContent = newCount;
+                
+                if (newCount === 0) {
+                    badge.style.display = 'none';
+                }
             }
         }
         
     } catch (error) {
         console.error('Error marking notification as read:', error);
+        alert('Failed to mark notification as read. Please try again.');
     }
 }
 
@@ -1303,30 +1386,52 @@ async function markAllAsRead(username) {
         const notificationsRef = ref(database, 'credentials/' + username + '/notifications');
         const snapshot = await get(notificationsRef);
         
-        if (snapshot.exists()) {
-            const notificationsData = snapshot.val();
-            
-            // Find all unread notifications
-            const unreadNotifications = Object.keys(notificationsData).filter(key => 
-                !notificationsData[key].read || notificationsData[key].read !== true
-            );
+        if (!snapshot.exists()) {
+            console.log('No notifications found');
+            return;
+        }
+        
+        const notificationsData = snapshot.val();
+        const updates = {};
+        const readAt = new Date().toISOString();
+        
+        // Find all unread notifications and prepare updates
+        Object.keys(notificationsData).forEach(key => {
+            if (!notificationsData[key].read || notificationsData[key].read !== true) {
+                updates[`credentials/${username}/notifications/${key}/read`] = true;
+                updates[`credentials/${username}/notifications/${key}/readAt`] = readAt;
+            }
+        });
+        
+        // If there are unread notifications, update Firebase
+        if (Object.keys(updates).length > 0) {
+            await update(ref(database), updates);
+            console.log(`Marked ${Object.keys(updates).length / 2} notifications as read`);
             
             // Update UI
-            if (unreadNotifications.length > 0) {
-                // Update all notification items in UI
-                document.querySelectorAll('.notification-item.unread').forEach(item => {
-                    item.classList.remove('unread');
-                });
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
                 
-                // Reset badge count
-                updateNotificationBadge(0);
-                
-                console.log(`Marked ${unreadNotifications.length} notifications as read`);
-            }
+                // Update time display to show "Read"
+                const timeSpan = item.querySelector('.time');
+                if (timeSpan) {
+                    const timeText = timeSpan.textContent.replace('•', '').trim();
+                    timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${timeText}`;
+                }
+            });
+            
+            // Reset badge count
+            updateNotificationBadge(0);
+            
+            // Show success message
+            alert(`Successfully marked ${Object.keys(updates).length / 2} notifications as read!`);
+        } else {
+            alert('All notifications are already marked as read.');
         }
         
     } catch (error) {
         console.error('Error marking all notifications as read:', error);
+        alert('Failed to mark notifications as read. Please try again.');
     }
 }   
 
