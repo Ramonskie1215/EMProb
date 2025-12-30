@@ -1126,10 +1126,10 @@ async function handleTamperingDetection() {
         
         // 10. Create a notification
      const notification = {
-    type: "violation_tampering",
-    message: `Device tampering detected for ${probationerKey}`,
+    type: "Device Tampering",
+    message: `${probationerKey} attempted to remove or tamper the device. `,
     violation: violation,
-    timestamp: new Date().toISOString(), // ← CHANGED TO timestamp
+    timestamp: new Date().toISOString(), 
     acknowledged: false
 };
         
@@ -1380,7 +1380,7 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
     try {
         // Create notification object with timestamp
         const notification = {
-            type: "battery_low",
+            type: "Low Battery",
             message: `Device battery is low: ${batteryPercentage}%`,
             batteryLevel: batteryPercentage,
             timestamp: new Date().toISOString(), // ← CHANGE FROM "time" TO "timestamp"
@@ -2059,13 +2059,13 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         
         // Create notification object with timestamp
         const notification = {
-            type: "announcement_acknowledged",
+            type: "Announcement Acknowledged",
             subject: announcement.subject || "No Subject",
             message: announcement.details || "No Message",
             announcementTime: announcement.time || new Date().toISOString(),
             acknowledgedAt: new Date().toISOString(),
             acknowledged: true,
-            timestamp: new Date().toISOString() // ← ADD THIS LINE
+            timestamp: new Date().toISOString() 
         };
         
         // Generate a unique ID for this notification
@@ -2164,6 +2164,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
