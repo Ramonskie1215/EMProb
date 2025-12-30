@@ -1453,31 +1453,33 @@ function initializeEventListeners() {
         });
     }
 
+// Close dropdowns when clicking outside
 document.addEventListener('click', function(e) {
-    // Check if click is on notification button or inside notification dropdown
-    const notificationBtn = document.getElementById('notificationBtn');
+    const target = e.target;
     const notificationDropdown = document.getElementById('notificationDropdown');
-    
-    if (notificationBtn && notificationDropdown) {
-        const isNotificationClick = notificationBtn.contains(e.target) || 
-                                   notificationDropdown.contains(e.target);
-        
-        if (!isNotificationClick) {
-            notificationDropdown.classList.remove('active');
-        }
-    }
-    
-    // Check if click is on user profile or inside profile dropdown
-    const userProfile = document.getElementById('userProfile');
     const profileDropdown = document.getElementById('profileDropdown');
     
-    if (userProfile && profileDropdown) {
-        const isProfileClick = userProfile.contains(e.target) || 
-                              profileDropdown.contains(e.target);
-        
-        if (!isProfileClick) {
-            profileDropdown.classList.remove('active');
-        }
+    // Check if click is on a notification item that's being processed
+    const isProcessingNotification = target.closest('.notification-item') && 
+                                    target.closest('.notification-item').getAttribute('data-processing') === 'true';
+    
+    // Don't close dropdown if clicking on a processing notification
+    if (isProcessingNotification) {
+        return;
+    }
+    
+    // Close notification dropdown if click is outside
+    if (notificationDropdown && 
+        !notificationDropdown.contains(target) && 
+        !document.getElementById('notificationBtn').contains(target)) {
+        notificationDropdown.classList.remove('active');
+    }
+    
+    // Close profile dropdown if click is outside
+    if (profileDropdown && 
+        !profileDropdown.contains(target) && 
+        !document.getElementById('userProfile').contains(target)) {
+        profileDropdown.classList.remove('active');
     }
 });
     
