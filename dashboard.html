@@ -1290,39 +1290,36 @@ html += `
     
 // Add click handlers for notifications
 document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', async function() {
+    item.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        
         const notificationId = this.getAttribute('data-id');
         const isUnread = this.classList.contains('unread');
         
         if (!isUnread) {
-            return; // Already read, don't do anything
+            return; // Already read - dropdown stays open
         }
         
-        // Show loading state
-        const originalHTML = this.innerHTML;
-        const originalCursor = this.style.cursor;
-        this.innerHTML = `
-            <div style="text-align: center; padding: 10px; color: #7F8C8D;">
-                <div class="spinner-small"></div>
-                <div>Marking as read...</div>
-            </div>
-        `;
-        this.style.cursor = 'wait';
-        this.style.pointerEvents = 'none'; // Prevent multiple clicks
-        
+        // Mark as read but don't close dropdown
         try {
             await markAsRead(currentUsername, notificationId);
             
-            // After successful update, the notification will be reloaded
-            // So we don't need to restore HTML here
+            // Update UI without closing dropdown
+            this.classList.remove('unread');
+            
+            // Update time display
+            const timeSpan = this.querySelector('.time');
+            if (timeSpan) {
+                const currentText = timeSpan.textContent;
+                const cleanText = currentText.replace(/✓ Read • /g, '').trim();
+                timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${cleanText}`;
+            }
+            
+            // Update badge
+            updateBadgeCountAfterRead();
             
         } catch (error) {
-            // Restore original content on error
-            this.innerHTML = originalHTML;
-            this.style.cursor = originalCursor;
-            this.style.pointerEvents = 'auto';
-            console.error('Error marking as read:', error);
-            alert('Failed to mark notification as read. Please try again.');
+            console.error('Error:', error);
         }
     });
 });
