@@ -1290,7 +1290,7 @@ html += `
     
 // Add click handlers for notifications
 document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', function() {
+    item.addEventListener('click', async function() {
         const notificationId = this.getAttribute('data-id');
         const isUnread = this.classList.contains('unread');
         
@@ -1298,11 +1298,9 @@ document.querySelectorAll('.notification-item').forEach(item => {
             return; // Already read, don't do anything
         }
         
-        // Store references for later use
-        const itemElement = this;
+        // Show loading state
         const originalHTML = this.innerHTML;
-        
-        // Show spinner for 200ms
+        const originalCursor = this.style.cursor;
         this.innerHTML = `
             <div style="text-align: center; padding: 10px; color: #7F8C8D;">
                 <div class="spinner-small"></div>
@@ -1310,23 +1308,22 @@ document.querySelectorAll('.notification-item').forEach(item => {
             </div>
         `;
         this.style.cursor = 'wait';
+        this.style.pointerEvents = 'none'; // Prevent multiple clicks
         
-        // Disable further clicks while processing
-        this.style.pointerEvents = 'none';
-        
-        // Mark as read after showing spinner for 200ms
-        setTimeout(async () => {
-            try {
-                await markAsRead(currentUsername, notificationId);
-                // markAsRead will update the UI with read status
-            } catch (error) {
-                // On error, restore to original state
-                itemElement.innerHTML = originalHTML;
-                itemElement.style.cursor = 'pointer';
-                itemElement.style.pointerEvents = 'auto';
-                console.error('Error marking as read:', error);
-            }
-        }, 200);
+        try {
+            await markAsRead(currentUsername, notificationId);
+            
+            // After successful update, the notification will be reloaded
+            // So we don't need to restore HTML here
+            
+        } catch (error) {
+            // Restore original content on error
+            this.innerHTML = originalHTML;
+            this.style.cursor = originalCursor;
+            this.style.pointerEvents = 'auto';
+            console.error('Error marking as read:', error);
+            alert('Failed to mark notification as read. Please try again.');
+        }
     });
 });
 }
@@ -1342,7 +1339,7 @@ async function markAsRead(username, notificationId) {
         const snapshot = await get(notificationRef);
         if (!snapshot.exists()) {
             console.error('Notification not found:', notificationId);
-            return;
+            throw new Error('Notification not found');
         }
         
         const notificationData = snapshot.val();
@@ -1361,33 +1358,12 @@ async function markAsRead(username, notificationId) {
         await update(ref(database), updates);
         console.log('Notification marked as read:', notificationId);
         
-        // Update UI
-        const item = document.querySelector(`.notification-item[data-id="${notificationId}"]`);
-        if (item) {
-            item.classList.remove('unread');
-            
-            // Add read indicator
-            const timeSpan = item.querySelector('.time');
-            if (timeSpan) {
-                timeSpan.innerHTML = `<span style="color: #27AE60;">✓ Read</span> • ${timeSpan.textContent}`;
-            }
-            
-            // Update badge count
-            const badge = document.getElementById('notificationBadge');
-            const currentCount = parseInt(badge.textContent);
-            if (currentCount > 0) {
-                const newCount = currentCount - 1;
-                badge.textContent = newCount;
-                
-                if (newCount === 0) {
-                    badge.style.display = 'none';
-                }
-            }
-        }
+        // Reload notifications to get updated data
+        await loadNotifications(username);
         
     } catch (error) {
         console.error('Error marking notification as read:', error);
-        alert('Failed to mark notification as read. Please try again.');
+        throw error; // Re-throw to handle in click handler
     }
 }
 
