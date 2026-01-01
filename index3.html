@@ -22,23 +22,19 @@
             overflow: hidden;
         }
 
-        .clock-container {
-            width: 100vmin;
-            height: 100vmin;
-            max-width: 100vh;
-            max-height: 100vw;
-            background: #1C1C1C;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            box-shadow: 
-                inset 0 0 0 2px rgba(37, 159, 222, 0.2),
-                0 0 50px rgba(0, 0, 0, 0.8);
-        }
-
+.clock-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /* PREFIX - Add some padding if needed after size increase */
+    padding: 2vmin; /* SUFFIX - Optional: Add padding for larger time */
+     padding-top: 30%;
+}
 /* PREFIX - Combined Status Container (INCREASED SPACING BY 50%) */
 .combined-status {
     position: absolute;
@@ -2053,6 +2049,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
