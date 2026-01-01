@@ -200,38 +200,40 @@
             margin-bottom: 3vmin;
         }
 
-        .time-digit {
-            font-size: 32vmin;
-            font-weight: 1000;
-            font-family: 'Courier New', monospace;
-            color: #FFFFFF;
-            text-shadow: 
-                0 0 5vmin rgba(37, 159, 222, 0.8),
-                0 0 10vmin rgba(14, 60, 189, 0.6),
-                0 0 20vmin rgba(37, 159, 222, 0.4);
-            line-height: 1;
-            height: 32vmin;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.time-digit {
+    font-size: 32vmin;
+    font-weight: 900;            /* SUFFIX: Changed to 900 for bold */
+    font-family: Georgia, 'Times New Roman', Times, serif; /* SUFFIX: Changed to serif */
+    color: #FFFFFF;
+    text-shadow: 
+        0 0 5vmin rgba(37, 159, 222, 0.8),
+        0 0 10vmin rgba(14, 60, 189, 0.6),
+        0 0 20vmin rgba(37, 159, 222, 0.4);
+    line-height: 1;
+    height: 32vmin;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
         .hours, .minutes {
             width: 40vmin;
             text-align: center;
         }
 
-        .time-colon {
-            font-size: 20vmin;
-            color: #259FDE;
-            animation: blink 1.5s infinite;
-            text-shadow: 0 0 3vmin rgba(37, 159, 222, 1);
-            height: 32vmin;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 2vmin;
-        }
+.time-colon {
+    font-size: 20vmin;
+    font-weight: 900;            /* SUFFIX: Added bold weight */
+    font-family: Georgia, 'Times New Roman', Times, serif; /* SUFFIX: Changed to serif */
+    color: #259FDE;
+    animation: blink 1.5s infinite;
+    text-shadow: 0 0 3vmin rgba(37, 159, 222, 1);
+    height: 32vmin;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 2vmin;
+}
 
         /* Seconds Display */
         .seconds-display {
@@ -370,15 +372,19 @@
 
         /* Responsive Adjustments */
         @media (max-height: 500px) and (max-width: 500px) {
-            .time-digit {
-                font-size: 24vmin;
-                height: 24vmin;
-            }
-            
-            .time-colon {
-                font-size: 15vmin;
-                height: 24vmin;
-            }
+    .time-digit {
+        font-size: 24vmin;
+        height: 24vmin;
+        font-family: Georgia, 'Times New Roman', Times, serif; /* SUFFIX: Ensure serif in responsive */
+        font-weight: 900; /* SUFFIX: Ensure bold in responsive */
+    }
+    
+    .time-colon {
+        font-size: 15vmin;
+        height: 24vmin;
+        font-family: Georgia, 'Times New Roman', Times, serif; /* SUFFIX: Ensure serif in responsive */
+        font-weight: 900; /* SUFFIX: Ensure bold in responsive */
+    }
             
             .hours, .minutes {
                 width: 30vmin;
@@ -2095,6 +2101,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
