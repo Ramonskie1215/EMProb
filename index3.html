@@ -1846,8 +1846,6 @@ const gpsTracker = new GeolocationTracker();
             await uptimeTracker.start();
             await gpsTracker.start();
 
-               addTamperingIndicator();
-
             async function checkProbationerAndShowModal() {
     if (!uptimeTracker.isConnected || !uptimeTracker.deviceId) {
         console.log("Skipping modal check: not connected or no device ID");
@@ -2074,37 +2072,6 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         throw error;
     }
 }
-
-
-
-// Optional: Add visual indicator that F6 tampering is active
-function addTamperingIndicator() {
-    // Add small indicator to status area
-    const combinedStatus = document.querySelector('.combined-status');
-    if (combinedStatus) {
-        const tamperingIndicator = document.createElement('div');
-        tamperingIndicator.id = 'tamperingIndicator';
-        tamperingIndicator.style.cssText = `
-            font-size: 3vmin;
-            color: #5E5E5E;
-            margin-left: 2vmin;
-            font-family: 'Courier New', monospace;
-            opacity: 0.6;
-        `;
-        tamperingIndicator.textContent = 'F6=Tamper';
-        combinedStatus.appendChild(tamperingIndicator);
-        
-        // Flash briefly on page load to show it's active
-        setTimeout(() => {
-            tamperingIndicator.style.color = '#FFA500';
-            tamperingIndicator.style.opacity = '1';
-            setTimeout(() => {
-                tamperingIndicator.style.color = '#5E5E5E';
-                tamperingIndicator.style.opacity = '0.6';
-            }, 2000);
-        }, 1000);
-    }
-}
             
 
 // Listen for F1 key
@@ -2150,6 +2117,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
