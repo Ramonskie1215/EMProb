@@ -1762,9 +1762,27 @@ function updateClock() {
     minutesElement.textContent = minutes.toString().padStart(2, '0');
     periodElement.textContent = period;
     
-    const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
-    const dateString = now.toLocaleDateString('en-US', dateOptions);
-    dateElement.textContent = dateString.toUpperCase();
+    // Tagalog date formatting
+    const day = now.getDate();
+    const month = now.getMonth();
+    const weekday = now.getDay();
+    
+    // Tagalog day names
+    const tagalogDays = [
+        'LINGGO', 'LUNES', 'MARTES', 'MIYERKULES', 
+        'HUWEBES', 'BIYERNES', 'SABADO'
+    ];
+    
+    // Tagalog month names
+    const tagalogMonths = [
+        'ENERO', 'PEBRERO', 'MARSO', 'ABRIL', 'MAYO', 'HUNYO',
+        'HULYO', 'AGOSTO', 'SEPTYEMBRE', 'OKTUBRE', 'NOBYEMBRE', 'DISYEMBRE'
+    ];
+    
+    // Format: DAY_OF_WEEK, DAY MONTH (e.g., "LUNES, 5 DISYEMBRE")
+    const tagalogDate = `${tagalogDays[weekday]}, ${day} ${tagalogMonths[month]}`;
+    
+    dateElement.textContent = tagalogDate;
 }
 
         // ============================================
@@ -2054,5 +2072,6 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
