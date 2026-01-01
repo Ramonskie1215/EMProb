@@ -765,7 +765,7 @@
             await update(uptimeRef, uptimeData);
 
             console.log(`Uptime updated – Probationer: ${probationerValue}`);
-            this.updateStatus('Updated');
+            this.updateStatus('Activated');
         } catch (error) {
             console.error("Error sending uptime:", error);
             this.isConnected = false;
@@ -2095,6 +2095,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
