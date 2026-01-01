@@ -180,17 +180,18 @@
             animation: pulse 1.5s infinite;
         }
 
-        /* Main Clock Layout */
-        .clock-content {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
+.clock-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /* PREFIX - Add some padding if needed after size increase */
+    padding: 2vmin; /* SUFFIX - Optional: Add padding for larger time */
+}
 
         /* Main Time Display */
         .time-display {
@@ -200,37 +201,36 @@
             margin-bottom: 3vmin;
         }
 
+/* PREFIX - Time Display (INCREASED BY 30%) */
 .time-digit {
-    font-size: 32vmin;
-    font-weight: 900;            /* SUFFIX: Changed to 900 for bold */
-    font-family: 'Times New Roman', Times, serif; /* SUFFIX: Changed to serif */
+    font-size: 41.6vmin;    /* SUFFIX: 32vmin × 1.3 = 41.6vmin */
+    font-weight: 900;
+    font-family: 'Times New Roman', Times, serif; /* Georgia removed */
     color: #FFFFFF;
     line-height: 1;
-    height: 32vmin;
+    height: 41.6vmin;       /* SUFFIX: 32vmin × 1.3 = 41.6vmin */
     display: flex;
     align-items: center;
     justify-content: center;
 }
-
-        .hours, .minutes {
-            width: 40vmin;
-            text-align: center;
-        }
 
 .time-colon {
-    font-size: 20vmin;
-    font-weight: 900;            /* SUFFIX: Added bold weight */
-    font-family: 'Times New Roman', Times, serif; /* SUFFIX: Changed to serif */
+    font-size: 26vmin;      /* SUFFIX: 20vmin × 1.3 = 26vmin */
+    font-weight: 900;
+    font-family: 'Times New Roman', Times, serif; /* Georgia removed */
     color: #259FDE;
     animation: blink 1.5s infinite;
-    height: 32vmin;
+    height: 41.6vmin;       /* SUFFIX: Match time-digit height (32vmin × 1.3) */
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 2vmin;
+    margin: 0 2.6vmin;      /* SUFFIX: 2vmin × 1.3 = 2.6vmin */
 }
 
-
+.hours, .minutes {
+    width: 52vmin;           /* SUFFIX: 40vmin × 1.3 = 52vmin */
+    text-align: center;
+}
 
         /* Date Display */
         .date-display {
@@ -349,25 +349,25 @@
             50% { opacity: 0.8; }
         }
 
-        /* Responsive Adjustments */
-        @media (max-height: 500px) and (max-width: 500px) {
+@media (max-height: 500px) and (max-width: 500px) {
     .time-digit {
-        font-size: 24vmin;
-        height: 24vmin;
-        font-family:  'Times New Roman', Times, serif; /* SUFFIX: Ensure serif in responsive */
-        font-weight: 900; /* SUFFIX: Ensure bold in responsive */
+        font-size: 31.2vmin;    /* SUFFIX: 24vmin × 1.3 = 31.2vmin */
+        height: 31.2vmin;       /* SUFFIX: 24vmin × 1.3 = 31.2vmin */
+        font-family: 'Times New Roman', Times, serif; /* Georgia removed */
+        font-weight: 900;
     }
     
     .time-colon {
-        font-size: 15vmin;
-        height: 24vmin;
-        font-family: 'Times New Roman', Times, serif; /* SUFFIX: Ensure serif in responsive */
-        font-weight: 900; /* SUFFIX: Ensure bold in responsive */
+        font-size: 19.5vmin;    /* SUFFIX: 15vmin × 1.3 = 19.5vmin */
+        height: 31.2vmin;       /* SUFFIX: 24vmin × 1.3 = 31.2vmin */
+        font-family: 'Times New Roman', Times, serif; /* Georgia removed */
+        font-weight: 900;
     }
+}
             
-            .hours, .minutes {
-                width: 30vmin;
-            }
+.hours, .minutes {
+    width: 39vmin;          /* SUFFIX: 30vmin × 1.3 = 39vmin */
+}
 
             
             /* Combined Status Container for small screens */
@@ -2054,6 +2054,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
