@@ -957,6 +957,124 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
 // END: FUNCTION - Log Notification to Officer's Credentials
 // ============================================
 
+// ============================================
+// START: FUNCTION - Check if inside probation area
+// ============================================
+async function checkInsideProbationArea(probationerKey, currentLat, currentLng) {
+    try {
+        // Get probation area data
+        const areaRef = ref(database, `probationers/${probationerKey}/probationArea`);
+        const areaSnap = await get(areaRef);
+        
+        if (!areaSnap.exists()) {
+            console.log(`No probation area defined for ${probationerKey}`);
+            return null;
+        }
+        
+        const areaData = areaSnap.val();
+        let isInside = false;
+        
+        if (areaData.type === 'circle') {
+            // Circle area check
+            const dx = currentLng - areaData.center.lng;
+            const dy = currentLat - areaData.center.lat;
+            const distanceSquared = dx * dx + dy * dy;
+            const radiusSquared = areaData.radius * areaData.radius;
+            isInside = distanceSquared <= radiusSquared;
+            
+        } else if (areaData.type === 'polygon' && areaData.points && areaData.points.length >= 3) {
+            // Polygon area check
+            const bounds = areaData.points.map(p => ({x: p.lng, y: p.lat}));
+            isInside = isPointInPolygon(bounds, currentLat, currentLng);
+            
+        } else {
+            console.log(`Unknown area type:`, areaData.type);
+            return null;
+        }
+        
+        // Save the result
+        const resultRef = ref(database, `probationers/${probationerKey}/probationerAreaInside`);
+        await set(resultRef, isInside);
+        
+        console.log(`Area check: ${probationerKey} -> ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
+        return isInside;
+        
+    } catch (error) {
+        console.error("Error checking probation area:", error);
+        return null;
+    }
+}
+
+// Point in polygon check
+function isPointInPolygon(bounds, lat, lng) {
+    var count = 0;
+    for (var b = 0; b < bounds.length; b++) {
+        var vertex1 = bounds[b];
+        var vertex2 = bounds[(b + 1) % bounds.length];
+        if (west(vertex1, vertex2, lng, lat))
+            ++count;
+    }
+    return count % 2 === 1;
+
+    function west(A, B, x, y) {
+        if (A.y <= B.y) {
+            if (y <= A.y || y > B.y ||
+                x >= A.x && x >= B.x) {
+                return false;
+            } else if (x < A.x && x < B.x) {
+                return true;
+            } else {
+                return (y - A.y) / (x - A.x) > (B.y - A.y) / (B.x - A.x);
+            }
+        } else {
+            return west(B, A, x, y);
+        }
+    }
+}
+// ============================================
+// END: FUNCTION - Check if inside probation area
+// ============================================
+
+// ============================================
+// START: FUNCTION - Periodic probation area check
+// ============================================
+async function performProbationAreaCheck() {
+    try {
+        // 1. Get current GPS coordinates
+        if (!gpsTracker || !gpsTracker.currentCoords) {
+            console.log("No GPS coordinates available");
+            return;
+        }
+        
+        const currentLat = parseFloat(gpsTracker.currentCoords.lat);
+        const currentLng = parseFloat(gpsTracker.currentCoords.lng);
+        
+        // 2. Get assigned probationer
+        const uptimeTracker = window.uptimeTracker;
+        if (!uptimeTracker || !uptimeTracker.deviceId) {
+            return;
+        }
+        
+        const probationerRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
+        const snapshot = await get(probationerRef);
+        const probationerId = (snapshot.val() || "").toString().trim();
+        
+        if (!probationerId || probationerId === "none") {
+            return;
+        }
+        
+        const probationerKey = `probationer_${probationerId}`;
+        
+        // 3. Perform the check
+        await checkInsideProbationArea(probationerKey, currentLat, currentLng);
+        
+    } catch (error) {
+        console.error("Error in area check:", error);
+    }
+}
+// ============================================
+// END: FUNCTION - Periodic probation area check
+// ============================================
         
 // ============================================
 // TAMPERING DETECTION (F6 KEY)
@@ -2057,6 +2175,18 @@ document.addEventListener('keydown', (e) => {
 setInterval(checkForAnnouncements, 5000);
 checkForAnnouncements(); // Initial check
 
+ // ============================================
+// START: INIT - Start area boundary checking
+// ============================================
+// Start area check every 5 seconds
+setInterval(performProbationAreaCheck, 5000);
+
+// Initial check after 3 seconds (wait for GPS)
+setTimeout(performProbationAreaCheck, 3000);
+// ============================================
+// END: INIT - Start area boundary checking
+// ============================================
+            
 // Re-check when probationer name updates (optional extra trigger)
 const originalUpdateProbationerDisplay = updateProbationerDisplay;
 updateProbationerDisplay = async function() {
@@ -2088,6 +2218,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
