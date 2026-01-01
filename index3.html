@@ -235,23 +235,7 @@
     margin: 0 2vmin;
 }
 
-        /* Seconds Display */
-        .seconds-display {
-            position: absolute;
-            bottom: 15vmin;
-            left: 0;
-            right: 0;
-            text-align: center;
-        }
 
-        .seconds {
-            font-size: 12vmin;
-            font-weight: 900;
-            color: #259FDE;
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 3vmin rgba(37, 159, 222, 0.8);
-            letter-spacing: 1vmin;
-        }
 
         /* Date Display */
         .date-display {
@@ -389,11 +373,7 @@
             .hours, .minutes {
                 width: 30vmin;
             }
-            
-            .seconds {
-                font-size: 8vmin;
-                bottom: 8vmin;
-            }
+
             
             /* Combined Status Container for small screens */
             .combined-status {
@@ -517,10 +497,7 @@
        <div id="probationerDisplay" class="date-display" style="opacity: 0; margin-top: 4vmin; margin-bottom: 7vmin;">
     👤 <span id="probationerName" style="color: #259FDE;">NONE</span>
 </div>
-        <!-- Seconds Display -->
-        <div class="seconds-display">
-            <div class="seconds" id="seconds">42</div>
-        </div>
+
     </div>
 
 
@@ -1773,46 +1750,45 @@ const gpsTracker = new GeolocationTracker();
         // ============================================
         const hoursElement = document.getElementById('hours');
         const minutesElement = document.getElementById('minutes');
-        const secondsElement = document.getElementById('seconds');
         const periodElement = document.getElementById('period');
         const dateElement = document.getElementById('date');
 
-        function updateClock() {
-            const now = new Date();
-            
-            let hours = now.getHours();
-            const minutes = now.getMinutes();
-            const seconds = now.getSeconds();
-            const period = hours >= 12 ? 'PM' : 'AM';
-            
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            
-            hoursElement.textContent = hours.toString().padStart(2, '0');
-            minutesElement.textContent = minutes.toString().padStart(2, '0');
-            secondsElement.textContent = seconds.toString().padStart(2, '0');
-            periodElement.textContent = period;
-            
-            const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
-            const dateString = now.toLocaleDateString('en-US', dateOptions);
-            dateElement.textContent = dateString.toUpperCase();
-            
-            const intensity = Math.sin(seconds * 0.1) * 0.3 + 0.7;
-            secondsElement.style.color = `rgba(37, 159, 222, ${intensity})`;
-            secondsElement.style.textShadow = `0 0 ${intensity * 4}vmin rgba(37, 159, 222, 0.8)`;
-            
-            if (seconds % 2 === 0) {
-                hoursElement.style.textShadow = minutesElement.style.textShadow = 
-                    `0 0 6vmin rgba(37, 159, 222, 0.9),
-                     0 0 12vmin rgba(14, 60, 189, 0.7),
-                     0 0 24vmin rgba(37, 159, 222, 0.5)`;
-            } else {
-                hoursElement.style.textShadow = minutesElement.style.textShadow = 
-                    `0 0 5vmin rgba(37, 159, 222, 0.8),
-                     0 0 10vmin rgba(14, 60, 189, 0.6),
-                     0 0 20vmin rgba(37, 159, 222, 0.4)`;
-            }
-        }
+function updateClock() {
+    const now = new Date();
+    
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    // PREFIX - Removed seconds variable
+    const period = hours >= 12 ? 'PM' : 'AM';
+    
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    
+    hoursElement.textContent = hours.toString().padStart(2, '0');
+    minutesElement.textContent = minutes.toString().padStart(2, '0');
+    // PREFIX - Removed seconds update
+    periodElement.textContent = period;
+    
+    const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('en-US', dateOptions);
+    dateElement.textContent = dateString.toUpperCase();
+    
+    // PREFIX - Removed seconds-based effects
+    // Use minutes for the pulsing effect instead
+    const intensity = Math.sin(minutes * 0.1) * 0.3 + 0.7; // SUFFIX: Changed from seconds to minutes
+    
+    if (minutes % 2 === 0) { // SUFFIX: Changed from seconds to minutes
+        hoursElement.style.textShadow = minutesElement.style.textShadow = 
+            `0 0 6vmin rgba(37, 159, 222, 0.9),
+             0 0 12vmin rgba(14, 60, 189, 0.7),
+             0 0 24vmin rgba(37, 159, 222, 0.5)`;
+    } else {
+        hoursElement.style.textShadow = minutesElement.style.textShadow = 
+            `0 0 5vmin rgba(37, 159, 222, 0.8),
+             0 0 10vmin rgba(14, 60, 189, 0.6),
+             0 0 20vmin rgba(37, 159, 222, 0.4)`;
+    }
+}
 
         // ============================================
         // INITIALIZATION
@@ -2101,6 +2077,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
