@@ -958,54 +958,95 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
 // ============================================
 
 // ============================================
-// START: FUNCTION - Check if inside probation area
+// START: FUNCTION - Check probationer location status
 // ============================================
-async function checkInsideProbationArea(probationerKey, currentLat, currentLng) {
+async function checkProbationerLocationStatus(probationerKey, currentLat, currentLng) {
     try {
-        // Get probation area data
+        // Initialize all statuses
+        let isProbationerhasCoordinate = false;
+        let isProbationerhasBoundaries = false;
+        let probationerAreaInside = false;
+        
+        // 1. Check if probationer has coordinates (current location exists)
+        isProbationerhasCoordinate = (currentLat !== undefined && currentLng !== undefined && 
+                                     !isNaN(currentLat) && !isNaN(currentLng));
+        
+        // 2. Check if probationer has boundaries defined
         const areaRef = ref(database, `probationers/${probationerKey}/probationArea`);
         const areaSnap = await get(areaRef);
         
-        if (!areaSnap.exists()) {
-            console.log(`No probation area defined for ${probationerKey}`);
-            return null;
+        if (areaSnap.exists()) {
+            const areaData = areaSnap.val();
+            isProbationerhasBoundaries = true;
+            
+            // 3. Check if inside boundaries (only if we have valid coordinates)
+            if (isProbationerhasCoordinate) {
+                if (areaData.type === 'circle') {
+                    // Circle area check
+                    const dx = currentLng - areaData.center.lng;
+                    const dy = currentLat - areaData.center.lat;
+                    const distanceSquared = dx * dx + dy * dy;
+                    const radiusSquared = areaData.radius * areaData.radius;
+                    probationerAreaInside = distanceSquared <= radiusSquared;
+                    
+                } else if (areaData.type === 'polygon' && areaData.points && areaData.points.length >= 3) {
+                    // Polygon area check
+                    const bounds = areaData.points.map(p => ({x: p.lng, y: p.lat}));
+                    probationerAreaInside = isPointInPolygon(bounds, currentLat, currentLng);
+                }
+            }
         }
         
-        const areaData = areaSnap.val();
-        let isInside = false;
+        // 4. Save all statuses to Firebase
+        await saveProbationerStatuses(probationerKey, {
+            isProbationerhasCoordinate,
+            isProbationerhasBoundaries,
+            probationerAreaInside,
+            lastCheck: new Date().toISOString(),
+            coordinates: isProbationerhasCoordinate ? {
+                lat: currentLat,
+                lng: currentLng
+            } : null
+        });
         
-        if (areaData.type === 'circle') {
-            // Circle area check
-            const dx = currentLng - areaData.center.lng;
-            const dy = currentLat - areaData.center.lat;
-            const distanceSquared = dx * dx + dy * dy;
-            const radiusSquared = areaData.radius * areaData.radius;
-            isInside = distanceSquared <= radiusSquared;
-            
-        } else if (areaData.type === 'polygon' && areaData.points && areaData.points.length >= 3) {
-            // Polygon area check
-            const bounds = areaData.points.map(p => ({x: p.lng, y: p.lat}));
-            isInside = isPointInPolygon(bounds, currentLat, currentLng);
-            
-        } else {
-            console.log(`Unknown area type:`, areaData.type);
-            return null;
-        }
+        console.log(`Status check for ${probationerKey}:`);
+        console.log(`- Has Coordinates: ${isProbationerhasCoordinate}`);
+        console.log(`- Has Boundaries: ${isProbationerhasBoundaries}`);
+        console.log(`- Inside Area: ${probationerAreaInside}`);
         
-        // Save the result
-        const resultRef = ref(database, `probationers/${probationerKey}/probationerAreaInside`);
-        await set(resultRef, isInside);
-        
-        console.log(`Area check: ${probationerKey} -> ${isInside ? 'INSIDE' : 'OUTSIDE'}`);
-        return isInside;
+        return { isProbationerhasCoordinate, isProbationerhasBoundaries, probationerAreaInside };
         
     } catch (error) {
-        console.error("Error checking probation area:", error);
+        console.error("Error checking probationer status:", error);
         return null;
     }
 }
 
-// Point in polygon check
+// Helper function to save all statuses
+async function saveProbationerStatuses(probationerKey, statuses) {
+    try {
+        // Save individual fields for easy querying
+        const updates = {
+            'isProbationerhasCoordinate': statuses.isProbationerhasCoordinate,
+            'isProbationerhasBoundaries': statuses.isProbationerhasBoundaries,
+            'probationerAreaInside': statuses.probationerAreaInside,
+            'lastLocationCheck': statuses.lastCheck
+        };
+        
+        // Save to probationer status path
+        const statusRef = ref(database, `probationers/${probationerKey}`);
+        await update(statusRef, updates);
+        
+        // Also save detailed log
+        const logRef = ref(database, `probationers/${probationerKey}/locationStatusLogs/${Date.now()}`);
+        await set(logRef, statuses);
+        
+    } catch (error) {
+        console.error("Error saving probationer statuses:", error);
+    }
+}
+
+// Point in polygon check (unchanged)
 function isPointInPolygon(bounds, lat, lng) {
     var count = 0;
     for (var b = 0; b < bounds.length; b++) {
@@ -1032,22 +1073,21 @@ function isPointInPolygon(bounds, lat, lng) {
     }
 }
 // ============================================
-// END: FUNCTION - Check if inside probation area
+// END: FUNCTION - Check probationer location status
 // ============================================
 
 // ============================================
-// START: FUNCTION - Periodic probation area check
+// START: FUNCTION - Periodic probationer status check
 // ============================================
-async function performProbationAreaCheck() {
+async function performProbationerStatusCheck() {
     try {
-        // 1. Get current GPS coordinates
-        if (!gpsTracker || !gpsTracker.currentCoords) {
-            console.log("No GPS coordinates available");
-            return;
-        }
+        let currentLat, currentLng;
         
-        const currentLat = parseFloat(gpsTracker.currentCoords.lat);
-        const currentLng = parseFloat(gpsTracker.currentCoords.lng);
+        // 1. Get current GPS coordinates if available
+        if (gpsTracker && gpsTracker.currentCoords) {
+            currentLat = parseFloat(gpsTracker.currentCoords.lat);
+            currentLng = parseFloat(gpsTracker.currentCoords.lng);
+        }
         
         // 2. Get assigned probationer
         const uptimeTracker = window.uptimeTracker;
@@ -1065,16 +1105,17 @@ async function performProbationAreaCheck() {
         
         const probationerKey = `probationer_${probationerId}`;
         
-        // 3. Perform the check
-        await checkInsideProbationArea(probationerKey, currentLat, currentLng);
+        // 3. Perform the status check
+        await checkProbationerLocationStatus(probationerKey, currentLat, currentLng);
         
     } catch (error) {
-        console.error("Error in area check:", error);
+        console.error("Error in status check:", error);
     }
 }
 // ============================================
-// END: FUNCTION - Periodic probation area check
+// END: FUNCTION - Periodic probationer status check
 // ============================================
+        
         
 // ============================================
 // TAMPERING DETECTION (F6 KEY)
@@ -2175,16 +2216,16 @@ document.addEventListener('keydown', (e) => {
 setInterval(checkForAnnouncements, 5000);
 checkForAnnouncements(); // Initial check
 
- // ============================================
-// START: INIT - Start area boundary checking
 // ============================================
-// Start area check every 5 seconds
-setInterval(performProbationAreaCheck, 5000);
+// START: INIT - Start probationer status checking
+// ============================================
+// Start status check every 5 seconds
+setInterval(performProbationerStatusCheck, 5000);
 
 // Initial check after 3 seconds (wait for GPS)
-setTimeout(performProbationAreaCheck, 3000);
+setTimeout(performProbationerStatusCheck, 3000);
 // ============================================
-// END: INIT - Start area boundary checking
+// END: INIT - Start probationer status checking
 // ============================================
             
 // Re-check when probationer name updates (optional extra trigger)
@@ -2218,6 +2259,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
