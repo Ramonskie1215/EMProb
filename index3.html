@@ -39,45 +39,45 @@
                 0 0 50px rgba(0, 0, 0, 0.8);
         }
 
-        /* Combined Status Container - AM/PM, GPS & Battery */
-        .combined-status {
-            position: absolute;
-            top: 5vmin;
-            right: 5vmin;
-            display: flex;
-            align-items: center;
-            z-index: 100;
-            background: rgba(28, 28, 28, 0.95);
-            padding: 2vmin;
-            border-radius: 2.5vmin;
-            border: 2px solid rgba(37, 159, 222, 0.5);
-            backdrop-filter: blur(10px);
-        }
+/* PREFIX - Combined Status Container (INCREASED SPACING BY 50%) */
+.combined-status {
+    position: absolute;
+    top: 7.5vmin;        /* SUFFIX: 5vmin × 1.5 = 7.5vmin (50% more from top) */
+    right: 7.5vmin;      /* SUFFIX: 5vmin × 1.5 = 7.5vmin (50% more from right) */
+    display: flex;
+    align-items: center;
+    z-index: 100;
+    background: rgba(28, 28, 28, 0.95);
+    padding: 3vmin;      /* SUFFIX: 2vmin × 1.5 = 3vmin (50% larger padding) */
+    border-radius: 3.75vmin; /* SUFFIX: 2.5vmin × 1.5 = 3.75vmin */
+    border: 2px solid rgba(37, 159, 222, 0.5);
+    backdrop-filter: blur(10px);
+}
 
-        .status-section {
-            display: flex;
-            align-items: center;
-            gap: 1.5vmin;
-            padding: 0 2vmin;
-            height: 100%;
-        }
+.status-section {
+    display: flex;
+    align-items: center;
+    gap: 2.25vmin;       /* SUFFIX: 1.5vmin × 1.5 = 2.25vmin (50% larger gap) */
+    padding: 0 3vmin;    /* SUFFIX: 2vmin × 1.5 = 3vmin (50% larger padding) */
+    height: 100%;
+}
 
-        .status-divider {
-            width: 1px;
-            height: 5vmin;
-            background: rgba(37, 159, 222, 0.3);
-        }
+.status-divider {
+    width: 1px;
+    height: 7.5vmin;      /* SUFFIX: 5vmin × 1.5 = 7.5vmin (50% taller) */
+    background: rgba(37, 159, 222, 0.3);
+}
 
         /* Period Indicator */
-        .period-indicator {
-            font-size: 5.5vmin;
-            font-weight: 900;
-            color: #259FDE;
-            font-family: 'Courier New', monospace;
-            text-align: center;
-            min-width: 10vmin;
-            text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
-        }
+.period-indicator {
+    font-size: 5.5vmin;
+    font-weight: 900;
+    color: #259FDE;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    min-width: 15vmin;     /* SUFFIX: 10vmin × 1.5 = 15vmin (50% wider) */
+    text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
+}
 
         /* GPS Icon */
         .gps-icon {
@@ -370,27 +370,26 @@
 }
 
             
-            /* Combined Status Container for small screens */
-            .combined-status {
-                top: 3vmin;
-                right: 3vmin;
-                padding: 1.5vmin;
-            }
+/* PREFIX - Combined Status Container for small screens (INCREASED SPACING BY 50%) */
+.combined-status {
+    top: 4.5vmin;        /* SUFFIX: 3vmin × 1.5 = 4.5vmin */
+    right: 4.5vmin;      /* SUFFIX: 3vmin × 1.5 = 4.5vmin */
+    padding: 2.25vmin;   /* SUFFIX: 1.5vmin × 1.5 = 2.25vmin */
+}
             
-            .status-section {
-                gap: 1vmin;
-                padding: 0 1.5vmin;
-            }
+.status-section {
+    gap: 1.5vmin;        /* SUFFIX: 1vmin × 1.5 = 1.5vmin */
+    padding: 0 2.25vmin; /* SUFFIX: 1.5vmin × 1.5 = 2.25vmin */
+}
             
-            .status-divider {
-                height: 4vmin;
-            }
+.status-divider {
+    height: 6vmin;        /* SUFFIX: 4vmin × 1.5 = 6vmin */
+}
             
-            /* Period adjustments */
-            .period-indicator {
-                font-size: 4.5vmin;
-                min-width: 8vmin;
-            }
+.period-indicator {
+    font-size: 4.5vmin;
+    min-width: 12vmin;     /* SUFFIX: 8vmin × 1.5 = 12vmin */
+}
             
             /* GPS adjustments */
             .gps-icon {
@@ -2054,6 +2053,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
