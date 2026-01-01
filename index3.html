@@ -68,6 +68,20 @@
     background: rgba(37, 159, 222, 0.3);
 }
 
+.blinking-circle {
+    width: 6vmin;
+    height: 6vmin;
+    border-radius: 50%;
+    background-color: #DE3725;
+    margin-top: 4vmin;
+    animation: blinkToggle 1s infinite steps(2);
+}
+
+@keyframes blinkToggle {
+    0% { background-color: #DE3725; } /* Red */
+    50% { background-color: #25DE37; } /* Green */
+}   
+
         /* Period Indicator */
 .period-indicator {
     font-size: 5.5vmin;
@@ -487,6 +501,8 @@
             
             <!-- Date Display -->
             <div class="date-display" id="date">SATURDAY 5 DECEMBER</div>
+
+            <div class="blinking-circle"></div>
         </div>
         
        <div id="probationerDisplay" class="date-display" style="opacity: 0; margin-top: 4vmin; margin-bottom: 7vmin;">
@@ -2072,6 +2088,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
