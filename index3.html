@@ -1780,7 +1780,7 @@ function updateClock() {
     ];
     
     // Format: DAY_OF_WEEK, DAY MONTH (e.g., "LUNES, 5 DISYEMBRE")
-    const tagalogDate = `${tagalogDays[weekday]}, ${day} ${tagalogMonths[month]}`;
+    const tagalogDate = `${tagalogDays[weekday]}, ${tagalogMonths[month]}  ${day}`;
     
     dateElement.textContent = tagalogDate;
 }
@@ -2072,6 +2072,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
