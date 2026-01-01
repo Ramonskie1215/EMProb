@@ -205,10 +205,6 @@
     font-weight: 900;            /* SUFFIX: Changed to 900 for bold */
     font-family: 'Times New Roman', Times, serif; /* SUFFIX: Changed to serif */
     color: #FFFFFF;
-    text-shadow: 
-        0 0 5vmin rgba(37, 159, 222, 0.8),
-        0 0 10vmin rgba(14, 60, 189, 0.6),
-        0 0 20vmin rgba(37, 159, 222, 0.4);
     line-height: 1;
     height: 32vmin;
     display: flex;
@@ -227,7 +223,6 @@
     font-family: 'Times New Roman', Times, serif; /* SUFFIX: Changed to serif */
     color: #259FDE;
     animation: blink 1.5s infinite;
-    text-shadow: 0 0 3vmin rgba(37, 159, 222, 1);
     height: 32vmin;
     display: flex;
     align-items: center;
@@ -1758,7 +1753,6 @@ function updateClock() {
     
     let hours = now.getHours();
     const minutes = now.getMinutes();
-    // PREFIX - Removed seconds variable
     const period = hours >= 12 ? 'PM' : 'AM';
     
     hours = hours % 12;
@@ -1766,28 +1760,11 @@ function updateClock() {
     
     hoursElement.textContent = hours.toString().padStart(2, '0');
     minutesElement.textContent = minutes.toString().padStart(2, '0');
-    // PREFIX - Removed seconds update
     periodElement.textContent = period;
     
     const dateOptions = { weekday: 'long', month: 'long', day: 'numeric' };
     const dateString = now.toLocaleDateString('en-US', dateOptions);
     dateElement.textContent = dateString.toUpperCase();
-    
-    // PREFIX - Removed seconds-based effects
-    // Use minutes for the pulsing effect instead
-    const intensity = Math.sin(minutes * 0.1) * 0.3 + 0.7; // SUFFIX: Changed from seconds to minutes
-    
-    if (minutes % 2 === 0) { // SUFFIX: Changed from seconds to minutes
-        hoursElement.style.textShadow = minutesElement.style.textShadow = 
-            `0 0 6vmin rgba(37, 159, 222, 0.9),
-             0 0 12vmin rgba(14, 60, 189, 0.7),
-             0 0 24vmin rgba(37, 159, 222, 0.5)`;
-    } else {
-        hoursElement.style.textShadow = minutesElement.style.textShadow = 
-            `0 0 5vmin rgba(37, 159, 222, 0.8),
-             0 0 10vmin rgba(14, 60, 189, 0.6),
-             0 0 20vmin rgba(37, 159, 222, 0.4)`;
-    }
 }
 
         // ============================================
@@ -2077,6 +2054,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
