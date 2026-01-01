@@ -186,11 +186,11 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start; /* Changed from center to flex-start */
     align-items: center;
     text-align: center;
-    /* PREFIX - Add some padding if needed after size increase */
-    padding: 2vmin; /* SUFFIX - Optional: Add padding for larger time */
+    padding: 2vmin;
+    padding-top: 100%; /* This moves the entire clock content down by 100% */
 }
 
         /* Main Time Display */
@@ -2053,6 +2053,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
