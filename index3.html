@@ -982,20 +982,14 @@ async function checkProbationerLocationStatus(probationerKey, currentLat, curren
             // 3. Check if inside boundaries (only if we have valid coordinates)
             if (isProbationerhasCoordinate) {
                 if (areaData.type === 'circle') {
-                    // CORRECTED: Circle area check using Haversine formula
-                    const centerLat = areaData.center.lat;
-                    const centerLng = areaData.center.lng;
-                    const radiusMeters = areaData.radius;
-                    
-                    // Calculate distance using Haversine formula
-                    const distance = calculateDistance(
+                    // Circle area check using Haversine formula
+                    probationerAreaInside = isPointInCircle(
                         currentLat, currentLng,
-                        centerLat, centerLng
+                        areaData.center.lat, areaData.center.lng,
+                        areaData.radius
                     );
                     
-                    probationerAreaInside = distance <= radiusMeters;
-                    
-                    console.log(`Circle check: Distance=${distance.toFixed(2)}m, Radius=${radiusMeters}m, Inside=${probationerAreaInside}`);
+                    console.log(`Circle check: Inside=${probationerAreaInside}, Radius=${areaData.radius}m`);
                     
                 } else if (areaData.type === 'polygon' && areaData.points && areaData.points.length >= 3) {
                     // Polygon area check
@@ -1032,7 +1026,26 @@ async function checkProbationerLocationStatus(probationerKey, currentLat, curren
     }
 }
 
-// Helper function: Calculate distance between two points using Haversine formula
+// Helper function: Check if point is inside circle using Haversine formula
+function isPointInCircle(pointLat, pointLng, centerLat, centerLng, radiusMeters) {
+    // Calculate distance between point and center using Haversine formula
+    const R = 6371000; // Earth's radius in meters
+    
+    const φ1 = pointLat * Math.PI / 180;
+    const φ2 = centerLat * Math.PI / 180;
+    const Δφ = (centerLat - pointLat) * Math.PI / 180;
+    const Δλ = (centerLng - pointLng) * Math.PI / 180;
+    
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    
+    return distance <= radiusMeters;
+}
+
+// Helper function: Calculate distance between two points (for logging)
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371000; // Earth's radius in meters
     const φ1 = lat1 * Math.PI / 180;
@@ -1043,9 +1056,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
               Math.cos(φ1) * Math.cos(φ2) *
               Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c; // Distance in meters
+    const distance = R * c;
     
     return distance;
 }
@@ -1078,6 +1090,7 @@ async function saveProbationerStatuses(probationerKey, statuses) {
                         updates['distanceFromCenter'] = distance;
                         updates['centerCoordinates'] = areaData.center;
                         updates['radius'] = areaData.radius;
+                        updates['isInsideRadius'] = distance <= areaData.radius;
                     }
                 }
             } catch (error) {
@@ -2314,6 +2327,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
