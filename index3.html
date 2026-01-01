@@ -68,20 +68,20 @@
     background: rgba(37, 159, 222, 0.3);
 }
 
+/* Blinking Circle */
 .blinking-circle {
     width: 6vmin;
     height: 6vmin;
     border-radius: 50%;
-    background-color: #DE3725;
+    background-color: #259FDE; /* Starting color */
     margin-top: 4vmin;
-    animation: blinkToggle 1s infinite steps(2);
+    animation: blinkRedGreen 1s infinite alternate;
 }
 
-@keyframes blinkToggle {
+@keyframes blinkRedGreen {
     0% { background-color: #DE3725; } /* Red */
-    50% { background-color: #25DE37; } /* Green */
-}   
-
+    100% { background-color: #25DE37; } /* Green */
+}
         /* Period Indicator */
 .period-indicator {
     font-size: 5.5vmin;
@@ -2088,6 +2088,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
