@@ -982,17 +982,27 @@ async function checkProbationerLocationStatus(probationerKey, currentLat, curren
             // 3. Check if inside boundaries (only if we have valid coordinates)
             if (isProbationerhasCoordinate) {
                 if (areaData.type === 'circle') {
-                    // Circle area check
-                    const dx = currentLng - areaData.center.lng;
-                    const dy = currentLat - areaData.center.lat;
-                    const distanceSquared = dx * dx + dy * dy;
-                    const radiusSquared = areaData.radius * areaData.radius;
-                    probationerAreaInside = distanceSquared <= radiusSquared;
+                    // CORRECTED: Circle area check using Haversine formula
+                    const centerLat = areaData.center.lat;
+                    const centerLng = areaData.center.lng;
+                    const radiusMeters = areaData.radius;
+                    
+                    // Calculate distance using Haversine formula
+                    const distance = calculateDistance(
+                        currentLat, currentLng,
+                        centerLat, centerLng
+                    );
+                    
+                    probationerAreaInside = distance <= radiusMeters;
+                    
+                    console.log(`Circle check: Distance=${distance.toFixed(2)}m, Radius=${radiusMeters}m, Inside=${probationerAreaInside}`);
                     
                 } else if (areaData.type === 'polygon' && areaData.points && areaData.points.length >= 3) {
                     // Polygon area check
                     const bounds = areaData.points.map(p => ({x: p.lng, y: p.lat}));
                     probationerAreaInside = isPointInPolygon(bounds, currentLat, currentLng);
+                    
+                    console.log(`Polygon check: Points=${bounds.length}, Inside=${probationerAreaInside}`);
                 }
             }
         }
@@ -1022,6 +1032,24 @@ async function checkProbationerLocationStatus(probationerKey, currentLat, curren
     }
 }
 
+// Helper function: Calculate distance between two points using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371000; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c; // Distance in meters
+    
+    return distance;
+}
+
 // Helper function to save all statuses
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
@@ -1033,13 +1061,40 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             'lastLocationCheck': statuses.lastCheck
         };
         
+        // If we have coordinates and boundaries, save distance info for circles
+        if (statuses.isProbationerhasCoordinate && statuses.isProbationerhasBoundaries) {
+            try {
+                const areaRef = ref(database, `probationers/${probationerKey}/probationArea`);
+                const areaSnap = await get(areaRef);
+                
+                if (areaSnap.exists()) {
+                    const areaData = areaSnap.val();
+                    if (areaData.type === 'circle') {
+                        const distance = calculateDistance(
+                            statuses.coordinates.lat, statuses.coordinates.lng,
+                            areaData.center.lat, areaData.center.lng
+                        );
+                        
+                        updates['distanceFromCenter'] = distance;
+                        updates['centerCoordinates'] = areaData.center;
+                        updates['radius'] = areaData.radius;
+                    }
+                }
+            } catch (error) {
+                console.log("Could not save distance info:", error);
+            }
+        }
+        
         // Save to probationer status path
         const statusRef = ref(database, `probationers/${probationerKey}`);
         await update(statusRef, updates);
         
         // Also save detailed log
         const logRef = ref(database, `probationers/${probationerKey}/locationStatusLogs/${Date.now()}`);
-        await set(logRef, statuses);
+        await set(logRef, {
+            ...statuses,
+            timestamp: new Date().toISOString()
+        });
         
     } catch (error) {
         console.error("Error saving probationer statuses:", error);
@@ -2259,6 +2314,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
