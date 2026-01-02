@@ -1294,73 +1294,29 @@ async function logBoundaryViolationToFirebase(probationerKey, probationerId, sta
     console.log("Attempting to log boundary violation...");
     
     try {
-        // Null check for coordinates
-        if (!statuses || !statuses.coordinates) {
-            console.error("Missing coordinates in statuses:", statuses);
-            return;
-        }
-        
-        // Get device ID if available
-        const deviceId = window.uptimeTracker?.deviceId || "unknown";
-        
-        // Create violation object
         const violation = {
             type: "Boundary Violation",
-            details: "Probationer left the designated probation area",
+            details: "Probationer left the probation area",
             location: `${statuses.coordinates.lat}, ${statuses.coordinates.lng}`,
-            coordinates: {
-                lat: statuses.coordinates.lat,
-                lng: statuses.coordinates.lng
-            },
-            deviceId: deviceId,
             time: new Date().toISOString(),
-            severity: "high",
-            status: "pending_review"
+            severity: "high"
         };
         
         console.log("Violation object created:", violation);
         
-        // 1. Save to probationer's violations array
+        // Save to violations array
         const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
-        const violationsSnap = await get(violationsRef);
+        const snap = await get(violationsRef);
         
-        let violationsArray = [];
-        if (violationsSnap.exists() && Array.isArray(violationsSnap.val())) {
-            violationsArray = violationsSnap.val();
+        let violations = [];
+        if (snap.exists() && Array.isArray(snap.val())) {
+            violations = snap.val();
         }
         
-        violationsArray.push(violation);
-        await set(violationsRef, violationsArray);
+        violations.push(violation);
+        await set(violationsRef, violations);
         
-        console.log("Step 1: Violation saved to array");
-        
-        // 2. Create notification for probationer
-        const notification = {
-            type: "Boundary Violation",
-            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
-            coordinates: {
-                lat: statuses.coordinates.lat,
-                lng: statuses.coordinates.lng
-            },
-            timestamp: new Date().toISOString(),
-            acknowledged: false
-        };
-        
-        const notificationId = `boundary_${Date.now()}_notif`;
-        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
-        await set(notificationRef, notification);
-        
-        console.log("Step 2: Notification created");
-        
-        // 3. Notify officer (if officer notification function exists)
-        if (typeof logNotificationToOfficer === 'function') {
-            await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
-            console.log("Step 3: Officer notified");
-        } else {
-            console.log("logNotificationToOfficer function not available");
-        }
-        
-        console.log(`Boundary violation fully logged for ${probationerKey}`);
+        console.log("Violation saved successfully");
         
     } catch (error) {
         console.error("ERROR in logBoundaryViolationToFirebase:", error);
@@ -2518,6 +2474,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
