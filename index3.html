@@ -1062,7 +1062,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
-// Helper function to save all statuses and detect violations
+// Helper function to save all statuses
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
         // Save individual fields for easy querying
@@ -1096,16 +1096,6 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             } catch (error) {
                 console.log("Could not save distance info:", error);
             }
-            
-            // DETECT BOUNDARY VIOLATION
-            // Only trigger if: 1) Has boundaries, 2) Has coordinates, 3) Was inside, 4) Now outside
-            if (wasInsideBoundary && !statuses.probationerAreaInside) {
-                console.log(`Boundary violation detected for ${probationerKey}!`);
-                await handleBoundaryViolation(probationerKey, statuses);
-            }
-            
-            // Update previous state for next check
-            wasInsideBoundary = statuses.probationerAreaInside;
         }
         
         // Save to probationer status path
@@ -1123,165 +1113,6 @@ async function saveProbationerStatuses(probationerKey, statuses) {
         console.error("Error saving probationer statuses:", error);
     }
 }
-
-// Handle boundary violation detection
-async function handleBoundaryViolation(probationerKey, statuses) {
-    const now = Date.now();
-    
-    // Check cooldown period
-    if (now - lastBoundaryViolationTime < BOUNDARY_VIOLATION_COOLDOWN) {
-        console.log(`Boundary violation alert on cooldown. Wait ${Math.round((BOUNDARY_VIOLATION_COOLDOWN - (now - lastBoundaryViolationTime)) / 1000)}s`);
-        return;
-    }
-    
-    lastBoundaryViolationTime = now;
-    
-    try {
-        // Extract probationer ID from key
-        const probationerId = probationerKey.replace('probationer_', '');
-        
-        // Get probationer's name for the alert
-        let probationerName = probationerId;
-        try {
-            const nameRef = ref(database, `probationers/${probationerKey}/fullName`);
-            const nameSnap = await get(nameRef);
-            if (nameSnap.exists()) {
-                probationerName = nameSnap.val();
-            }
-        } catch (error) {
-            console.log("Could not fetch probationer name:", error);
-        }
-        
-        // Show visual alert
-        showBoundaryViolationAlert(probationerName, statuses.coordinates);
-        
-        // Log violation to Firebase
-        await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
-        
-    } catch (error) {
-        console.error("Error handling boundary violation:", error);
-    }
-
-    // Update status indicator
-const statusIndicator = document.getElementById('statusIndicator');
-if (statusIndicator) {
-    const originalText = statusIndicator.textContent;
-    statusIndicator.textContent = "BOUNDARY VIOLATION!";
-    statusIndicator.style.color = '#DE3725';
-    
-    setTimeout(() => {
-        statusIndicator.textContent = originalText;
-        statusIndicator.style.color = '#5E5E5E';
-    }, 5000);
-}
-}
-
- // Show boundary violation alert (similar to tamper detection)
-function showBoundaryViolationAlert(probationerName, coordinates) {
-    // Create alert overlay
-    const alertDiv = document.createElement('div');
-    alertDiv.style.position = 'fixed';
-    alertDiv.style.top = '0';
-    alertDiv.style.left = '0';
-    alertDiv.style.width = '100%';
-    alertDiv.style.height = '100%';
-    alertDiv.style.backgroundColor = 'rgba(222, 55, 37, 0.9)'; // Red background
-    alertDiv.style.color = '#FFFFFF';
-    alertDiv.style.fontFamily = "'Courier New', monospace";
-    alertDiv.style.fontSize = '8vmin';
-    alertDiv.style.fontWeight = '900';
-    alertDiv.style.display = 'flex';
-    alertDiv.style.flexDirection = 'column';
-    alertDiv.style.alignItems = 'center';
-    alertDiv.style.justifyContent = 'center';
-    alertDiv.style.zIndex = '9999999';
-    alertDiv.style.textAlign = 'center';
-    alertDiv.style.padding = '5vmin';
-    alertDiv.style.letterSpacing = '1vmin';
-    alertDiv.style.textShadow = '0 0 3vmin rgba(255, 255, 255, 0.8)';
-    alertDiv.style.animation = 'pulse 0.5s 3';
-    
-    alertDiv.innerHTML = `
-        <div style="margin-bottom: 5vmin;">🚨</div>
-        <div>BOUNDARY VIOLATION!</div>
-        <div style="font-size: 5vmin; margin-top: 3vmin; opacity: 0.9;">
-            ${probationerName.toUpperCase()}
-        </div>
-        <div style="font-size: 4vmin; margin-top: 5vmin; opacity: 0.8;">
-            LEFT PROBATION AREA
-        </div>
-        <div style="font-size: 3.5vmin; margin-top: 3vmin; opacity: 0.7;">
-            Coordinates: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}
-        </div>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    // Remove after 10 seconds (matches tamper detection)
-    setTimeout(() => {
-        alertDiv.style.opacity = '0';
-        alertDiv.style.transition = 'opacity 0.5s ease';
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.parentNode.removeChild(alertDiv);
-            }
-        }, 500);
-    }, 10000);
-}
-
-// Log boundary violation to Firebase
-async function logBoundaryViolationToFirebase(probationerKey, probationerId, statuses) {
-    try {
-        // Create violation object
-        const violation = {
-            type: "Boundary Violation",
-            details: "Probationer left the designated probation area",
-            location: `${statuses.coordinates.lat}, ${statuses.coordinates.lng}`,
-            coordinates: statuses.coordinates,
-            deviceId: window.uptimeTracker?.deviceId || "unknown",
-            time: new Date().toISOString(),
-            severity: "high",
-            status: "pending_review"
-        };
-        
-        // Generate unique violation ID
-        const violationId = `boundary_${Date.now()}`;
-        
-        // Save to probationer's violations array
-        const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
-        const violationsSnap = await get(violationsRef);
-        
-        let violationsArray = [];
-        if (violationsSnap.exists() && Array.isArray(violationsSnap.val())) {
-            violationsArray = violationsSnap.val();
-        }
-        
-        violationsArray.push(violation);
-        await set(violationsRef, violationsArray);
-        
-        // Create notification
-        const notification = {
-            type: "Boundary Violation",
-            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
-            violation: violation,
-            timestamp: new Date().toISOString(),
-            acknowledged: false
-        };
-        
-        const notificationId = `boundary_${Date.now()}_notif`;
-        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
-        await set(notificationRef, notification);
-        
-        // Notify officer
-        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
-        
-        console.log(`Boundary violation logged for ${probationerKey}`);
-        
-    } catch (error) {
-        console.error("Error logging boundary violation to Firebase:", error);
-    }
-}        
-        
 
 // Point in polygon check (unchanged)
 function isPointInPolygon(bounds, lat, lng) {
@@ -1595,15 +1426,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// ============================================
-// START: VARIABLES - Boundary violation tracking
-// ============================================
-let lastBoundaryViolationTime = 0;
-const BOUNDARY_VIOLATION_COOLDOWN = 10000; // 10 seconds cooldown
-let wasInsideBoundary = true; // Track previous state to detect changes
-// ============================================
-// END: VARIABLES - Boundary violation tracking
-// ============================================
+
         
 // ============================================
 // BATTERY MONITORING WITH LOW BATTERY NOTIFICATION
