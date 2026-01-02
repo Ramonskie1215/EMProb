@@ -350,6 +350,18 @@
             transform: translateY(-3px);
         }
 
+        .btn-tertiary {
+            background: linear-gradient(135deg, #E74C3C 0%, #C0392B 100%);
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-tertiary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(231, 76, 60, 0.3);
+        }
+
         .btn-icon {
             width: 20px;
             height: 20px;
@@ -418,6 +430,200 @@
             font-weight: 600;
         }
 
+        /* Toggle Switch for Notifications */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-right: 15px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            color: #2C3E50;
+            font-weight: 500;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .toggle-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            color: #259FDE;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 18px;
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .modal-form-group {
+            margin-bottom: 25px;
+        }
+
+        .modal-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2C3E50;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #E4E9F2;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #259FDE;
+            box-shadow: 0 0 0 3px rgba(37, 159, 222, 0.2);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 159, 222, 0.3);
+        }
+
+        .modal-btn-secondary {
+            background: white;
+            border: 2px solid #259FDE;
+            color: #259FDE;
+        }
+
+        .modal-btn-secondary:hover {
+            background: rgba(37, 159, 222, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #7F8C8D;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-modal:hover {
+            color: #E74C3C;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -470,6 +676,15 @@
             .btn {
                 width: 100%;
             }
+            
+            .modal {
+                padding: 30px 20px;
+                width: 95%;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
         }
 
         @media (max-width: 480px) {
@@ -514,6 +729,36 @@
         <div class="loading-text">Loading Settings...</div>
     </div>
 
+    <!-- Password Change Modal -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal">
+            <button class="close-modal" id="closePasswordModal">&times;</button>
+            <h2 class="modal-title">Change Password</h2>
+            
+            <div class="status-message" id="passwordChangeStatus"></div>
+            
+            <div class="modal-form-group">
+                <label class="modal-label">Current Password</label>
+                <input type="password" class="modal-input" id="currentPassword" placeholder="Enter your current password">
+            </div>
+            
+            <div class="modal-form-group">
+                <label class="modal-label">New Password</label>
+                <input type="password" class="modal-input" id="newPassword" placeholder="Enter new password">
+            </div>
+            
+            <div class="modal-form-group">
+                <label class="modal-label">Confirm New Password</label>
+                <input type="password" class="modal-input" id="confirmNewPassword" placeholder="Confirm new password">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-secondary" id="cancelPasswordChange">Cancel</button>
+                <button class="modal-btn modal-btn-primary" id="saveNewPassword">Change Password</button>
+            </div>
+        </div>
+    </div>
+
     <div class="header" style="display: none;" id="mainHeader">
         <!-- Left Section: Logo + EMProb -->
         <div class="left-section">
@@ -534,45 +779,44 @@
                     <div class="email" id="emailDisplay">john.doe@example.com</div>
                 </div>
             </div>
-<div class="profile-dropdown" id="profileDropdown">
-    <!-- Add Dashboard item here -->
-    <div class="dropdown-item" onclick="location.href='dashboard.html'">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M0 0v8h8V0H0zm1 1h6v6H1V1zm8-1v4h8V0H9zm0 5v8h8V5H9zm-8 5v4h8v-4H1zm1 1h6v2H2v-2z"/>
-        </svg>
-        Dashboard
-    </div>
-    <div class="dropdown-item" onclick="location.href='profile.html'">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
-        </svg>
-        My Profile
-    </div>
-    <div class="dropdown-item active">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
-        </svg>
-        Settings
-    </div>
-    <div class="dropdown-item" onclick="location.href='probationers.html'">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM6 2h4v2H6V2zm0 4h4v2H6V6zm0 4h4v2H6v-2zm6 4H6v-2h6v2zm0-4H10V8h2v2zm0-4H10V4h2v2z"/>
-        </svg>
-        Probationers
-    </div>
-    <div class="dropdown-item" onclick="location.href='interface.html'">
-        <svg width="16" height="16" viewBox"0 0 16 16" fill="currentColor">
-            <path d="M0 0v16h16V0H0zm15 15H1V1h14v14zM2 2h12v12H2V2zm4 2H4v8h2V4zm2 0h2v8H8V4zm4 0h2v8h-2V4z"/>
-        </svg>
-        Map View
-    </div>
-    <div class="dropdown-item logout" id="logoutBtn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
-        </svg>
-        Logout
-    </div>
-</div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <div class="dropdown-item" onclick="location.href='dashboard.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M0 0v8h8V0H0zm1 1h6v6H1V1zm8-1v4h8V0H9zm0 5v8h8V5H9zm-8 5v4h8v-4H1zm1 1h6v2H2v-2z"/>
+                    </svg>
+                    Dashboard
+                </div>
+                <div class="dropdown-item" onclick="location.href='profile.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 12a7.5 7.5 0 0 1-5-1.9C3.5 11 5 9 8 9s4.5 2 5 3.1A7.5 7.5 0 0 1 8 14z"/>
+                    </svg>
+                    My Profile
+                </div>
+                <div class="dropdown-item active">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M7 2v6h2V2h-2zm5 10v-2H4v2H2v2h12v-2h-2z"/>
+                    </svg>
+                    Settings
+                </div>
+                <div class="dropdown-item" onclick="location.href='probationers.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M12 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM6 2h4v2H6V2zm0 4h4v2H6V6zm0 4h4v2H6v-2zm6 4H6v-2h6v2zm0-4H10V8h2v2zm0-4H10V4h2v2z"/>
+                    </svg>
+                    Probationers
+                </div>
+                <div class="dropdown-item" onclick="location.href='interface.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M0 0v16h16V0H0zm15 15H1V1h14v14zM2 2h12v12H2V2zm4 2H4v8h2V4zm2 0h2v8H8V4zm4 0h2v8h-2V4z"/>
+                    </svg>
+                    Map View
+                </div>
+                <div class="dropdown-item logout" id="logoutBtn">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M7 1v6h2V1H7zM2 7h4v2H2v4h12V9h-4V7h4a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    </svg>
+                    Logout
+                </div>
+            </div>
         </div>
     </div>
     
@@ -580,6 +824,45 @@
         <h1 class="page-title">Settings</h1>
         
         <div class="settings-container">
+            <!-- Basic Settings Card -->
+            <div class="settings-card">
+                <h2 class="card-title">Basic Settings</h2>
+                
+                <div class="form-group">
+                    <div class="toggle-container">
+                        <label class="toggle-label">
+                            <span class="toggle-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                                </svg>
+                            </span>
+                            Notification Preferences
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notificationToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span id="notificationStatusText">Sound</span>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="changePasswordBtn">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Change Password
+                    </button>
+                    
+                    <button class="btn btn-tertiary" id="logoutButton">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                        Logout
+                    </button>
+                </div>
+            </div>
+            
             <!-- Default Map Settings Card -->
             <div class="settings-card">
                 <h2 class="card-title">Default Map Settings</h2>
@@ -632,7 +915,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -702,12 +985,55 @@
                     // Return default settings if none exist
                     return {
                         defaultMap: 'streets',
+                        notificationSound: true,
                         lastUpdated: new Date().toISOString()
                     };
                 }
             } catch (error) {
                 console.error('Error loading settings:', error);
                 return null;
+            }
+        }
+
+        // Update user password in Firebase
+        async function updatePassword(username, newPassword) {
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                
+                // Get current user data
+                const snapshot = await get(userRef);
+                if (!snapshot.exists()) {
+                    return { success: false, message: 'User not found' };
+                }
+                
+                const userData = snapshot.val();
+                
+                // Update password
+                userData.password = newPassword;
+                
+                // Save back to Firebase
+                await set(userRef, userData);
+                return { success: true, message: 'Password updated successfully' };
+            } catch (error) {
+                console.error('Error updating password:', error);
+                return { success: false, message: 'Error updating password' };
+            }
+        }
+
+        // Verify current password
+        async function verifyPassword(username, password) {
+            try {
+                const userRef = ref(database, 'credentials/' + username);
+                const snapshot = await get(userRef);
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    return userData.password === password;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error verifying password:', error);
+                return false;
             }
         }
 
@@ -765,6 +1091,15 @@
                         if (settings.defaultMap) {
                             document.getElementById(`${settings.defaultMap}Radio`).checked = true;
                         }
+                        
+                        // Set notification toggle based on saved setting
+                        const notificationToggle = document.getElementById('notificationToggle');
+                        const notificationStatusText = document.getElementById('notificationStatusText');
+                        
+                        if (settings.notificationSound !== undefined) {
+                            notificationToggle.checked = settings.notificationSound;
+                            notificationStatusText.textContent = settings.notificationSound ? 'Sound' : 'Vibration';
+                        }
                     }
                     
                     // Show the main interface
@@ -806,11 +1141,37 @@
                 profileDropdown.classList.remove('active');
             });
             
+            // Notification toggle functionality
+            const notificationToggle = document.getElementById('notificationToggle');
+            const notificationStatusText = document.getElementById('notificationStatusText');
+            
+            notificationToggle.addEventListener('change', async function() {
+                const isSound = this.checked;
+                notificationStatusText.textContent = isSound ? 'Sound' : 'Vibration';
+                
+                // Save notification preference
+                const settingsRef = ref(database, 'settings/' + username);
+                const currentSettings = await loadSettings(username);
+                
+                if (currentSettings) {
+                    currentSettings.notificationSound = isSound;
+                    currentSettings.lastUpdated = new Date().toISOString();
+                    
+                    const success = await saveSettings(username, currentSettings);
+                    
+                    if (success) {
+                        console.log('Notification preference saved:', isSound ? 'Sound' : 'Vibration');
+                    }
+                }
+            });
+            
             // Save map settings
             document.getElementById('saveMapSettingsBtn').addEventListener('click', async function() {
                 const selectedMap = document.querySelector('input[name="defaultMap"]:checked').value;
                 
+                const currentSettings = await loadSettings(username);
                 const settings = {
+                    ...currentSettings,
                     defaultMap: selectedMap,
                     lastUpdated: new Date().toISOString()
                 };
@@ -836,11 +1197,112 @@
                 }
             });
             
+            // Password change modal functionality
+            const passwordModal = document.getElementById('passwordModal');
+            const changePasswordBtn = document.getElementById('changePasswordBtn');
+            const closePasswordModal = document.getElementById('closePasswordModal');
+            const cancelPasswordChange = document.getElementById('cancelPasswordChange');
+            const saveNewPasswordBtn = document.getElementById('saveNewPassword');
+            
+            // Open password modal
+            changePasswordBtn.addEventListener('click', function() {
+                passwordModal.classList.add('active');
+                // Clear previous inputs
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+                document.getElementById('passwordChangeStatus').style.display = 'none';
+            });
+            
+            // Close password modal
+            function closePasswordModalFunc() {
+                passwordModal.classList.remove('active');
+            }
+            
+            closePasswordModal.addEventListener('click', closePasswordModalFunc);
+            cancelPasswordChange.addEventListener('click', closePasswordModalFunc);
+            
+            // Save new password
+            saveNewPasswordBtn.addEventListener('click', async function() {
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+                const statusElement = document.getElementById('passwordChangeStatus');
+                
+                // Validation
+                if (!currentPassword || !newPassword || !confirmNewPassword) {
+                    statusElement.textContent = 'Please fill in all fields';
+                    statusElement.className = 'status-message status-error';
+                    statusElement.style.display = 'block';
+                    return;
+                }
+                
+                if (newPassword !== confirmNewPassword) {
+                    statusElement.textContent = 'New passwords do not match';
+                    statusElement.className = 'status-message status-error';
+                    statusElement.style.display = 'block';
+                    return;
+                }
+                
+                if (newPassword.length < 6) {
+                    statusElement.textContent = 'Password must be at least 6 characters';
+                    statusElement.className = 'status-message status-error';
+                    statusElement.style.display = 'block';
+                    return;
+                }
+                
+                // Verify current password
+                const isPasswordCorrect = await verifyPassword(username, currentPassword);
+                if (!isPasswordCorrect) {
+                    statusElement.textContent = 'Current password is incorrect';
+                    statusElement.className = 'status-message status-error';
+                    statusElement.style.display = 'block';
+                    return;
+                }
+                
+                // Update password
+                statusElement.textContent = 'Updating password...';
+                statusElement.className = 'status-message status-info';
+                statusElement.style.display = 'block';
+                
+                const result = await updatePassword(username, newPassword);
+                
+                if (result.success) {
+                    statusElement.textContent = 'Password updated successfully!';
+                    statusElement.className = 'status-message status-success';
+                    
+                    // Clear form and close modal after 2 seconds
+                    setTimeout(() => {
+                        closePasswordModalFunc();
+                        document.getElementById('currentPassword').value = '';
+                        document.getElementById('newPassword').value = '';
+                        document.getElementById('confirmNewPassword').value = '';
+                        statusElement.style.display = 'none';
+                    }, 2000);
+                } else {
+                    statusElement.textContent = result.message;
+                    statusElement.className = 'status-message status-error';
+                }
+            });
+            
             // Logout functionality
-            document.getElementById('logoutBtn').addEventListener('click', function() {
-                if (confirm('Are you sure you want to logout?')) {
-                    localStorage.removeItem('emprobUsername');
-                    window.location.href = 'index.html';
+            const logoutButtons = [document.getElementById('logoutBtn'), document.getElementById('logoutButton')];
+            
+            logoutButtons.forEach(button => {
+                if (button) {
+                    button.addEventListener('click', function() {
+                        if (confirm('Are you sure you want to logout?')) {
+                            localStorage.removeItem('emprobUsername');
+                            window.location.href = 'index.html';
+                        }
+                    });
+                }
+            });
+            
+            // Close modal when clicking outside
+            passwordModal.addEventListener('click', function(e) {
+                if (e.target === passwordModal) {
+                    closePasswordModalFunc();
                 }
             });
         }
