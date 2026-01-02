@@ -710,7 +710,7 @@
                 try {
                     await signInAnonymously(auth);
                     this.isConnected = true;
-                    console.log("Firebase anonymous authentication successful");
+                    //console.log("Firebase anonymous authentication successful");
                     this.updateStatus('Connected');
                     return true;
                 } catch (error) {
@@ -723,7 +723,7 @@
 
              async sendUptime() {
         if (!this.isConnected) {
-            console.log("Not connected to Firebase, skipping uptime update");
+            //console.log("Not connected to Firebase, skipping uptime update");
             return;
         }
         const uptimePath = `watch/watch_${this.deviceId}`;
@@ -756,7 +756,7 @@
             // 4. Merge (never overwrites existing probationer name)
             await update(uptimeRef, uptimeData);
 
-            console.log(`Uptime updated – Probationer: ${probationerValue}`);
+            //console.log(`Uptime updated – Probationer: ${probationerValue}`);
             this.updateStatus('Activated');
         } catch (error) {
             console.error("Error sending uptime:", error);
@@ -784,7 +784,7 @@
                 // Get and display device ID
                 this.deviceId = this.getDeviceId();
                 this.displayId();
-                console.log("Device Short ID:", this.deviceId);
+                //console.log("Device Short ID:", this.deviceId);
 
                 // Authenticate with Firebase
                 const authSuccess = await this.authenticate();
@@ -871,7 +871,7 @@ async function getOfficerUsernameByFullName(fullName) {
         const snapshot = await get(credentialsRef);
         
         if (!snapshot.exists()) {
-            console.log("No credentials found");
+            //console.log("No credentials found");
             return null;
         }
         
@@ -880,12 +880,12 @@ async function getOfficerUsernameByFullName(fullName) {
         // Search for user with matching fullName
         for (const [username, userData] of Object.entries(credentials)) {
             if (userData.fullName === fullName) {
-                console.log(`Found officer: ${username} (${fullName})`);
+                //console.log(`Found officer: ${username} (${fullName})`);
                 return username;
             }
         }
         
-        console.log(`No officer found with name: ${fullName}`);
+        //console.log(`No officer found with name: ${fullName}`);
         return null;
         
     } catch (error) {
@@ -908,7 +908,7 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
         const officerFullName = officerSnap.val();
         
         if (!officerFullName) {
-            console.log(`No officer assigned for ${probationerKey}`);
+            //console.log(`No officer assigned for ${probationerKey}`);
             return;
         }
         
@@ -916,7 +916,7 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
         const officerUsername = await getOfficerUsernameByFullName(officerFullName);
         
         if (!officerUsername) {
-            console.log(`Could not find username for officer: ${officerFullName}`);
+            //console.log(`Could not find username for officer: ${officerFullName}`);
             return;
         }
         
@@ -939,13 +939,13 @@ async function logNotificationToOfficer(probationerKey, probationerId, notificat
         const officerNotificationRef = ref(database, `credentials/${officerUsername}/notifications/${notificationId}`);
         await set(officerNotificationRef, officerNotification);
         
-        console.log(`Notification logged to officer: ${officerUsername} with timestamp`);
+        //console.log(`Notification logged to officer: ${officerUsername} with timestamp`);
         
         // 5. ALSO SAVE TO LATEST NOTIFICATION PATH ← ADD THIS SECTION
         const latestNotificationRef = ref(database, `credentials/${officerUsername}/latestnotification`);
         await set(latestNotificationRef, officerNotification);
         
-        console.log(`Latest notification updated for officer: ${officerUsername}`);
+        //console.log(`Latest notification updated for officer: ${officerUsername}`);
         
     } catch (error) {
         console.error("Error logging to officer's notifications:", error);
@@ -987,14 +987,14 @@ async function checkProbationerLocationStatus(probationerKey, currentLat, curren
                         areaData.radius
                     );
                     
-                    console.log(`Circle check: Inside=${probationerAreaInside}, Radius=${areaData.radius}m`);
+                    //console.log(`Circle check: Inside=${probationerAreaInside}, Radius=${areaData.radius}m`);
                     
                 } else if (areaData.type === 'polygon' && areaData.points && areaData.points.length >= 3) {
                     // Polygon area check
                     const bounds = areaData.points.map(p => ({x: p.lng, y: p.lat}));
                     probationerAreaInside = isPointInPolygon(bounds, currentLat, currentLng);
                     
-                    console.log(`Polygon check: Points=${bounds.length}, Inside=${probationerAreaInside}`);
+                    //console.log(`Polygon check: Points=${bounds.length}, Inside=${probationerAreaInside}`);
                 }
             }
         }
@@ -1011,10 +1011,10 @@ async function checkProbationerLocationStatus(probationerKey, currentLat, curren
             } : null
         });
         
-        console.log(`Status check for ${probationerKey}:`);
-        console.log(`- Has Coordinates: ${isProbationerhasCoordinate}`);
-        console.log(`- Has Boundaries: ${isProbationerhasBoundaries}`);
-        console.log(`- Inside Area: ${probationerAreaInside}`);
+        //console.log(`Status check for ${probationerKey}:`);
+        //console.log(`- Has Coordinates: ${isProbationerhasCoordinate}`);
+        //console.log(`- Has Boundaries: ${isProbationerhasBoundaries}`);
+        //console.log(`- Inside Area: ${probationerAreaInside}`);
         
         return { isProbationerhasCoordinate, isProbationerhasBoundaries, probationerAreaInside };
         
@@ -1125,7 +1125,7 @@ function initializeCircle() {
 // PREFIX: Updated boundary detection with circle control
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
-        console.log(`Saving status for ${probationerKey}`, statuses);
+        //console.log(`Saving status for ${probationerKey}`, statuses);
         
         // Save individual fields
         const updates = {
@@ -1141,7 +1141,7 @@ async function saveProbationerStatuses(probationerKey, statuses) {
         if (!boundaryStatusAvailable) {
             // GPS or boundary data unavailable - set stable green
             currentBoundaryState = 'unavailable';
-            console.log("Boundary/location data unavailable - setting stable green");
+            //console.log("Boundary/location data unavailable - setting stable green");
             
             // Update circle immediately
             updateCircleColor();
@@ -1156,28 +1156,28 @@ async function saveProbationerStatuses(probationerKey, statuses) {
                 currentBoundaryState = newState;
                 lastBoundaryStatusChangeTime = Date.now();
                 updateCircleColor();
-                console.log(`Boundary state changed: ${oldState} -> ${newState}`);
+                //console.log(`Boundary state changed: ${oldState} -> ${newState}`);
             }
             
             // DETECT BOUNDARY VIOLATION
             // Only trigger if: 1) Has boundaries, 2) Has coordinates, 3) Was inside, 4) Now outside
             if (wasInsideBoundary && !isInside) {
-                console.log(`⚠️ Boundary violation transition detected!`);
-                console.log(`Previous: inside, Current: outside`);
+                //console.log(`⚠️ Boundary violation transition detected!`);
+                //console.log(`Previous: inside, Current: outside`);
                 await handleBoundaryViolation(probationerKey, statuses);
             } else {
-                console.log(`No violation. Previous inside: ${wasInsideBoundary}, Current inside: ${isInside}`);
+                //console.log(`No violation. Previous inside: ${wasInsideBoundary}, Current inside: ${isInside}`);
             }
             
             // Update previous state for next check
             wasInsideBoundary = isInside;
-            console.log(`Updated wasInsideBoundary to: ${wasInsideBoundary}`);
+            //console.log(`Updated wasInsideBoundary to: ${wasInsideBoundary}`);
             
             // Update circle if state changed
             if (oldState !== currentBoundaryState) {
                 lastBoundaryStatusChangeTime = Date.now();
                 updateCircleColor();
-                console.log(`Boundary state changed from ${oldState} to ${currentBoundaryState}`);
+                //console.log(`Boundary state changed from ${oldState} to ${currentBoundaryState}`);
             }
         }
         
@@ -1190,7 +1190,7 @@ async function saveProbationerStatuses(probationerKey, statuses) {
         const statusRef = ref(database, `probationers/${probationerKey}`);
         await update(statusRef, updates);
         
-        console.log(`Status saved for ${probationerKey}`);
+        //console.log(`Status saved for ${probationerKey}`);
         
     } catch (error) {
         console.error("Error saving probationer statuses:", error);
@@ -1318,7 +1318,7 @@ async function handleBoundaryViolation(probationerKey, statuses) {
     
     // Check cooldown period
     if (now - lastBoundaryViolationTime < BOUNDARY_VIOLATION_COOLDOWN) {
-        console.log(`Boundary violation alert on cooldown. Wait ${Math.round((BOUNDARY_VIOLATION_COOLDOWN - (now - lastBoundaryViolationTime)) / 1000)}s`);
+        //console.log(`Boundary violation alert on cooldown. Wait ${Math.round((BOUNDARY_VIOLATION_COOLDOWN - (now - lastBoundaryViolationTime)) / 1000)}s`);
         return;
     }
     
@@ -1337,7 +1337,7 @@ async function handleBoundaryViolation(probationerKey, statuses) {
                 probationerName = nameSnap.val();
             }
         } catch (error) {
-            console.log("Could not fetch probationer name:", error);
+            //console.log("Could not fetch probationer name:", error);
         }
         
         // Show visual alert
@@ -1422,7 +1422,7 @@ async function logBoundaryViolationToFirebase(probationerKey, probationerId, sta
         // Notify officer
         await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         
-        console.log(`Boundary violation logged for ${probationerKey}`);
+        //console.log(`Boundary violation logged for ${probationerKey}`);
         
     } catch (error) {
         console.error("Error logging boundary violation to Firebase:", error);
@@ -1438,7 +1438,7 @@ async function handleTamperingDetection() {
     
     // Prevent rapid successive presses
     if (now - lastF6PressTime < F6_COOLDOWN) {
-        console.log(`Tampering detection on cooldown. Wait ${Math.round((F6_COOLDOWN - (now - lastF6PressTime)) / 1000)}s`);
+        //console.log(`Tampering detection on cooldown. Wait ${Math.round((F6_COOLDOWN - (now - lastF6PressTime)) / 1000)}s`);
         return;
     }
     
@@ -1448,7 +1448,7 @@ async function handleTamperingDetection() {
         // 1. Check if we have a probationer assigned
         const uptimeTracker = window.uptimeTracker;
         if (!uptimeTracker || !uptimeTracker.deviceId) {
-            console.log("No device ID available, cannot log tampering");
+            //console.log("No device ID available, cannot log tampering");
             return;
         }
         
@@ -1458,7 +1458,7 @@ async function handleTamperingDetection() {
         const probationerId = (snapshot.val() || "").toString().trim();
         
         if (!probationerId || probationerId === "none") {
-            console.log("No probationer assigned, cannot log tampering violation");
+            //console.log("No probationer assigned, cannot log tampering violation");
             
             // Show brief notification that tampering was detected but no probationer assigned
             const statusIndicator = document.getElementById('statusIndicator');
@@ -1500,7 +1500,7 @@ async function handleTamperingDetection() {
                     }
                 }
             } catch (error) {
-                console.log("No coordinates available:", error.message);
+                //console.log("No coordinates available:", error.message);
             }
         }
         
@@ -1567,7 +1567,7 @@ async function handleTamperingDetection() {
         await set(notificationRef, notification);
         await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         
-        console.log(`Tampering violation logged for ${probationerKey}:`, violation);
+        //console.log(`Tampering violation logged for ${probationerKey}:`, violation);
         
         // 11. Visual feedback
         showTamperingAlert();
@@ -1660,12 +1660,12 @@ const F6_COOLDOWN = 3000; // 3 second cooldown between detections
 
 document.addEventListener('keydown', function(event) {
     // Only log the key pressed, nothing else
-    console.log(event.key);
+    //console.log(event.key);
     
     // Check for F6 key for tampering detection
     if (event.key === 'F6' || event.key === 'f6' || event.key === 'F6') {
         event.preventDefault(); // Prevent default browser behavior
-        console.log("F6 pressed - Tampering detection triggered");
+        //console.log("F6 pressed - Tampering detection triggered");
         handleTamperingDetection();
     }
 });
@@ -1770,7 +1770,7 @@ async function checkAndSendLowBatteryNotification(batteryPercentage) {
     // Check cooldown period
     const now = Date.now();
     if (now - lastLowBatteryNotificationTime < NOTIFICATION_COOLDOWN) {
-        console.log(`Low battery notification on cooldown. Next available in ${Math.round((NOTIFICATION_COOLDOWN - (now - lastLowBatteryNotificationTime)) / 60000)} minutes`);
+        //console.log(`Low battery notification on cooldown. Next available in ${Math.round((NOTIFICATION_COOLDOWN - (now - lastLowBatteryNotificationTime)) / 60000)} minutes`);
         return;
     }
     
@@ -1778,7 +1778,7 @@ async function checkAndSendLowBatteryNotification(batteryPercentage) {
         // Check if we have a probationer assigned
         const probationerAssigned = await getAssignedProbationerId();
         if (!probationerAssigned) {
-            console.log("No probationer assigned, skipping battery notification");
+            //console.log("No probationer assigned, skipping battery notification");
             return;
         }
         
@@ -1787,7 +1787,7 @@ async function checkAndSendLowBatteryNotification(batteryPercentage) {
         
         // Update last notification time
         lastLowBatteryNotificationTime = now;
-        console.log(`Low battery (${batteryPercentage}%) notification sent`);
+        //console.log(`Low battery (${batteryPercentage}%) notification sent`);
         
     } catch (error) {
         console.error("Error sending low battery notification:", error);
@@ -1838,7 +1838,7 @@ async function logLowBatteryNotification(probationerId, batteryPercentage) {
         // Save the notification
         await set(notificationRef, notification);
         
-        console.log(`Low battery notification logged for probationer_${probationerId}`);
+        //console.log(`Low battery notification logged for probationer_${probationerId}`);
         
         // Get the probationer key for officer lookup
         const probationerKey = `probationer_${probationerId}`;
@@ -1885,7 +1885,7 @@ function testAndSetGPSIcon() {
         
         if (hasSize && isVisible) {
             gpsTextIcon.textContent = icon;
-            console.log(`Using GPS icon: ${icon} (Unicode: ${icon.charCodeAt(0).toString(16)})`);
+            //console.log(`Using GPS icon: ${icon} (Unicode: ${icon.charCodeAt(0).toString(16)})`);
             return icon;
         }
     }
@@ -1893,7 +1893,7 @@ function testAndSetGPSIcon() {
     // If nothing works, use simple text
     gpsTextIcon.textContent = 'GPS';
     gpsTextIcon.style.fontSize = '3vmin';
-    console.log("Using text fallback: GPS");
+    //console.log("Using text fallback: GPS");
     return 'GPS';
 }
 
@@ -1957,7 +1957,7 @@ class GeolocationTracker {
         this.permissionGranted = false;
         this.lastError = null;
         
-        console.log("GeolocationTracker created. Available:", this.isAvailable);
+        //console.log("GeolocationTracker created. Available:", this.isAvailable);
     }
     
     // Initialize GPS tracking
@@ -1968,13 +1968,13 @@ class GeolocationTracker {
             return false;
         }
         
-        console.log("Starting GPS tracking...");
+        //console.log("Starting GPS tracking...");
         updateGPSIcon('searching');
         
         // Test permissions first
         const hasPermission = await this.checkPermission();
         if (!hasPermission) {
-            console.log("Waiting for user to grant permission...");
+            //console.log("Waiting for user to grant permission...");
             // We'll try anyway - browser will prompt
         }
         
@@ -1985,26 +1985,26 @@ class GeolocationTracker {
     // Check if we have permission
     async checkPermission() {
         if (!navigator.permissions || !navigator.permissions.query) {
-            console.log("Permission API not available, will rely on browser prompt");
+            //console.log("Permission API not available, will rely on browser prompt");
             return true; // Assume we can ask
         }
         
         try {
             const permission = await navigator.permissions.query({ name: 'geolocation' });
-            console.log("Current permission state:", permission.state);
+            //console.log("Current permission state:", permission.state);
             
             this.permissionGranted = permission.state === 'granted';
             
             // Listen for permission changes
             permission.onchange = () => {
-                console.log("Permission changed to:", permission.state);
+                //console.log("Permission changed to:", permission.state);
                 this.permissionGranted = permission.state === 'granted';
                 
                 if (this.permissionGranted && !this.isTracking) {
-                    console.log("Permission granted, restarting GPS...");
+                    //console.log("Permission granted, restarting GPS...");
                     this.startWatching();
                 } else if (!this.permissionGranted) {
-                    console.log("Permission revoked, stopping GPS...");
+                    //console.log("Permission revoked, stopping GPS...");
                     this.stop();
                     updateGPSIcon('error');
                 }
@@ -2012,7 +2012,7 @@ class GeolocationTracker {
             
             return this.permissionGranted;
         } catch (error) {
-            console.log("Error checking permissions:", error);
+            //console.log("Error checking permissions:", error);
             return true; // Assume we can ask
         }
     }
@@ -2020,7 +2020,7 @@ class GeolocationTracker {
     // Start watching position
     startWatching() {
         if (this.watchId !== null) {
-            console.log("GPS already watching, clearing old watch");
+            //console.log("GPS already watching, clearing old watch");
             this.stop();
         }
         
@@ -2039,7 +2039,7 @@ class GeolocationTracker {
             
             this.isTracking = true;
             this.retryCount = 0; // Reset retry count
-            console.log("GPS watch started successfully. Watch ID:", this.watchId);
+            //console.log("GPS watch started successfully. Watch ID:", this.watchId);
             
             return true;
         } catch (error) {
@@ -2051,7 +2051,7 @@ class GeolocationTracker {
     
     // Handle successful position
     async handlePositionSuccess(position) {
-        console.log("GPS position acquired!");
+        //console.log("GPS position acquired!");
         
         const coords = position.coords;
         this.currentCoords = {
@@ -2064,8 +2064,8 @@ class GeolocationTracker {
             timestamp: new Date(position.timestamp).toISOString()
         };
         
-        console.log(`Location: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
-        console.log(`Accuracy: ${this.currentCoords.accuracy} meters`);
+        //console.log(`Location: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
+        //console.log(`Accuracy: ${this.currentCoords.accuracy} meters`);
         
         // Update UI
         updateGPSIcon('connected');
@@ -2125,7 +2125,7 @@ class GeolocationTracker {
         }
         
         this.retryCount++;
-        console.log(`GPS retry ${this.retryCount}/${this.maxRetries}. Next retry in ${this.retryDelay/1000}s`);
+        //console.log(`GPS retry ${this.retryCount}/${this.maxRetries}. Next retry in ${this.retryDelay/1000}s`);
         
         updateGPSIcon('searching');
         
@@ -2137,7 +2137,7 @@ class GeolocationTracker {
         
         setTimeout(() => {
             if (this.isTracking) {
-                console.log("Retrying GPS...");
+                //console.log("Retrying GPS...");
                 this.startWatching();
             }
         }, this.retryDelay);
@@ -2145,7 +2145,7 @@ class GeolocationTracker {
     
     // Show permission alert
     showPermissionAlert() {
-        console.log("GPS permission denied. User needs to enable location services.");
+        //console.log("GPS permission denied. User needs to enable location services.");
         
         // You could show a message to the user here
         const statusIndicator = document.getElementById('statusIndicator');
@@ -2181,7 +2181,7 @@ class GeolocationTracker {
             };
             
             await set(coordsRef, gpsData);
-            console.log("GPS coordinates saved to Firebase");
+            //console.log("GPS coordinates saved to Firebase");
             
         } catch (error) {
             console.error("Error saving GPS to Firebase:", error);
@@ -2216,7 +2216,7 @@ class GeolocationTracker {
         if (this.watchId !== null) {
             navigator.geolocation.clearWatch(this.watchId);
             this.watchId = null;
-            console.log("GPS watch stopped");
+            //console.log("GPS watch stopped");
         }
         
         this.isTracking = false;
@@ -2308,7 +2308,7 @@ function updateClock() {
             
             async function checkProbationerAndShowModal() {
     if (!uptimeTracker.isConnected || !uptimeTracker.deviceId) {
-        console.log("Skipping modal check: not connected or no device ID");
+        //console.log("Skipping modal check: not connected or no device ID");
         return;
     }
     
@@ -2317,7 +2317,7 @@ function updateClock() {
         const snapshot = await get(probationerRef);
         const probationer = snapshot.val() || "none";
         
-        console.log(`Probationer check: ${probationer}`);  // For debugging
+        //console.log(`Probationer check: ${probationer}`);  // For debugging
         
         if (probationer === "none") {
             const modal = document.getElementById('noProbationerModal');
@@ -2477,7 +2477,7 @@ async function acknowledgeCurrentAnnouncement() {
         const ackRef = ref(database, `probationers/${currentProbationerKey}/announcements/${index}/acknowledge`);
         await set(ackRef, true);
 
-        console.log(`Acknowledged announcement #${index}: ${current.subject}`);
+        //console.log(`Acknowledged announcement #${index}: ${current.subject}`);
 
         // 2. Log this acknowledgement as a notification
         await logAnnouncementAcknowledgement(currentProbationerKey, current);
@@ -2524,8 +2524,8 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
         // Also update officer's latest notification
         await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
         
-        console.log(`Announcement acknowledgement logged for ${probationerKey}`);
-        console.log(`Subject: ${notification.subject}`);
+        //console.log(`Announcement acknowledgement logged for ${probationerKey}`);
+        //console.log(`Subject: ${notification.subject}`);
         
     } catch (error) {
         console.error("Error logging announcement acknowledgement:", error);
@@ -2590,6 +2590,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
