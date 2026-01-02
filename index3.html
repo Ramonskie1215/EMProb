@@ -88,7 +88,6 @@
     font-family: 'Courier New', monospace;
     text-align: center;
     min-width: 15vmin;     /* SUFFIX: 10vmin × 1.5 = 15vmin (50% wider) */
-    text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
 }
 
         /* GPS Icon */
@@ -117,7 +116,6 @@
             font-family: 'Courier New', monospace;
             min-width: 8vmin;
             text-align: center;
-            text-shadow: 0 0 1vmin rgba(37, 159, 222, 0.5);
         }
 
 .battery-icon {
@@ -306,10 +304,7 @@
             font-weight: 900 !important;
             color: #259FDE !important;
             letter-spacing: 0.6vmin !important;
-            text-shadow: 
-                0 0 15px #0E3CBD,
-                0 0 30px #259FDE !important;
-
+           
             background: none !important;
             border: none !important;
             padding: 0 !important;
@@ -553,12 +548,8 @@
         border: 3px solid #259FDE;
         border-radius: 3vmin;
         padding: 6vmin 5vmin;
-        box-shadow: 
-            0 0 40px rgba(37, 159, 222, 0.6),
-            inset 0 0 20px rgba(37, 159, 222, 0.1);
         position: relative;
         text-align: center;
-        animation: pulseGlow 3s infinite alternate;
     ">
         <!-- Corner Accents -->
         <div style="position: absolute; top: 3vmin; left: 3vmin; width: 10vmin; height: 10vmin; border-left: 3px solid #259FDE; border-top: 3px solid #259FDE;"></div>
@@ -573,7 +564,6 @@
             font-weight: 900;
             letter-spacing: 1vmin;
             margin-bottom: 3vmin;
-            text-shadow: 0 0 15px #259FDE;
         ">NEW ANNOUNCEMENT</div>
 
         <!-- Subject -->
@@ -582,9 +572,6 @@
             font-weight: 1000;
             color: #FFFFFF;
             margin: 3vmin 0;
-            text-shadow: 
-                0 0 10px rgba(37, 159, 222, 0.9),
-                0 0 20px rgba(37, 159, 222, 0.6);
             font-family: 'Courier New', monospace;
         ">URGENT MESSAGE</div>
 
@@ -594,7 +581,6 @@
             color: #259FDE;
             margin-bottom: 4vmin;
             font-weight: 700;
-            text-shadow: 0 0 10px rgba(37, 159, 222, 0.7);
         ">-- --- ---- --:-- --</div>
 
         <!-- Details -->
@@ -615,12 +601,7 @@
             font-size: 5vmin;
             color: #666666;
         ">
-            Press <span style="
-                color: #259FDE;
-                font-size: 6vmin;
-                font-weight: 900;
-                text-shadow: 0 0 15px #259FDE;
-            ">F1</span> to acknowledge
+            Press acknowledge button
         </div>
     </div>
 </div>
@@ -2590,6 +2571,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
