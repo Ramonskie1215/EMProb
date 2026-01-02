@@ -1150,9 +1150,6 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             const isInside = statuses.probationerAreaInside;
             const newState = isInside ? 'inside' : 'outside';
             const oldState = currentBoundaryState;
-            
-            // Store old state to detect changes
-            const oldState = currentBoundaryState;
             currentBoundaryState = isInside ? 'inside' : 'outside';
 
               if (oldState !== newState) {
@@ -2593,6 +2590,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
