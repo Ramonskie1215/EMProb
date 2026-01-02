@@ -1284,57 +1284,57 @@ async function performProbationerStatusCheck() {
 // ============================================
 // END: FUNCTION - Periodic probationer status check
 // ============================================
+
         
-// Log boundary violation to Firebase
-async function logBoundaryViolationToFirebase(probationerKey, probationerId, statuses) {
+// Handle boundary violation detection
+async function handleBoundaryViolation(probationerKey, statuses) {
+    const now = Date.now();
+    
+    // Check cooldown period
+    if (now - lastBoundaryViolationTime < BOUNDARY_VIOLATION_COOLDOWN) {
+        console.log(`Boundary violation alert on cooldown. Wait ${Math.round((BOUNDARY_VIOLATION_COOLDOWN - (now - lastBoundaryViolationTime)) / 1000)}s`);
+        return;
+    }
+    
+    lastBoundaryViolationTime = now;
+    
     try {
-        // Create violation object
-        const violation = {
-            type: "Boundary Violation",
-            details: "Probationer left the designated probation area",
-            location: `${statuses.coordinates.lat}, ${statuses.coordinates.lng}`,
-            coordinates: statuses.coordinates,
-            deviceId: window.uptimeTracker?.deviceId || "unknown",
-            time: new Date().toISOString(),
-            severity: "high",
-            status: "pending_review"
-        };
+        // Extract probationer ID from key
+        const probationerId = probationerKey.replace('probationer_', '');
         
-        // Generate unique violation ID
-        const violationId = `boundary_${Date.now()}`;
-        
-        // Save to probationer's violations array
-        const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
-        const violationsSnap = await get(violationsRef);
-        
-        let violationsArray = [];
-        if (violationsSnap.exists() && Array.isArray(violationsSnap.val())) {
-            violationsArray = violationsSnap.val();
+        // Get probationer's name for the alert
+        let probationerName = probationerId;
+        try {
+            const nameRef = ref(database, `probationers/${probationerKey}/fullName`);
+            const nameSnap = await get(nameRef);
+            if (nameSnap.exists()) {
+                probationerName = nameSnap.val();
+            }
+        } catch (error) {
+            console.log("Could not fetch probationer name:", error);
         }
         
-        violationsArray.push(violation);
-        await set(violationsRef, violationsArray);
+        // Show visual alert
+        showBoundaryViolationAlert(probationerName, statuses.coordinates);
         
-        // Create notification
-        const notification = {
-            type: "Boundary Violation",
-            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
-            violation: violation,
-            timestamp: new Date().toISOString(),
-            acknowledged: false
-        };
+        // Update status indicator
+        const statusIndicator = document.getElementById('statusIndicator');
+        if (statusIndicator) {
+            const originalText = statusIndicator.textContent;
+            statusIndicator.textContent = "BOUNDARY VIOLATION!";
+            statusIndicator.style.color = '#DE3725';
+            
+            setTimeout(() => {
+                statusIndicator.textContent = originalText;
+                statusIndicator.style.color = '#5E5E5E';
+            }, 5000);
+        }
         
-        const notificationId = `boundary_${Date.now()}_notif`;
-        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
-        await set(notificationRef, notification);
-        
-        // Notify officer
-        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
-        
-        console.log(`Boundary violation logged for ${probationerKey}`);
+        // Log violation to Firebase
+        await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
         
     } catch (error) {
-        console.error("Error logging boundary violation to Firebase:", error);
+        console.error("Error handling boundary violation:", error);
     }
 }
         
