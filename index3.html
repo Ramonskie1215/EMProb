@@ -1285,83 +1285,58 @@ async function performProbationerStatusCheck() {
 // END: FUNCTION - Periodic probationer status check
 // ============================================
         
-
-
- // ============================================
-// START: FUNCTION - Log boundary violation to Firebase
-// ============================================
+// Log boundary violation to Firebase
 async function logBoundaryViolationToFirebase(probationerKey, probationerId, statuses) {
-    console.log("Logging boundary violation for:", probationerKey);
-
     try {
-        // Create the violation object with more details
+        // Create violation object
         const violation = {
             type: "Boundary Violation",
             details: "Probationer left the designated probation area",
-            location: `${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
-            coordinates: {
-                lat: statuses.coordinates.lat,
-                lng: statuses.coordinates.lng
-            },
+            location: `${statuses.coordinates.lat}, ${statuses.coordinates.lng}`,
+            coordinates: statuses.coordinates,
             deviceId: window.uptimeTracker?.deviceId || "unknown",
-            timestamp: new Date().toISOString(),
+            time: new Date().toISOString(),
             severity: "high",
             status: "pending_review"
         };
-
-        const dbRef = ref(database);
-
-        // 1. Save violation using push() — best practice for lists in RTDB
-        const violationsRef = ref(dbRef, `probationers/${probationerKey}/violations`);
-        const newViolationRef = push(violationsRef);
-        await set(newViolationRef, violation);
-
-        console.log("Violation logged successfully with ID:", newViolationRef.key);
-
-        // 2. Create notification for the probationer
+        
+        // Generate unique violation ID
+        const violationId = `boundary_${Date.now()}`;
+        
+        // Save to probationer's violations array
+        const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
+        const violationsSnap = await get(violationsRef);
+        
+        let violationsArray = [];
+        if (violationsSnap.exists() && Array.isArray(violationsSnap.val())) {
+            violationsArray = violationsSnap.val();
+        }
+        
+        violationsArray.push(violation);
+        await set(violationsRef, violationsArray);
+        
+        // Create notification
         const notification = {
             type: "Boundary Violation",
-            title: "Boundary Violation Detected",
-            message: `${probationerId || probationerKey} has left the approved area.`,
-            location: violation.location,
-            timestamp: violation.timestamp,
-            violationId: newViolationRef.key,
-            acknowledged: false,
-            read: false
+            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
+            violation: violation,
+            timestamp: new Date().toISOString(),
+            acknowledged: false
         };
-
-        const notificationsRef = ref(dbRef, `probationers/${probationerKey}/notifications`);
-        const newNotificationRef = push(notificationsRef);
-        await set(newNotificationRef, notification);
-
-        console.log("Probationer notification created:", newNotificationRef.key);
-
-        // 3. Notify the officer (assuming you have this function)
-        // Pass the notification data and optionally the IDs
-        if (typeof logNotificationToOfficer === "function") {
-            await logNotificationToOfficer(
-                probationerKey,
-                probationerId,
-                notification,
-                newNotificationRef.key
-            );
-        }
-
-        console.log(`Boundary violation fully logged for ${probationerKey}`);
-
+        
+        const notificationId = `boundary_${Date.now()}_notif`;
+        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
+        await set(notificationRef, notification);
+        
+        // Notify officer
+        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
+        
+        console.log(`Boundary violation logged for ${probationerKey}`);
+        
     } catch (error) {
         console.error("Error logging boundary violation to Firebase:", error);
-        
-        // Optional: send to error tracking service (Sentry, LogRocket, etc.)
-        // captureException(error);
-        
-        // Re-throw if you want calling code to handle it
-        // throw error;
     }
 }
-// ============================================
-// END: FUNCTION - Log boundary violation to Firebase
-// ============================================
         
 // ============================================
 // TAMPERING DETECTION (F6 KEY)
@@ -2511,6 +2486,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
