@@ -1200,7 +1200,7 @@ async function handleBoundaryViolation(probationerKey, statuses) {
         showBoundaryViolationAlert(probationerName, statuses.coordinates);
         
         // Log violation to Firebase
-        await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
+      //  await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
         
     } catch (error) {
         console.error("Error handling boundary violation:", error);
@@ -2488,6 +2488,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
