@@ -2465,24 +2465,7 @@ function resizeTextToFit() {
     console.log(`Text resized to ${fontSize}vmin`);
 }
 
-// SUFFIX: Add event listeners for auto-resizing
-window.addEventListener('resize', function() {
-    if (announcementModal.style.display === 'flex') {
-        resizeTextToFit();
-    }
-});
 
-// Also resize when modal is shown
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.attributeName === 'style' && 
-            announcementModal.style.display === 'flex') {
-            setTimeout(resizeTextToFit, 200);
-        }
-    });
-});
-
-observer.observe(announcementModal, { attributes: true });
 
 // ANNOUNCEMENT SYSTEM (F1 to Acknowledge)
 // ============================================
@@ -2695,6 +2678,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
