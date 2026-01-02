@@ -1513,7 +1513,7 @@ function handleCircleClick(e) {
             <b>Circle Boundary</b><br>
             Center: ${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}<br>
             Radius: ${Math.round(radius)} meters
-        `).openPopup();
+        `);
         // Save to probationArea
         // Save circle to probationArea
         saveProbationArea('circle', {
@@ -1639,7 +1639,7 @@ function finishPolygon() {
         Points: ${polygonPoints.length}<br>
         Perimeter: ${Math.round(perimeter)} meters<br>
         Area: ${Math.round(area)} m²
-    `).openPopup();
+    `);
 
         // Save polygon to probationArea
         saveProbationArea('polygon', {
@@ -2008,6 +2008,7 @@ function plotBoundaryOnMap(boundaryData, mapInstance) {
             Radius: ${Math.round(radius)} meters<br>
             <small>Saved on: ${new Date(boundaryData.savedAt).toLocaleDateString()}</small>
         `);
+        // REMOVED: .openPopup(); // Don't open popup automatically
         
         console.log("Circle boundary plotted");
         
@@ -2054,6 +2055,7 @@ function plotBoundaryOnMap(boundaryData, mapInstance) {
             Area: ${Math.round(area)} m²<br>
             <small>Saved on: ${new Date(boundaryData.savedAt).toLocaleDateString()}</small>
         `);
+        // REMOVED: .openPopup(); // Don't open popup automatically
         
         console.log("Polygon boundary plotted");
         
@@ -2070,11 +2072,7 @@ function plotBoundaryOnMap(boundaryData, mapInstance) {
             maxZoom: 15
         });
         
-        // Open the popup
-        setTimeout(() => {
-            window.currentShape.openPopup();
-            console.log("Popup opened");
-        }, 1000);
+        // REMOVED the setTimeout that was opening the popup
     } else {
         console.error("Failed to create shape");
     }
@@ -2485,7 +2483,7 @@ async function loadAndPlotSavedBoundaryForProbationer(probationerKey) {
     }
 }
         
-// Add a marker for probationer with real-time styling
+// In the probationer controls section, find the addProbationerMarker function:
 function addProbationerMarker(lat, lng, probationer) {
     // Create a custom marker with pulsing effect for real-time updates
     const probationerIcon = L.divIcon({
@@ -2508,7 +2506,7 @@ function addProbationerMarker(lat, lng, probationer) {
         className: 'probationer-marker'
     });
     
-    // Create marker
+    // Create marker WITHOUT opening popup by default
     const marker = L.marker([lat, lng], { 
         icon: probationerIcon,
         title: probationer.fullName
@@ -2527,8 +2525,8 @@ function addProbationerMarker(lat, lng, probationer) {
     probationerMarkers[selectedProbationer] = marker;
     
     // Zoom to probationer location (with padding for controls)
-    map.setView([lat, lng], 15);
-    marker.openPopup();
+   //  map.setView([lat, lng], 15);
+    // REMOVED: marker.openPopup(); // Don't open popup automatically
     
     console.log(`Marker created at: ${lat}, ${lng}`);
 }
@@ -2722,7 +2720,7 @@ function updateProbationerCoordinates(probationer) {
     }
 }
 
-// Update existing marker position
+// In the real-time tracking section, find the updateMarkerPosition function:
 function updateMarkerPosition(lat, lng, probationer) {
     const marker = probationerMarkers[selectedProbationer];
     
@@ -2756,7 +2754,7 @@ function updateMarkerPosition(lat, lng, probationer) {
             
         console.log(`Updated position: ${lat}, ${lng} at ${new Date().toLocaleTimeString()}`);
     } else {
-        // If marker doesn't exist, create it
+        // If marker doesn't exist, create it WITHOUT opening popup
         addProbationerMarker(lat, lng, probationer);
     }
 }
