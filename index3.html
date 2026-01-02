@@ -1062,7 +1062,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
-// Helper function to save all statuses
+// Helper function to save all statuses and detect violations
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
         // Save individual fields for easy querying
@@ -1096,6 +1096,16 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             } catch (error) {
                 console.log("Could not save distance info:", error);
             }
+            
+            // DETECT BOUNDARY VIOLATION
+            // Only trigger if: 1) Has boundaries, 2) Has coordinates, 3) Was inside, 4) Now outside
+            if (wasInsideBoundary && !statuses.probationerAreaInside) {
+                console.log(`Boundary violation detected for ${probationerKey}!`);
+                await handleBoundaryViolation(probationerKey, statuses);
+            }
+            
+            // Update previous state for next check
+            wasInsideBoundary = statuses.probationerAreaInside;
         }
         
         // Save to probationer status path
@@ -1441,6 +1451,12 @@ let lastLowBatteryNotificationTime = 0; // Track when we last notified
 const LOW_BATTERY_THRESHOLD = 20; // 20%
 const NOTIFICATION_COOLDOWN = 300000; // 5 minutes (in milliseconds)
 
+let lastBoundaryViolationTime = 0;
+const BOUNDARY_VIOLATION_COOLDOWN = 10000; // 10 seconds cooldown
+let wasInsideBoundary = true; // Track previous state to detect changes
+
+
+        
 function initBattery() {
     if ('getBattery' in navigator) {
         isBatterySupported = true;
@@ -2327,6 +2343,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
