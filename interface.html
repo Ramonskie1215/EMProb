@@ -1108,8 +1108,8 @@ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9
         let map = null;
 
         // Your current coordinates
-        const currentLat = 14.7596;
-        const currentLng = 120.9633;
+        const currentLat = 14.8438;
+const currentLng = 120.8114;
 const mapControls = document.getElementById('mapControls');
 // === END OF NEW BLOCK ===
 const hideControlsBtn = document.getElementById('hideControlsBtn');
@@ -1393,11 +1393,11 @@ function selectLocation(location) {
     searchInput.value = location.display_name;
     
     // Update location info
-    document.getElementById('locationDetails').innerHTML = `
-        Latitude: ${lat.toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}<br>
-        Longitude: ${lon.toFixed(4)}° ${lon >= 0 ? 'E' : 'W'}<br>
-        <span id="locationAddress">${location.display_name}</span>
-    `;
+document.getElementById('locationDetails').innerHTML = `
+    Latitude: 14.7596° N<br>
+    Longitude: 120.9633° E<br>
+    <span id="locationAddress">Loading address...</span>
+`;
     
     // Show location info panel
     locationInfo.style.display = 'block';
