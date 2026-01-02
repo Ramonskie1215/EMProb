@@ -2297,17 +2297,17 @@ function updateProbationerDetails(probationer) {
     const hasWatch = probationer.watch && probationer.watch !== "none";
     
     // Determine status based on last update time
-    if (secondsSinceUpdate <= 30) { // Updated within last 30 seconds
+    if (secondsSinceUpdate <= 60) { // Updated within last 30 seconds
         if (hasWatch) {
             statusIndicator.className = 'status-indicator online';
-            statusText.textContent = ' Active (Watch)';
+            statusText.textContent = ' Active';
         } else {
             statusIndicator.className = 'status-indicator online';
             statusText.textContent = ' Active';
         }
     } else if (secondsSinceUpdate <= 300) { // Updated within last 5 minutes
         statusIndicator.className = 'status-indicator warning';
-        statusText.textContent = ' Recent';
+        statusText.textContent = ' Inactive';
     } else { // Not updated for more than 5 minutes
         statusIndicator.className = 'status-indicator offline';
         statusText.textContent = ' Inactive';
@@ -2806,14 +2806,14 @@ function updateProbationerStatusDisplay(probationer) {
     if (secondsSinceUpdate <= 60) { // Updated within last 30 seconds
         if (hasWatch) {
             statusIndicator.className = 'status-indicator online';
-            statusText.textContent = ' Active (Watch)';
+            statusText.textContent = ' Active';
         } else {
             statusIndicator.className = 'status-indicator online';
             statusText.textContent = ' Active';
         }
     } else if (secondsSinceUpdate <= 300) { // Updated within last 5 minutes
         statusIndicator.className = 'status-indicator warning';
-        statusText.textContent = ' Recent';
+        statusText.textContent = ' Inactive';
     } else { // Not updated for more than 5 minutes
         statusIndicator.className = 'status-indicator offline';
         statusText.textContent = ' Inactive';
