@@ -1151,10 +1151,10 @@ const showLocationBtn = document.getElementById('showLocationBtn');
         // Map initialization function
         function initializeMap() {
             // Initialize the map with your current location
-             map = L.map('map', {
-    zoomControl: false,  // This disables the default zoom control
-    attributionControl: false  // Optional: also hides the attribution text
-}).setView([currentLat, currentLng], 13);
+    map = L.map('map', {
+        zoomControl: false,
+        attributionControl: false
+    }).setView([currentLat, currentLng], 13); // Keep this as default fallback
             
             // Add tile layers
             const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1186,9 +1186,7 @@ const showLocationBtn = document.getElementById('showLocationBtn');
                 });
             }
             
-            // Add a marker for your current location
-            let marker = L.marker([currentLat, currentLng], {icon: createCircleIcon()}).addTo(map)
-                .bindPopup('<b>Your Current Location</b><br>Latitude: 14.7596° N<br>Longitude: 120.9633° E')
+            let marker = null;
             
             // Get address for current location
             async function getAddress(lat, lng) {
@@ -1292,13 +1290,35 @@ showLocationBtn.addEventListener('click', () => {
                 }
             });
             
-            // Return to current location
-            document.getElementById('currentLocationBtn').addEventListener('click', function() {
-                map.setView([currentLat, currentLng], 13);
-                marker.setLatLng([currentLat, currentLng])
-                    .bindPopup('<b>Your Current Location</b><br>Latitude: 14.7596° N<br>Longitude: 120.9633° E')
-                    .openPopup();
-            });
+// Return to appropriate location based on available data
+document.getElementById('currentLocationBtn').addEventListener('click', function() {
+    zoomToAppropriateLocation();
+});
+
+// Function to zoom to appropriate location
+function zoomToAppropriateLocation() {
+    // First priority: Zoom to boundary if available
+    if (window.currentShape && map.hasLayer(window.currentShape)) {
+        map.fitBounds(window.currentShape.getBounds(), {
+            padding: [50, 50],
+            maxZoom: 15
+        });
+        console.log("Zoomed to boundary");
+        return;
+    }
+    
+    // Second priority: Zoom to selected probationer if available
+    if (selectedProbationer && probationerMarkers[selectedProbationer]) {
+        const marker = probationerMarkers[selectedProbationer];
+        const latLng = marker.getLatLng();
+        map.setView(latLng, 15);
+        console.log("Zoomed to probationer");
+        return;
+    }
+    
+    // Fallback: Show a message if nothing to zoom to
+   // alert("No boundary or probationer selected to zoom to.");
+}
             
             // Search for location using Nominatim API
             async function searchLocation(query) {
@@ -1360,37 +1380,30 @@ showLocationBtn.addEventListener('click', () => {
                 searchResults.style.display = 'block';
             }
             
-            // Select a location from search results
-            function selectLocation(location) {
-                const lat = parseFloat(location.lat);
-                const lon = parseFloat(location.lon);
-                
-                // Update map view
-                map.setView([lat, lon], 13);
-                
-                // Update or create marker - always use circle icon
-                if (marker) {
-                    map.removeLayer(marker);
-                }
-                
-                // Use a slightly different color for searched locations
-                const searchedLocationColor = '#0E3CBD';
-                
-                marker = L.marker([lat, lon], {icon: createCircleIcon(searchedLocationColor)}).addTo(map)
-                    .bindPopup(`<b>${location.display_name.split(',')[0]}</b><br>${location.display_name}`)
-                    .openPopup();
-                
-                // Clear search results
-                searchResults.style.display = 'none';
-                searchInput.value = location.display_name;
-                
-                // Update location info
-                document.getElementById('locationDetails').innerHTML = `
-                    Latitude: ${lat.toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}<br>
-                    Longitude: ${lon.toFixed(4)}° ${lon >= 0 ? 'E' : 'W'}<br>
-                    <span id="locationAddress">${location.display_name}</span>
-                `;
-            }
+// Select a location from search results
+function selectLocation(location) {
+    const lat = parseFloat(location.lat);
+    const lon = parseFloat(location.lon);
+    
+    // Simply zoom to the location without adding a marker
+    map.setView([lat, lon], 13);
+    
+    // Clear search results
+    searchResults.style.display = 'none';
+    searchInput.value = location.display_name;
+    
+    // Update location info
+    document.getElementById('locationDetails').innerHTML = `
+        Latitude: ${lat.toFixed(4)}° ${lat >= 0 ? 'N' : 'S'}<br>
+        Longitude: ${lon.toFixed(4)}° ${lon >= 0 ? 'E' : 'W'}<br>
+        <span id="locationAddress">${location.display_name}</span>
+    `;
+    
+    // Show location info panel
+    locationInfo.style.display = 'block';
+    showLocationBtn.style.display = 'none';
+    updateMapPadding();
+}
             
             // Layer selection
             document.getElementById('layerSelect').addEventListener('change', function() {
@@ -2213,6 +2226,7 @@ async function loadProbationers() {
     }
 }
 
+// In the probationerSelect change event handler, add zoom logic:
 probationerSelect.addEventListener('change', async function() {
     const selectedKey = this.value;
     
@@ -2532,10 +2546,12 @@ function addProbationerMarker(lat, lng, probationer) {
     // Store marker reference
     probationerMarkers[selectedProbationer] = marker;
     
-    // Zoom to probationer location (with padding for controls)
-   //  map.setView([lat, lng], 15);
-    // REMOVED: marker.openPopup(); // Don't open popup automatically
-    
+    if (!window.currentShape || !map.hasLayer(window.currentShape)) {
+        map.setView([lat, lng], 15);
+        console.log("Zoomed to probationer (no boundary available)");
+    } else {
+        console.log("Boundary is displayed, not zooming to probationer");
+    }  
     console.log(`Marker created at: ${lat}, ${lng}`);
 }
 
