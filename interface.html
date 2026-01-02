@@ -2291,13 +2291,7 @@ function updateProbationerDetails(probationer) {
     // Check if probationer has watch
     const hasWatch = probationer.watch && probationer.watch !== "none";
     
-    if (probationer.deviceStatus === 'tampered' || probationer.deviceStatus === 'offline') {
-        statusIndicator.className = 'status-indicator warning';
-        statusText.textContent = ' Tampered/Alert';
-    } else if (hasWatch && probationer.currentCoordinates) {
-        statusIndicator.className = 'status-indicator online';
-        statusText.textContent = ' Online (Watch)';
-    } else if (probationer.currentCoordinates && probationer.currentCoordinates !== 'N/A') {
+    if (probationer.currentCoordinates && probationer.currentCoordinates !== 'N/A') {
         statusIndicator.className = 'status-indicator online';
         statusText.textContent = ' Online';
     } else {
