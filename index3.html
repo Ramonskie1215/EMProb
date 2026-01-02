@@ -1116,61 +1116,6 @@ function showBoundaryViolationAlert(probationerName, coordinates) {
 }
 
 
-// Handle boundary violation detection
-async function handleBoundaryViolation(probationerKey, statuses) {
-    const now = Date.now();
-    
-    // Check cooldown period
-    if (now - lastBoundaryViolationTime < BOUNDARY_VIOLATION_COOLDOWN) {
-        console.log(`Boundary violation alert on cooldown. Wait ${Math.round((BOUNDARY_VIOLATION_COOLDOWN - (now - lastBoundaryViolationTime)) / 1000)}s`);
-        return;
-    }
-    
-    lastBoundaryViolationTime = now;
-    
-    console.log("🚨 Boundary violation detected!");
-    
-    try {
-        // Extract probationer ID from key
-        const probationerId = probationerKey.replace('probationer_', '');
-        
-        // Get probationer's name for the alert
-        let probationerName = probationerId;
-        try {
-            const nameRef = ref(database, `probationers/${probationerKey}/fullName`);
-            const nameSnap = await get(nameRef);
-            if (nameSnap.exists()) {
-                probationerName = nameSnap.val();
-                console.log("Probationer name found:", probationerName);
-            }
-        } catch (error) {
-            console.log("Could not fetch probationer name:", error);
-        }
-        
-        // Show visual alert
-        showBoundaryViolationAlert(probationerName, statuses.coordinates);
-        
-        // Log violation to Firebase
-        await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
-        
-        // Update status indicator
-        const statusIndicator = document.getElementById('statusIndicator');
-        if (statusIndicator) {
-            const originalText = statusIndicator.textContent;
-            statusIndicator.textContent = "BOUNDARY VIOLATION!";
-            statusIndicator.style.color = '#DE3725';
-            
-            setTimeout(() => {
-                statusIndicator.textContent = originalText;
-                statusIndicator.style.color = '#5E5E5E';
-            }, 5000);
-        }
-        
-    } catch (error) {
-        console.error("Error in handleBoundaryViolation:", error);
-    }
-}    
-
        
 // Helper function to save all statuses and detect violations
 async function saveProbationerStatuses(probationerKey, statuses) {
@@ -2486,6 +2431,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
