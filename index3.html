@@ -1281,6 +1281,18 @@ async function handleBoundaryViolation(probationerKey, statuses) {
     } catch (error) {
         console.error("Error handling boundary violation:", error);
     }
+    // Update status indicator
+const statusIndicator = document.getElementById('statusIndicator');
+if (statusIndicator) {
+    const originalText = statusIndicator.textContent;
+    statusIndicator.textContent = "BOUNDARY VIOLATION!";
+    statusIndicator.style.color = '#DE3725';
+    
+    setTimeout(() => {
+        statusIndicator.textContent = originalText;
+        statusIndicator.style.color = '#5E5E5E';
+    }, 5000);
+}
 }
         
 // ============================================
@@ -2431,6 +2443,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
