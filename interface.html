@@ -2739,9 +2739,9 @@ function getStatusBasedOnTime(probationer) {
     const hasWatch = probationer.watch && probationer.watch !== "none";
     
     if (secondsSinceUpdate <= 30) {
-        return hasWatch ? 'Active (Watch)' : 'Active';
+        return hasWatch ? 'Active' : 'Active';
     } else if (secondsSinceUpdate <= 300) {
-        return 'Recent';
+        return 'Inactive';
     } else {
         return 'Inactive';
     }
