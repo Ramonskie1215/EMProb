@@ -1062,6 +1062,59 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
+// Show boundary violation alert (similar to tamper detection)
+function showBoundaryViolationAlert(probationerName, coordinates) {
+    // Create alert overlay
+    const alertDiv = document.createElement('div');
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '0';
+    alertDiv.style.left = '0';
+    alertDiv.style.width = '100%';
+    alertDiv.style.height = '100%';
+    alertDiv.style.backgroundColor = 'rgba(222, 55, 37, 0.9)'; // Red background
+    alertDiv.style.color = '#FFFFFF';
+    alertDiv.style.fontFamily = "'Courier New', monospace";
+    alertDiv.style.fontSize = '8vmin';
+    alertDiv.style.fontWeight = '900';
+    alertDiv.style.display = 'flex';
+    alertDiv.style.flexDirection = 'column';
+    alertDiv.style.alignItems = 'center';
+    alertDiv.style.justifyContent = 'center';
+    alertDiv.style.zIndex = '9999999';
+    alertDiv.style.textAlign = 'center';
+    alertDiv.style.padding = '5vmin';
+    alertDiv.style.letterSpacing = '1vmin';
+    alertDiv.style.textShadow = '0 0 3vmin rgba(255, 255, 255, 0.8)';
+    alertDiv.style.animation = 'pulse 0.5s 3';
+    
+    alertDiv.innerHTML = `
+        <div style="margin-bottom: 5vmin;">🚨</div>
+        <div>BOUNDARY VIOLATION!</div>
+        <div style="font-size: 5vmin; margin-top: 3vmin; opacity: 0.9;">
+            ${probationerName.toUpperCase()}
+        </div>
+        <div style="font-size: 4vmin; margin-top: 5vmin; opacity: 0.8;">
+            LEFT PROBATION AREA
+        </div>
+        <div style="font-size: 3.5vmin; margin-top: 3vmin; opacity: 0.7;">
+            Coordinates: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}
+        </div>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Remove after 10 seconds (matches tamper detection)
+    setTimeout(() => {
+        alertDiv.style.opacity = '0';
+        alertDiv.style.transition = 'opacity 0.5s ease';
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 500);
+    }, 10000);
+}
+
  // Handle boundary violation detection
 async function handleBoundaryViolation(probationerKey, statuses) {
     const now = Date.now();
@@ -2382,6 +2435,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
