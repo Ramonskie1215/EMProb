@@ -557,16 +557,21 @@
         justify-content: center;
         align-items: center;
     ">
-        <!-- Header -->
+        <!-- Header - Just Symbol, 100% Larger -->
         <div style="
             color: #259FDE;
-            font-size: 8vmin;
+            font-size: 16vmin;
             font-weight: 900;
-            letter-spacing: 1vmin;
-            margin-bottom: 5vmin;
+            margin-bottom: 3vmin;
             text-shadow: none;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 20vmin;
+            font-family: 'Segoe UI Emoji', 'Apple Color Emoji', sans-serif;
         ">
-            &#x1F4E2; ANNOUNCEMENT
+            &#x1F4E2;
         </div>
 
         <!-- Subject -->
@@ -588,15 +593,19 @@
             text-shadow: none;
         ">-- --- ---- --:-- --</div>
 
-        <!-- Details -->
+        <!-- Details - White Background with Black Text -->
         <div id="announcementDetails" style="
             font-size: 7vmin;
-            color: #AAAAAA;
-            line-height: 1.5;
+            color: #000000;
+            line-height: 1.6;
             margin: 6vmin 0;
-            padding: 0 10vmin;
-            font-weight: 600;
+            padding: 8vmin 6vmin;
+            font-weight: 700;
             max-width: 1200px;
+            background: #FFFFFF;
+            border-radius: 2vmin;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            font-family: 'Segoe UI', system-ui, sans-serif;
         ">
             Loading announcement details...
         </div>
@@ -607,10 +616,23 @@
             font-size: 6vmin;
             color: #666666;
         ">
-            Press acknowledge button
+            Press <span style="
+                color: #259FDE;
+                font-size: 7vmin;
+                font-weight: 900;
+                text-shadow: none;
+            ">F1</span> to acknowledge
         </div>
     </div>
 </div>
+
+<!-- Optional: Add pulse animation for the symbol -->
+<style>
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+}
+</style>
 
 <!-- Pulse Animation -->
 <style>
@@ -2577,6 +2599,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
