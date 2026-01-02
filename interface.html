@@ -2278,29 +2278,43 @@ probationerSelect.addEventListener('change', async function() {
     }
 });
 
-// Update probationer details in the UI
+// Find the updateProbationerDetails function and modify it:
 function updateProbationerDetails(probationer) {
     // Basic info
     document.getElementById('probationerName').textContent = probationer.fullName || '-';
     document.getElementById('probationerId').textContent = probationer.assignedId || '-';
     
-    // Status
+    // ============ STATUS BASED ON LAST UPDATED TIME ============
+    // Get the last updated time
+    const updatedAt = probationer.updatedAt ? new Date(probationer.updatedAt) : new Date();
+    const now = new Date();
+    const secondsSinceUpdate = (now - updatedAt) / 1000; // Convert to seconds
+    
     const statusIndicator = document.querySelector('#probationerStatus .status-indicator');
     const statusText = document.getElementById('probationerStatus').querySelector('span:last-child');
     
     // Check if probationer has watch
     const hasWatch = probationer.watch && probationer.watch !== "none";
     
-    if (probationer.currentCoordinates && probationer.currentCoordinates !== 'N/A') {
-        statusIndicator.className = 'status-indicator online';
-        statusText.textContent = ' Online';
-    } else {
+    // Determine status based on last update time
+    if (secondsSinceUpdate <= 30) { // Updated within last 30 seconds
+        if (hasWatch) {
+            statusIndicator.className = 'status-indicator online';
+            statusText.textContent = ' Active (Watch)';
+        } else {
+            statusIndicator.className = 'status-indicator online';
+            statusText.textContent = ' Active';
+        }
+    } else if (secondsSinceUpdate <= 300) { // Updated within last 5 minutes
+        statusIndicator.className = 'status-indicator warning';
+        statusText.textContent = ' Recent';
+    } else { // Not updated for more than 5 minutes
         statusIndicator.className = 'status-indicator offline';
-        statusText.textContent = ' Offline';
+        statusText.textContent = ' Inactive';
     }
+    // ============ END STATUS LOGIC ============
     
-    // Last updated
-    const updatedAt = probationer.updatedAt ? new Date(probationer.updatedAt) : new Date();
+    // Last updated display
     document.getElementById('probationerUpdated').textContent = 
         updatedAt.toLocaleDateString() + ' ' + updatedAt.toLocaleTimeString();
     
@@ -2509,10 +2523,10 @@ function addProbationerMarker(lat, lng, probationer) {
     .bindPopup(`
         <b>Probationer: ${probationer.fullName}</b><br>
         ID: ${probationer.assignedId || 'N/A'}<br>
-        Status: ${probationer.deviceStatus || 'N/A'}<br>
+        Status: ${getStatusBasedOnTime(probationer)}<br>
         Battery: ${probationer.batteryPercentage || 'N/A'}<br>
         Last Update: ${new Date(probationer.updatedAt || Date.now()).toLocaleString()}<br>
-        <small>Real-time tracking: ACTIVE</small>
+        <small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
     `);
     
     // Store marker reference
@@ -2548,7 +2562,7 @@ function startRealTimeTracking(probationerKey) {
     probationerListener = window.firebaseOnValue(probationerRef, (snapshot) => {
         if (snapshot.exists()) {
             const probationer = snapshot.val();
-            
+            updateProbationerStatusDisplay(probationer);
             // Step 2: Get the watch ID assigned to this probationer
             const watchId = probationer.watch;
             
@@ -2714,7 +2728,26 @@ function updateProbationerCoordinates(probationer) {
     }
 }
 
-// In the real-time tracking section, find the updateMarkerPosition function:
+// Add this helper function near the top of your probationer controls JavaScript section:
+function getStatusBasedOnTime(probationer) {
+    if (!probationer) return 'Unknown';
+    
+    const updatedAt = probationer.updatedAt ? new Date(probationer.updatedAt) : new Date();
+    const now = new Date();
+    const secondsSinceUpdate = (now - updatedAt) / 1000;
+    
+    const hasWatch = probationer.watch && probationer.watch !== "none";
+    
+    if (secondsSinceUpdate <= 30) {
+        return hasWatch ? 'Active (Watch)' : 'Active';
+    } else if (secondsSinceUpdate <= 300) {
+        return 'Recent';
+    } else {
+        return 'Inactive';
+    }
+}
+        
+// Find the updateMarkerPosition function and modify the popup content:
 function updateMarkerPosition(lat, lng, probationer) {
     const marker = probationerMarkers[selectedProbationer];
     
@@ -2722,11 +2755,11 @@ function updateMarkerPosition(lat, lng, probationer) {
         // Smooth transition to new position
         marker.setLatLng([lat, lng]);
         
-        // Update popup content with latest info
+        // Update popup content with latest info using new status logic
         marker.getPopup().setContent(`
             <b>Probationer: ${probationer.fullName}</b><br>
             ID: ${probationer.assignedId || 'N/A'}<br>
-            Status: ${probationer.deviceStatus || 'N/A'}<br>
+            Status: ${getStatusBasedOnTime(probationer)}<br>
             Battery: ${probationer.batteryPercentage || 'N/A'}<br>
             Last Update: ${new Date(probationer.updatedAt || Date.now()).toLocaleString()}<br>
             <small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>
@@ -2745,6 +2778,9 @@ function updateMarkerPosition(lat, lng, probationer) {
         const battery = probationer.batteryPercentage || 'N/A';
         document.getElementById('probationerBattery').textContent = 
             battery === 'N/A' ? 'N/A' : battery + '%';
+        
+        // Update the status display in probationer controls
+        updateProbationerStatusDisplay(probationer);
             
         console.log(`Updated position: ${lat}, ${lng} at ${new Date().toLocaleTimeString()}`);
     } else {
@@ -2752,6 +2788,37 @@ function updateMarkerPosition(lat, lng, probationer) {
         addProbationerMarker(lat, lng, probationer);
     }
 }
+
+// Add this function to update status display independently:
+function updateProbationerStatusDisplay(probationer) {
+    const statusIndicator = document.querySelector('#probationerStatus .status-indicator');
+    const statusText = document.getElementById('probationerStatus').querySelector('span:last-child');
+    
+    // Get the last updated time
+    const updatedAt = probationer.updatedAt ? new Date(probationer.updatedAt) : new Date();
+    const now = new Date();
+    const secondsSinceUpdate = (now - updatedAt) / 1000;
+    
+    // Check if probationer has watch
+    const hasWatch = probationer.watch && probationer.watch !== "none";
+    
+    // Determine status based on last update time
+    if (secondsSinceUpdate <= 60) { // Updated within last 30 seconds
+        if (hasWatch) {
+            statusIndicator.className = 'status-indicator online';
+            statusText.textContent = ' Active (Watch)';
+        } else {
+            statusIndicator.className = 'status-indicator online';
+            statusText.textContent = ' Active';
+        }
+    } else if (secondsSinceUpdate <= 300) { // Updated within last 5 minutes
+        statusIndicator.className = 'status-indicator warning';
+        statusText.textContent = ' Recent';
+    } else { // Not updated for more than 5 minutes
+        statusIndicator.className = 'status-indicator offline';
+        statusText.textContent = ' Inactive';
+    }
+}        
 // ===================== END REAL-TIME FUNCTIONS =====================
         
 // Track button functionality
