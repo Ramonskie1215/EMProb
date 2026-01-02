@@ -1116,7 +1116,7 @@ function showBoundaryViolationAlert(probationerName, coordinates) {
 }
 
 
- // Handle boundary violation detection
+// Handle boundary violation detection
 async function handleBoundaryViolation(probationerKey, statuses) {
     const now = Date.now();
     
@@ -1127,6 +1127,8 @@ async function handleBoundaryViolation(probationerKey, statuses) {
     }
     
     lastBoundaryViolationTime = now;
+    
+    console.log("🚨 Boundary violation detected!");
     
     try {
         // Extract probationer ID from key
@@ -1139,6 +1141,7 @@ async function handleBoundaryViolation(probationerKey, statuses) {
             const nameSnap = await get(nameRef);
             if (nameSnap.exists()) {
                 probationerName = nameSnap.val();
+                console.log("Probationer name found:", probationerName);
             }
         } catch (error) {
             console.log("Could not fetch probationer name:", error);
@@ -1148,12 +1151,25 @@ async function handleBoundaryViolation(probationerKey, statuses) {
         showBoundaryViolationAlert(probationerName, statuses.coordinates);
         
         // Log violation to Firebase
-      await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
+        await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
+        
+        // Update status indicator
+        const statusIndicator = document.getElementById('statusIndicator');
+        if (statusIndicator) {
+            const originalText = statusIndicator.textContent;
+            statusIndicator.textContent = "BOUNDARY VIOLATION!";
+            statusIndicator.style.color = '#DE3725';
+            
+            setTimeout(() => {
+                statusIndicator.textContent = originalText;
+                statusIndicator.style.color = '#5E5E5E';
+            }, 5000);
+        }
         
     } catch (error) {
-        console.error("Error handling boundary violation:", error);
+        console.error("Error in handleBoundaryViolation:", error);
     }
-}       
+}    
 
 // ============================================
 // START: FUNCTION - Log boundary violation to Firebase
@@ -1241,7 +1257,9 @@ async function logBoundaryViolationToFirebase(probationerKey, probationerId, sta
 // Helper function to save all statuses and detect violations
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
-        // Save individual fields for easy querying
+        console.log(`Saving status for ${probationerKey}`, statuses);
+        
+        // Save individual fields
         const updates = {
             'isProbationerhasCoordinate': statuses.isProbationerhasCoordinate,
             'isProbationerhasBoundaries': statuses.isProbationerhasBoundaries,
@@ -1249,51 +1267,30 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             'lastLocationCheck': statuses.lastCheck
         };
         
-        // If we have coordinates and boundaries, save distance info for circles
+        // If we have coordinates and boundaries
         if (statuses.isProbationerhasCoordinate && statuses.isProbationerhasBoundaries) {
-            try {
-                const areaRef = ref(database, `probationers/${probationerKey}/probationArea`);
-                const areaSnap = await get(areaRef);
-                
-                if (areaSnap.exists()) {
-                    const areaData = areaSnap.val();
-                    if (areaData.type === 'circle') {
-                        const distance = calculateDistance(
-                            statuses.coordinates.lat, statuses.coordinates.lng,
-                            areaData.center.lat, areaData.center.lng
-                        );
-                        
-                        updates['distanceFromCenter'] = distance;
-                        updates['centerCoordinates'] = areaData.center;
-                        updates['radius'] = areaData.radius;
-                        updates['isInsideRadius'] = distance <= areaData.radius;
-                    }
-                }
-            } catch (error) {
-                console.log("Could not save distance info:", error);
-            }
+            console.log("Has both coordinates and boundaries");
             
             // DETECT BOUNDARY VIOLATION
             // Only trigger if: 1) Has boundaries, 2) Has coordinates, 3) Was inside, 4) Now outside
             if (wasInsideBoundary && !statuses.probationerAreaInside) {
-                console.log(`Boundary violation detected for ${probationerKey}!`);
+                console.log(`⚠️ Boundary violation transition detected!`);
+                console.log(`Previous: inside, Current: outside`);
                 await handleBoundaryViolation(probationerKey, statuses);
+            } else {
+                console.log(`No violation. Previous inside: ${wasInsideBoundary}, Current inside: ${statuses.probationerAreaInside}`);
             }
             
             // Update previous state for next check
             wasInsideBoundary = statuses.probationerAreaInside;
+            console.log(`Updated wasInsideBoundary to: ${wasInsideBoundary}`);
         }
         
         // Save to probationer status path
         const statusRef = ref(database, `probationers/${probationerKey}`);
         await update(statusRef, updates);
         
-        // Also save detailed log
-        const logRef = ref(database, `probationers/${probationerKey}/locationStatusLogs/${Date.now()}`);
-        await set(logRef, {
-            ...statuses,
-            timestamp: new Date().toISOString()
-        });
+        console.log(`Status saved for ${probationerKey}`);
         
     } catch (error) {
         console.error("Error saving probationer statuses:", error);
@@ -2519,6 +2516,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
