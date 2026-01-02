@@ -1304,7 +1304,7 @@ async function logBoundaryViolationToFirebase(probationerKey, probationerId, sta
             details: "Probationer left the designated probation area",
             location: `${statuses.coordinates.lat}, ${statuses.coordinates.lng}`,
             coordinates: statuses.coordinates,
-            deviceId: window.uptimeTracker?.deviceId || "unknown",
+           // deviceId: window.uptimeTracker?.deviceId || "unknown",
             time: new Date().toISOString(),
             severity: "high",
             status: "pending_review"
@@ -2496,6 +2496,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
