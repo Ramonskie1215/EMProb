@@ -2447,8 +2447,8 @@ function resizeTextToFit() {
     textElement.style.fontSize = fontSize + 'vmin';
     
     // Get container dimensions (account for padding)
-    const containerHeight = container.clientHeight * 0.85;
-    const containerWidth = container.clientWidth * 0.85;
+    const containerHeight = container.clientHeight * 0.95;
+    const containerWidth = container.clientWidth * 0.95;
     
     // Keep reducing font size until text fits
     while (textElement.scrollHeight > containerHeight && fontSize > 3) {
@@ -2695,6 +2695,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
