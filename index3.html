@@ -638,16 +638,14 @@
     </div>
 </div>
 
-            <!-- Time -->
-            <div id="announcementTime" style="
-                font-size: 6vmin;
-                color: #259FDE;
-                margin: 2vmin 0;
-                font-weight: 700;
-                text-shadow: none;
-                flex-shrink: 0;
-            ">-- --- ---- --:-- --</div>
-        </div>
+<div id="announcementTime" style="
+    font-size: 6vmin;
+    color: #259FDE;
+    margin: 2vmin 0;
+    font-weight: 700;
+    text-shadow: none;
+    flex-shrink: 0;
+">-- --- ---- --:-- --</div>
 
         <!-- Fixed Footer -->
         <div style="
@@ -2476,7 +2474,7 @@ const announcementDetails = document.getElementById('announcementDetails');
 let currentProbationerKey = null;
 let pendingAnnouncements = [];
 
-// SUFFIX: Update showAnnouncement function
+// SUFFIX: Update showAnnouncement function with Tagalog formatting
 function showAnnouncement(announcement) {
     announcementSubject.textContent = (announcement.subject || "NO SUBJECT").toUpperCase();
     
@@ -2486,16 +2484,46 @@ function showAnnouncement(announcement) {
         textElement.textContent = announcement.details || "No details provided.";
     }
     
-    // Format time
+    // Format time in Tagalog
     const date = new Date(announcement.time);
-    const formattedTime = date.toLocaleString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-    }).toUpperCase();
+    
+const tagalogDays = [
+    'Linggo', 'Lunes', 'Martes', 'Miyerkules', 
+    'Huwebes', 'Biyernes', 'Sabado'
+];
+
+// Tagalog month names
+const tagalogMonths = [
+    'Enero', 'Pebrero', 'Marso', 'Abril', 'Mayo', 'Hunyo',
+    'Hulyo', 'Agosto', 'Setyembre', 'Oktubre', 'Nobyembre', 'Disyembre'
+];
+    
+    const day = date.getDate();
+    const month = date.getMonth();
+    const weekday = date.getDay();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    
+    // Determine time period abbreviation
+    let periodAbbreviation = '';
+    if (hours >= 5 && hours < 12) {
+        periodAbbreviation = 'n.u.'; // umaga
+    } else if (hours >= 12 && hours < 13) {
+        periodAbbreviation = 'n.t.'; // tanghali
+    } else if (hours >= 13 && hours < 18) {
+        periodAbbreviation = 'n.h.'; // hapon
+    } else if (hours >= 18 && hours < 24) {
+        periodAbbreviation = 'n.g.'; // gabi
+    } else {
+        periodAbbreviation = 'n.m.'; // madaling araw
+    }
+    
+    // Format hours in 12-hour format
+    let displayHours = hours % 12;
+    displayHours = displayHours ? displayHours : 12;
+    
+    // Format: "Lun, Peb 15 2:30 n.h."
+    const formattedTime = `${tagalogDays[weekday]}, ${tagalogMonths[month]} ${day} ${displayHours}:${minutes.toString().padStart(2, '0')} ${periodAbbreviation}`;
     
     document.getElementById('announcementTime').textContent = formattedTime;
     
@@ -2695,6 +2723,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
