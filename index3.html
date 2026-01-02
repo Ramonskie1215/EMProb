@@ -1294,6 +1294,59 @@ if (statusIndicator) {
     }, 5000);
 }
 }
+
+// Log boundary violation to Firebase
+async function logBoundaryViolationToFirebase(probationerKey, probationerId, statuses) {
+    try {
+        // Create violation object
+        const violation = {
+            type: "Boundary Violation",
+            details: "Probationer left the designated probation area",
+            location: `${statuses.coordinates.lat}, ${statuses.coordinates.lng}`,
+            coordinates: statuses.coordinates,
+            deviceId: window.uptimeTracker?.deviceId || "unknown",
+            time: new Date().toISOString(),
+            severity: "high",
+            status: "pending_review"
+        };
+        
+        // Generate unique violation ID
+        const violationId = `boundary_${Date.now()}`;
+        
+        // Save to probationer's violations array
+        const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
+        const violationsSnap = await get(violationsRef);
+        
+        let violationsArray = [];
+        if (violationsSnap.exists() && Array.isArray(violationsSnap.val())) {
+            violationsArray = violationsSnap.val();
+        }
+        
+        violationsArray.push(violation);
+        await set(violationsRef, violationsArray);
+        
+        // Create notification
+        const notification = {
+            type: "Boundary Violation",
+            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
+            violation: violation,
+            timestamp: new Date().toISOString(),
+            acknowledged: false
+        };
+        
+        const notificationId = `boundary_${Date.now()}_notif`;
+        const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
+        await set(notificationRef, notification);
+        
+        // Notify officer
+        await logNotificationToOfficer(probationerKey, probationerId, notification, notificationId);
+        
+        console.log(`Boundary violation logged for ${probationerKey}`);
+        
+    } catch (error) {
+        console.error("Error logging boundary violation to Firebase:", error);
+    }
+}
         
 // ============================================
 // TAMPERING DETECTION (F6 KEY)
@@ -2443,6 +2496,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
