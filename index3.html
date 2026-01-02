@@ -607,28 +607,36 @@
             min-height: 0;
             overflow: hidden;
         ">
-            <!-- Details - Scrollable White Box -->
-            <div id="announcementDetails" style="
-                font-size: 7vmin;
-                color: #000000;
-                line-height: 1.3;
-                padding: 4vmin 3vmin;
-                font-weight: 700;
-                width: 100%;
-                max-width: 1200px;
-                background: #FFFFFF;
-                border-radius: 4vmin;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-                font-family: 'Segoe UI', system-ui, sans-serif;
-                overflow-y: auto;
-                max-height: 40vh;
-                min-height: 20vh;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-                text-align: left;
-            ">
-                Loading announcement details...
-            </div>
+
+            <!-- Details - White Background with Black Text -->
+<div id="announcementDetails" style="
+    color: #000000;
+    line-height: 1.3;
+    padding: 4vmin 3vmin;
+    font-weight: 700;
+    width: 100%;
+    max-width: 1200px;
+    background: #FFFFFF;
+    border-radius: 4vmin;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;  <!-- Hide overflow -->
+    word-wrap: break-word;
+    text-align: center;  <!-- Center text by default -->
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 20vh;
+    max-height: 40vh;
+">
+    <div id="announcementText" style="
+        width: 100%;
+        max-height: 100%;
+        overflow: hidden;
+    ">
+        Loading announcement details...
+    </div>
+</div>
 
             <!-- Time -->
             <div id="announcementTime" style="
@@ -2428,10 +2436,56 @@ async function updateProbationerDisplay() {
 updateProbationerDisplay();
 setInterval(updateProbationerDisplay, 2000);
 
-            // ============================================
+function resizeTextToFit() {
+    const container = document.getElementById('announcementDetails');
+    const textElement = document.getElementById('announcementText');
+    
+    if (!container || !textElement) return;
+    
+    // Start with default size (7vmin)
+    let fontSize = 7;
+    textElement.style.fontSize = fontSize + 'vmin';
+    
+    // Get container dimensions (account for padding)
+    const containerHeight = container.clientHeight;
+    const containerWidth = container.clientWidth;
+    
+    // Keep reducing font size until text fits
+    while (textElement.scrollHeight > containerHeight && fontSize > 3) {
+        fontSize -= 0.5;
+        textElement.style.fontSize = fontSize + 'vmin';
+    }
+    
+    // If still too wide after fitting height, reduce more
+    while (textElement.scrollWidth > containerWidth && fontSize > 2.5) {
+        fontSize -= 0.5;
+        textElement.style.fontSize = fontSize + 'vmin';
+    }
+    
+    console.log(`Text resized to ${fontSize}vmin`);
+}
+
+// SUFFIX: Add event listeners for auto-resizing
+window.addEventListener('resize', function() {
+    if (announcementModal.style.display === 'flex') {
+        resizeTextToFit();
+    }
+});
+
+// Also resize when modal is shown
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.attributeName === 'style' && 
+            announcementModal.style.display === 'flex') {
+            setTimeout(resizeTextToFit, 200);
+        }
+    });
+});
+
+observer.observe(announcementModal, { attributes: true });
+
 // ANNOUNCEMENT SYSTEM (F1 to Acknowledge)
 // ============================================
-
 const announcementModal = document.getElementById('announcementModal');
 const announcementSubject = document.getElementById('announcementSubject');
 const announcementDetails = document.getElementById('announcementDetails');
@@ -2439,12 +2493,17 @@ const announcementDetails = document.getElementById('announcementDetails');
 let currentProbationerKey = null;
 let pendingAnnouncements = [];
 
-// Show modal with announcement
+// SUFFIX: Update showAnnouncement function
 function showAnnouncement(announcement) {
     announcementSubject.textContent = (announcement.subject || "NO SUBJECT").toUpperCase();
-    announcementDetails.textContent = announcement.details || "No details provided.";
-
-    // Format time beautifully
+    
+    // Update text content
+    const textElement = document.getElementById('announcementText');
+    if (textElement) {
+        textElement.textContent = announcement.details || "No details provided.";
+    }
+    
+    // Format time
     const date = new Date(announcement.time);
     const formattedTime = date.toLocaleString('en-US', {
         weekday: 'short',
@@ -2454,11 +2513,15 @@ function showAnnouncement(announcement) {
         minute: '2-digit',
         hour12: true
     }).toUpperCase();
-
+    
     document.getElementById('announcementTime').textContent = formattedTime;
-
+    
+    // Show modal
     announcementModal.style.display = 'flex';
     setTimeout(() => announcementModal.style.opacity = '1', 50);
+    
+    // Resize text after short delay (allows rendering)
+    setTimeout(resizeTextToFit, 100);
 }
 
 // Hide modal
@@ -2632,6 +2695,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
