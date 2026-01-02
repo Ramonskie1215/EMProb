@@ -195,7 +195,7 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 30px;
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
         }
 
@@ -430,74 +430,6 @@
             font-weight: 600;
         }
 
-        /* Toggle Switch for Notifications */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-            margin-right: 15px;
-        }
-
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-
-        .toggle-label {
-            display: flex;
-            align-items: center;
-            font-size: 16px;
-            color: #2C3E50;
-            font-weight: 500;
-        }
-
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .toggle-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            color: #259FDE;
-        }
-
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -622,6 +554,13 @@
 
         .close-modal:hover {
             color: #E74C3C;
+        }
+
+        .notification-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            color: #259FDE;
         }
 
         @keyframes spin {
@@ -829,84 +768,56 @@
                 <h2 class="card-title">Basic Settings</h2>
                 
                 <div class="form-group">
-                    <div class="toggle-container">
-                        <label class="toggle-label">
-                            <span class="toggle-icon">
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+                    <label class="form-label">Notification Preferences</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="notificationPref" value="sound" id="soundRadio">
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">
+                                <svg class="notification-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
                                 </svg>
+                                Sound
                             </span>
-                            Notification Preferences
                         </label>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="notificationToggle">
-                            <span class="toggle-slider"></span>
+                        
+                        <label class="radio-option">
+                            <input type="radio" name="notificationPref" value="vibrate" id="vibrateRadio">
+                            <span class="radio-custom"></span>
+                            <span class="radio-text">
+                                <svg class="notification-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M0 15h2V9H0v6zm3 2h2V7H3v10zm19-8v6h2V9h-2zm-3 8h2V7h-2v10zm-8-4h4v-2h-4V5h-2v4H7v2h4v4h2v-4z"/>
+                                </svg>
+                                Vibration
+                            </span>
                         </label>
-                        <span id="notificationStatusText">Sound</span>
                     </div>
                 </div>
                 
+                <div class="status-message" id="settingsStatus"></div>
+                
                 <div class="btn-group">
-                    <button class="btn btn-primary" id="changePasswordBtn">
+                    <button class="btn btn-primary" id="saveSettingsBtn">
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                        </svg>
+                        Save Settings
+                    </button>
+                    
+                    <button class="btn btn-secondary" id="changePasswordBtn">
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
                         </svg>
                         Change Password
                     </button>
-                    
-                    <button class="btn btn-tertiary" id="logoutButton">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-                        </svg>
-                        Logout
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Default Map Settings Card -->
-            <div class="settings-card">
-                <h2 class="card-title">Default Map Settings</h2>
-                
-                <div class="form-group">
-                    <label class="form-label">Select Default Map Layer</label>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" name="defaultMap" value="streets" id="streetsRadio">
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">Streets</span>
-                        </label>
-                        
-                        <label class="radio-option">
-                            <input type="radio" name="defaultMap" value="satellite" id="satelliteRadio">
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">Satellite</span>
-                        </label>
-                        
-                        <label class="radio-option">
-                            <input type="radio" name="defaultMap" value="terrain" id="terrainRadio">
-                            <span class="radio-custom"></span>
-                            <span class="radio-text">Terrain</span>
-                        </label>
-                    </div>
                 </div>
                 
-                <div class="status-message" id="mapSettingsStatus"></div>
-                
-                <div class="btn-group">
-                    <button class="btn btn-primary" id="saveMapSettingsBtn">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
-                        </svg>
-                        Save Map Settings
-                    </button>
-                    
-                    <button class="btn btn-secondary" onclick="location.href='interface.html'">
-                        <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                        </svg>
-                        Back to Map
-                    </button>
-                </div>
+                <button class="btn btn-tertiary" id="logoutButton">
+                    <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                    </svg>
+                    Logout
+                </button>
             </div>
         </div>
     </div>
@@ -915,7 +826,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp as initializeFirebase } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-        import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -961,10 +872,10 @@
             }
         }
 
-        // Save settings to Firebase
+        // Save settings to Firebase under credentials/<username>/settings
         async function saveSettings(username, settings) {
             try {
-                const settingsRef = ref(database, 'settings/' + username);
+                const settingsRef = ref(database, 'credentials/' + username + '/settings');
                 await set(settingsRef, settings);
                 return true;
             } catch (error) {
@@ -973,10 +884,10 @@
             }
         }
 
-        // Load settings from Firebase
+        // Load settings from Firebase under credentials/<username>/settings
         async function loadSettings(username) {
             try {
-                const settingsRef = ref(database, 'settings/' + username);
+                const settingsRef = ref(database, 'credentials/' + username + '/settings');
                 const snapshot = await get(settingsRef);
                 
                 if (snapshot.exists()) {
@@ -984,8 +895,7 @@
                 } else {
                     // Return default settings if none exist
                     return {
-                        defaultMap: 'streets',
-                        notificationSound: true,
+                        notificationSound: true, // Default to sound
                         lastUpdated: new Date().toISOString()
                     };
                 }
@@ -1087,18 +997,16 @@
                     // Load user settings
                     const settings = await loadSettings(username);
                     if (settings) {
-                        // Set radio button based on saved setting
-                        if (settings.defaultMap) {
-                            document.getElementById(`${settings.defaultMap}Radio`).checked = true;
-                        }
-                        
-                        // Set notification toggle based on saved setting
-                        const notificationToggle = document.getElementById('notificationToggle');
-                        const notificationStatusText = document.getElementById('notificationStatusText');
-                        
+                        // Set notification preference radio button
                         if (settings.notificationSound !== undefined) {
-                            notificationToggle.checked = settings.notificationSound;
-                            notificationStatusText.textContent = settings.notificationSound ? 'Sound' : 'Vibration';
+                            if (settings.notificationSound) {
+                                document.getElementById('soundRadio').checked = true;
+                            } else {
+                                document.getElementById('vibrateRadio').checked = true;
+                            }
+                        } else {
+                            // Default to sound if no setting exists
+                            document.getElementById('soundRadio').checked = true;
                         }
                     }
                     
@@ -1141,42 +1049,17 @@
                 profileDropdown.classList.remove('active');
             });
             
-            // Notification toggle functionality
-            const notificationToggle = document.getElementById('notificationToggle');
-            const notificationStatusText = document.getElementById('notificationStatusText');
-            
-            notificationToggle.addEventListener('change', async function() {
-                const isSound = this.checked;
-                notificationStatusText.textContent = isSound ? 'Sound' : 'Vibration';
+            // Save settings button
+            document.getElementById('saveSettingsBtn').addEventListener('click', async function() {
+                const selectedPref = document.querySelector('input[name="notificationPref"]:checked').value;
+                const isSound = selectedPref === 'sound';
                 
-                // Save notification preference
-                const settingsRef = ref(database, 'settings/' + username);
-                const currentSettings = await loadSettings(username);
-                
-                if (currentSettings) {
-                    currentSettings.notificationSound = isSound;
-                    currentSettings.lastUpdated = new Date().toISOString();
-                    
-                    const success = await saveSettings(username, currentSettings);
-                    
-                    if (success) {
-                        console.log('Notification preference saved:', isSound ? 'Sound' : 'Vibration');
-                    }
-                }
-            });
-            
-            // Save map settings
-            document.getElementById('saveMapSettingsBtn').addEventListener('click', async function() {
-                const selectedMap = document.querySelector('input[name="defaultMap"]:checked').value;
-                
-                const currentSettings = await loadSettings(username);
                 const settings = {
-                    ...currentSettings,
-                    defaultMap: selectedMap,
+                    notificationSound: isSound,
                     lastUpdated: new Date().toISOString()
                 };
                 
-                const statusElement = document.getElementById('mapSettingsStatus');
+                const statusElement = document.getElementById('settingsStatus');
                 statusElement.textContent = 'Saving settings...';
                 statusElement.className = 'status-message status-info';
                 statusElement.style.display = 'block';
