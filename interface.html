@@ -2837,26 +2837,19 @@ trackProbationerBtn.addEventListener('click', function() {
 });
 
 // View profile button
+// View profile button - Navigate to probationers.html
 viewProfileBtn.addEventListener('click', function() {
     if (!selectedProbationer) {
         alert('Please select a probationer first');
         return;
     }
     
-    // In a real app, this would open a profile page
-    // For now, show an alert with basic info
-    const probationer = window.assignedProbationers?.find(p => p.key === selectedProbationer);
-    if (probationer) {
-        alert(
-            `Probationer Profile:\n\n` +
-            `Name: ${probationer.fullName}\n` +
-            `ID: ${probationer.assignedId || 'N/A'}\n` +
-            `Email: ${probationer.email || 'N/A'}\n` +
-            `Phone: ${probationer.phone || 'N/A'}\n` +
-            `Address: ${probationer.address || 'N/A'}\n` +
-            `Officer: ${probationer.officerInCharge || 'N/A'}`
-        );
-    }
+    // Store the selected probationer ID in localStorage or sessionStorage
+    // so probationers.html knows which profile to show
+    localStorage.setItem('selectedProbationerId', selectedProbationer);
+    
+    // Navigate to probationers.html
+    window.location.href = 'probationers.html';
 });
 
 // Helper function to load probationer details
