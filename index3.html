@@ -68,19 +68,17 @@
     background: rgba(37, 159, 222, 0.3);
 }
 
-/* Blinking Circle */
 .blinking-circle {
     width: 6vmin;
     height: 6vmin;
     border-radius: 50%;
-    background-color: #259FDE; /* Starting color */
+    background-color: #25DE37; 
     margin-top: 4vmin;
-    animation: blinkRedGreen 1s infinite alternate;
 }
 
 @keyframes blinkRedGreen {
-    0% { background-color: #DE3725; } /* Red */
-    100% { background-color: #25DE37; } /* Green */
+    0% { background-color: #DE3725; }
+    100% { background-color: #25DE37; }
 }
         /* Period Indicator */
 .period-indicator {
@@ -1115,9 +1113,16 @@ function showBoundaryViolationAlert(probationerName, coordinates) {
     }, 10000);
 }
 
-
+function initializeCircle() {
+    const circle = document.querySelector('.blinking-circle');
+    if (circle) {
+        circle.style.animation = 'none';
+        circle.style.backgroundColor = '#25DE37';
+    }
+}
        
 // Helper function to save all statuses and detect violations
+// PREFIX: Updated boundary detection with circle control
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
         console.log(`Saving status for ${probationerKey}`, statuses);
@@ -1130,23 +1135,58 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             'lastLocationCheck': statuses.lastCheck
         };
         
-        // If we have coordinates and boundaries
-        if (statuses.isProbationerhasCoordinate && statuses.isProbationerhasBoundaries) {
-            console.log("Has both coordinates and boundaries");
+        // Check if boundary/location is available
+        boundaryStatusAvailable = statuses.isProbationerhasCoordinate && statuses.isProbationerhasBoundaries;
+        
+        if (!boundaryStatusAvailable) {
+            // GPS or boundary data unavailable - set stable green
+            currentBoundaryState = 'unavailable';
+            console.log("Boundary/location data unavailable - setting stable green");
+            
+            // Update circle immediately
+            updateCircleColor();
+        } else {
+            // We have both GPS and boundaries
+            const isInside = statuses.probationerAreaInside;
+            const newState = isInside ? 'inside' : 'outside';
+            const oldState = currentBoundaryState;
+            
+            // Store old state to detect changes
+            const oldState = currentBoundaryState;
+            currentBoundaryState = isInside ? 'inside' : 'outside';
+
+              if (oldState !== newState) {
+                currentBoundaryState = newState;
+                lastBoundaryStatusChangeTime = Date.now();
+                updateCircleColor();
+                console.log(`Boundary state changed: ${oldState} -> ${newState}`);
+            }
             
             // DETECT BOUNDARY VIOLATION
             // Only trigger if: 1) Has boundaries, 2) Has coordinates, 3) Was inside, 4) Now outside
-            if (wasInsideBoundary && !statuses.probationerAreaInside) {
+            if (wasInsideBoundary && !isInside) {
                 console.log(`⚠️ Boundary violation transition detected!`);
                 console.log(`Previous: inside, Current: outside`);
                 await handleBoundaryViolation(probationerKey, statuses);
             } else {
-                console.log(`No violation. Previous inside: ${wasInsideBoundary}, Current inside: ${statuses.probationerAreaInside}`);
+                console.log(`No violation. Previous inside: ${wasInsideBoundary}, Current inside: ${isInside}`);
             }
             
             // Update previous state for next check
-            wasInsideBoundary = statuses.probationerAreaInside;
+            wasInsideBoundary = isInside;
             console.log(`Updated wasInsideBoundary to: ${wasInsideBoundary}`);
+            
+            // Update circle if state changed
+            if (oldState !== currentBoundaryState) {
+                lastBoundaryStatusChangeTime = Date.now();
+                updateCircleColor();
+                console.log(`Boundary state changed from ${oldState} to ${currentBoundaryState}`);
+            }
+        }
+        
+        // If we have coordinates and boundaries, save coordinates too
+        if (statuses.isProbationerhasCoordinate && statuses.isProbationerhasBoundaries) {
+            updates.coordinates = statuses.coordinates;
         }
         
         // Save to probationer status path
@@ -1160,6 +1200,50 @@ async function saveProbationerStatuses(probationerKey, statuses) {
     }
 }
 
+// PREFIX: Add this function after your boundary status variables
+function updateCircleColor() {
+    const circle = document.querySelector('.blinking-circle');
+    if (!circle) return;
+    
+    const now = Date.now();
+    
+    // Clear any existing animations
+    circle.style.animation = 'none';
+    circle.style.backgroundColor = '';
+    
+    // Check cooldown periods
+    if (currentBoundaryState === 'inside') {
+        // Inside boundary logic
+        if (now - lastBoundaryStatusChangeTime > INSIDE_COOLDOWN) {
+            // Time for a blink
+            circle.style.backgroundColor = '#25DE37'; // Green
+            setTimeout(() => {
+                circle.style.backgroundColor = 'transparent';
+                lastBoundaryStatusChangeTime = Date.now();
+            }, INSIDE_BLINK_DURATION);
+        } else {
+            // In cooldown - show steady green
+            circle.style.backgroundColor = '#25DE37'; // Green
+        }
+    } else if (currentBoundaryState === 'outside') {
+        // Outside boundary logic
+        if (now - lastBoundaryStatusChangeTime > OUTSIDE_COOLDOWN) {
+            // Time for a blink
+            circle.style.backgroundColor = '#DE3725'; // Red
+            setTimeout(() => {
+                circle.style.backgroundColor = 'transparent';
+                lastBoundaryStatusChangeTime = Date.now();
+            }, OUTSIDE_BLINK_DURATION);
+        } else {
+            // In cooldown - transparent
+            circle.style.backgroundColor = 'transparent';
+        }
+    } else if (currentBoundaryState === 'unavailable') {
+        // GPS or boundary unavailable - steady green
+        circle.style.backgroundColor = '#25DE37'; // Green
+    }
+}
+        
 // Point in polygon check (unchanged)
 function isPointInPolygon(bounds, lat, lng) {
     var count = 0;
@@ -1607,6 +1691,13 @@ const NOTIFICATION_COOLDOWN = 300000; // 5 minutes (in milliseconds)
 let lastBoundaryViolationTime = 0;
 const BOUNDARY_VIOLATION_COOLDOWN = 10000; // 10 seconds cooldown
 let wasInsideBoundary = true; // Track previous state to detect changes
+let lastBoundaryStatusChangeTime = 0;
+const INSIDE_BLINK_DURATION = 500; // 500ms blink when inside
+const INSIDE_COOLDOWN = 10000; // 10 seconds cooldown when inside
+const OUTSIDE_BLINK_DURATION = 500; // 500ms blink when outside
+const OUTSIDE_COOLDOWN = 500; // 500ms cooldown when outside
+let boundaryStatusAvailable = true; // Track if boundary/location is available
+let currentBoundaryState = 'unknown'; // 'inside', 'outside', 'unavailable'
 
 
         
@@ -2207,12 +2298,17 @@ function updateClock() {
             
             // Initialize battery
             initBattery();
-            
+                lastBoundaryStatusChangeTime = Date.now();
+                currentBoundaryState = 'unavailable'; // Start with unavailable until we get data
+                updateCircleColor();
             // Start uptime tracking
             const uptimeTracker = new UptimeTracker();
             await uptimeTracker.start();
             await gpsTracker.start();
 
+              initializeCircle();
+            
+            
             async function checkProbationerAndShowModal() {
     if (!uptimeTracker.isConnected || !uptimeTracker.deviceId) {
         console.log("Skipping modal check: not connected or no device ID");
@@ -2464,6 +2560,7 @@ setTimeout(performProbationerStatusCheck, 3000);
 // ============================================
 // END: INIT - Start probationer status checking
 // ============================================
+setInterval(updateCircleColor, 1000);
             
 // Re-check when probationer name updates (optional extra trigger)
 const originalUpdateProbationerDisplay = updateProbationerDisplay;
@@ -2496,6 +2593,7 @@ updateProbationerDisplay = async function() {
     </script>
 </body>
 </html>
+
 
 
 
