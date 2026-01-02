@@ -1332,6 +1332,76 @@
         display: none;
     }
 }
+
+    /* Add this to the CSS section (around line 780) */
+
+/* Toggle Filter Styles */
+.toggle-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(37, 159, 222, 0.08);
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 2px solid rgba(37, 159, 222, 0.3);
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #259FDE 0%, #0E3CBD 100%);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* Filter indicator */
+.filter-active-indicator {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: rgba(37, 159, 222, 0.1);
+    color: #259FDE;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
     
     </style>
 </head>
@@ -1621,19 +1691,29 @@
 
     <div class="main-container" style="display: none;" id="mainContent">
         <div class="main-container">
-        <div class="page-header">
-            <div>
-                <h1 class="page-title">Probationers Management</h1>
-                <p class="page-subtitle">Monitor and manage all probationers under your supervision</p>
-            </div>
-             </div>
-            <button class="add-btn" id="addProbationerBtn">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
-                </svg>
-                Add New Probationer
-            </button>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Probationers Management</h1>
+        <p class="page-subtitle">Monitor and manage all probationers under your supervision</p>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <!-- Toggle Button Container -->
+        <div class="toggle-filter-container">
+            <span style="font-size: 14px; color: #2C3E50; font-weight: 600;">Assigned to Me</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="assignedFilterToggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
         </div>
+        <!-- Existing Add Button -->
+        <button class="add-btn" id="addProbationerBtn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
+            </svg>
+            Add New Probationer
+        </button>
+    </div>
+</div>
 
         <div class="probationers-grid" id="probationersGrid">
             <!-- Probationer cards will be dynamically added here -->
@@ -1643,12 +1723,12 @@
             <div class="empty-state-icon">📋</div>
             <h3>No Probationers Found</h3>
             <p>You haven't added any probationers yet. Click "Add New Probationer" to get started.</p>
-            <button class="add-btn" id="addFirstProbationerBtn">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
-                </svg>
-                Add Your First Probationer
-            </button>
+          <button class="add-btn" id="addFirstProbationerBtn">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 0a1 1 0 0 1 1 1v6h6a1 1 0 1 1 0 2H9v6a1 1 0 1 1-2 0V9H1a1 1 0 0 1 0-2h6V1a1 1 0 0 1 1-1z"/>
+    </svg>
+    Add Your First Probationer
+</button>
         </div>
     </div>
 
@@ -1714,6 +1794,10 @@
 
         // ============ USER PROFILE FUNCTIONS ============
 
+let currentUserFullName = null;
+let assignedFilterEnabled = true; // Default enabled
+        
+
 // Get user data from Firebase
 async function getUserData(username) {
     try {
@@ -1743,7 +1827,8 @@ async function initializeUserProfile() {
             // Update UI with user data
             document.getElementById('usernameDisplay').textContent = userData.username;
             document.getElementById('emailDisplay').textContent = userData.email;
-            
+            currentUserFullName = userData.fullName || userData.username;
+            console.log("Current user full name:", currentUserFullName);
             // Update user avatar with profile picture from Firebase
             const userAvatar = document.getElementById('userAvatar');
             
@@ -2530,20 +2615,51 @@ function openViolationsModal(probationerId) {
         }
 
         // Render probationers to the grid
-        function renderProbationers() {
-            const grid = document.getElementById('probationersGrid');
-            const emptyState = document.getElementById('emptyState');
+function renderProbationers() {
+    const grid = document.getElementById('probationersGrid');
+    const emptyState = document.getElementById('emptyState');
+    
+    // Filter probationers based on toggle state
+    let filteredProbationers = [...probationers];
+    
+    if (assignedFilterEnabled && currentUserFullName) {
+        filteredProbationers = probationers.filter(probationer => {
+            // Check if officerInCharge matches current user's full name
+            return probationer.officerInCharge === currentUserFullName;
+        });
+        console.log(`Filter enabled: Showing ${filteredProbationers.length} probationers assigned to ${currentUserFullName}`);
+    }
+    
+    if (filteredProbationers.length === 0) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        
+        // Update empty state message based on filter
+        if (assignedFilterEnabled && currentUserFullName) {
+            emptyState.querySelector('h3').textContent = 'No Assigned Probationers';
+            emptyState.querySelector('p').textContent = `You don't have any probationers assigned to you (${currentUserFullName}).`;
+        } else {
+            emptyState.querySelector('h3').textContent = 'No Probationers Found';
+            emptyState.querySelector('p').textContent = 'You haven\'t added any probationers yet. Click "Add New Probationer" to get started.';
+        }
+        
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    grid.innerHTML = '';
+    
+    // Update count indicator in toggle label
+    const toggleLabel = document.querySelector('.toggle-filter-container span');
+    if (toggleLabel && currentUserFullName) {
+        if (assignedFilterEnabled) {
+            toggleLabel.innerHTML = `Assigned to Me <span class="filter-active-indicator">${filteredProbationers.length}</span>`;
+        } else {
+            toggleLabel.textContent = 'Assigned to Me';
+        }
+    }
             
-            if (probationers.length === 0) {
-                grid.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
-            
-            emptyState.style.display = 'none';
-            grid.innerHTML = '';
-            
-            probationers.forEach(probationer => {
+                filteredProbationers.forEach(probationer => {
                 const initial = probationer.fullName ? probationer.fullName.charAt(0).toUpperCase() : '?';
                 const status = probationer.deviceStatus || 'N/A';
                 const statusClass = probationer.watch && probationer.watch !== "none" 
@@ -2780,12 +2896,15 @@ setTimeout(() => {
         }
 
     } else {
-document.getElementById('assignedId').disabled = false;
-    resetModalForm();
-    loadWatches(null, 'none');  // Pre-select "None" for new
-
-        // For new probationer: disable all watches that are already assigned
-       // loadWatches(null);
+        // For new probationer, pre-fill officerInCharge with current user
+        document.getElementById('assignedId').disabled = false;
+        resetModalForm();
+        loadWatches(null, 'none');
+        
+        // AUTO-FILL officerInCharge with current user's name
+        if (currentUserFullName) {
+            document.getElementById('officerInCharge').value = currentUserFullName;
+        }
     }
 }
 
@@ -3162,6 +3281,16 @@ async function initApplication() {
                     closeAddAnnouncementModal();
                 }
             });
+
+                // Toggle filter button
+    const toggleFilter = document.getElementById('assignedFilterToggle');
+    if (toggleFilter) {
+        toggleFilter.addEventListener('change', function(e) {
+            assignedFilterEnabled = this.checked;
+            console.log('Assigned filter:', assignedFilterEnabled ? 'ON' : 'OFF');
+            renderProbationers(); // Re-render with filter
+        });
+    }
             
             // Close modals with Escape key
             document.addEventListener('keydown', (e) => {
