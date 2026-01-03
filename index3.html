@@ -2269,32 +2269,32 @@ class GeolocationTracker {
         }
     }
     
-    // Save coordinates to Firebase
-    async saveToFirebase() {
-        try {
-            const uptimeTracker = window.uptimeTracker;
-            if (!uptimeTracker || !uptimeTracker.deviceId || !this.currentCoords) {
-                console.error("Cannot save: Missing device ID or coordinates");
-                return;
-            }
-            
-            const coordsRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/coordinates`);
-            
-            const gpsData = {
-                value: `${this.currentCoords.lat},${this.currentCoords.lng}`,
-                accuracy: this.currentCoords.accuracy,
-                timestamp: this.currentCoords.timestamp,
-                updated: new Date().toISOString(),
-                source: 'gps'
-            };
-            
-            await set(coordsRef, gpsData);
-            //console.log("GPS coordinates saved to Firebase");
-            
-        } catch (error) {
-            console.error("Error saving GPS to Firebase:", error);
+// Save coordinates to Firebase
+async saveToFirebase() {
+    try {
+        const uptimeTracker = window.uptimeTracker;
+        if (!uptimeTracker || !uptimeTracker.deviceId || !this.currentCoords) {
+            console.error("Cannot save: Missing device ID or coordinates");
+            return;
         }
+        
+        const coordsRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/coordinates`);
+        
+        const gpsData = {
+            value: `${this.currentCoords.lat},${this.currentCoords.lng}`,
+            accuracy: this.currentCoords.accuracy,
+            timestamp: this.currentCoords.timestamp,
+            updated: new Date().toISOString(),
+            source: this.currentCoords.source || 'gps' // Add source field
+        };
+        
+        await set(coordsRef, gpsData);
+        console.log("Coordinates saved to Firebase. Source:", gpsData.source);
+        
+    } catch (error) {
+        console.error("Error saving coordinates to Firebase:", error);
     }
+}
     
     // Get current coordinates
     getCurrentCoordinates() {
@@ -2345,9 +2345,80 @@ class GeolocationTracker {
     }
 }
 
+
+
+
 // Create global instance
 const gpsTracker = new GeolocationTracker();
+// ============================================
+// END: GEOLOCATION TRACKER (FIXED VERSION)
+// ============================================
+
+// ============================================
+// MANUAL COORDINATES SET FUNCTION
+// ============================================
+function setManualCoordinates(coordinateString) {
+    try {
+        // Parse the coordinate string (format: "14.56746,120.346456")
+        const [latStr, lngStr] = coordinateString.split(',');
+        const lat = parseFloat(latStr.trim());
+        const lng = parseFloat(lngStr.trim());
         
+        if (isNaN(lat) || isNaN(lng)) {
+            console.error("Invalid coordinate format. Use: 'latitude,longitude'");
+            return false;
+        }
+        
+        // Update GPS tracker's current coordinates
+        if (window.gpsTracker) {
+            window.gpsTracker.currentCoords = {
+                lat: lat.toFixed(6),
+                lng: lng.toFixed(6),
+                accuracy: 5, // Manual input, assume 5m accuracy
+                timestamp: new Date().toISOString(),
+                source: 'manual'
+            };
+            
+            console.log(`Manual coordinates set: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+            
+            // Update UI to show connected status
+            updateGPSIcon('connected');
+            
+            // Save to Firebase
+            window.gpsTracker.saveToFirebase();
+            
+            // Trigger probationer status check with new coordinates
+            if (window.performProbationerStatusCheck) {
+                window.performProbationerStatusCheck();
+            }
+            
+            // Show status feedback
+            const statusIndicator = document.getElementById('statusIndicator');
+            if (statusIndicator) {
+                const originalText = statusIndicator.textContent;
+                statusIndicator.textContent = "Manual GPS Set";
+                statusIndicator.style.color = '#259FDE';
+                
+                setTimeout(() => {
+                    statusIndicator.textContent = originalText;
+                    statusIndicator.style.color = '#5E5E5E';
+                }, 2000);
+            }
+            
+            return true;
+        } else {
+            console.error("GPS tracker not initialized");
+            return false;
+        }
+    } catch (error) {
+        console.error("Error setting manual coordinates:", error);
+        return false;
+    }
+}
+
+// Make the function globally accessible
+window.setManualCoordinates = setManualCoordinates;
+ 
         // ============================================
         // CLOCK LOGIC
         // ============================================
@@ -2783,6 +2854,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
