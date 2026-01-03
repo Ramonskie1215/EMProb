@@ -926,7 +926,6 @@ function playBeep(count = 3, frequency = 2000, interval = 400, duration = 200) {
                 });
                 
     window.uptimeTracker = this;
-    
     return this;
                 
             }
@@ -2350,6 +2349,7 @@ async saveToFirebase() {
 
 // Create global instance
 const gpsTracker = new GeolocationTracker();
+        window.gpsTracker = gpsTracker;
 // ============================================
 // END: GEOLOCATION TRACKER (FIXED VERSION)
 // ============================================
