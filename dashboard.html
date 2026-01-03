@@ -197,6 +197,87 @@
     100% { transform: scale(1); }
 }
 
+/* Notification Search Styles */
+.notification-search-container {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ECF0F1;
+    background: #F8FAFC;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.notification-search-input {
+    width: 100%;
+    padding: 10px 40px 10px 35px;
+    border: 1px solid rgba(37, 159, 222, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #2C3E50;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.notification-search-input:focus {
+    outline: none;
+    border-color: #259FDE;
+    box-shadow: 0 0 0 2px rgba(37, 159, 222, 0.2);
+}
+
+.notification-search-input::placeholder {
+    color: #95A5A6;
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 10px;
+    background: rgba(231, 76, 60, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.clear-search-btn:hover {
+    background: rgba(231, 76, 60, 0.2);
+    transform: scale(1.1);
+}
+
+.clear-search-btn svg {
+    width: 12px;
+    height: 12px;
+}
+
+.search-results-info {
+    padding: 5px 20px;
+    font-size: 12px;
+    color: #7F8C8D;
+    background: #F8FAFC;
+    border-bottom: 1px solid #ECF0F1;
+}
+
+.search-no-results {
+    padding: 40px 20px;
+    text-align: center;
+    color: #95A5A6;
+    font-style: italic;
+}
+
+.search-no-results svg {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
 .notification-dropdown {
     position: absolute;
     top: 100%;
@@ -807,16 +888,36 @@
             </svg>
             <span class="notification-badge" id="notificationBadge">0</span>
         </button>
-        <div class="notification-dropdown" id="notificationDropdown">
-            <div class="notification-header">
-                <h3>Notifications</h3>
-                <button class="mark-all-read" id="markAllReadBtn">Mark all as read</button>
-            </div>
-            <div class="notification-list" id="notificationList">
-                <!-- Notifications will be loaded here -->
-                <div class="notification-empty">No notifications</div>
-            </div>
+<div class="notification-dropdown" id="notificationDropdown">
+    <div class="notification-header">
+        <h3>Notifications</h3>
+        <button class="mark-all-read" id="markAllReadBtn">Mark all as read</button>
+    </div>
+    
+    <!-- Add search bar here -->
+    <div class="notification-search-container">
+        <div class="search-input-wrapper">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="#95A5A6" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%);">
+                <path d="M6.5 0a6.5 6.5 0 1 0 4.1 11.6l3.4 3.4 1.4-1.4-3.4-3.4A6.5 6.5 0 0 0 6.5 0zm0 12a5.5 5.5 0 1 1 5.5-5.5A5.5 5.5 0 0 1 6.5 12z"/>
+            </svg>
+            <input type="text" 
+                   id="notificationSearchInput" 
+                   placeholder="Search notifications..." 
+                   class="notification-search-input"
+                   autocomplete="off">
+            <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="#E74C3C">
+                    <path d="M14 1.4L12.6 0 7 5.6 1.4 0 0 1.4 5.6 7 0 12.6 1.4 14 7 8.4l5.6 5.6 1.4-1.4L8.4 7z"/>
+                </svg>
+            </button>
         </div>
+    </div>
+    
+    <div class="notification-list" id="notificationList">
+        <!-- Notifications will be loaded here -->
+        <div class="notification-empty">No notifications</div>
+    </div>
+</div>
     </div>
 
         
@@ -1129,7 +1230,239 @@ async function loadDashboardStats(username) {
     }
 }
 
-     // Load notifications for the logged-in user
+
+// Store original notifications for filtering
+let originalNotifications = [];
+
+// Function to filter notifications based on search text
+function filterNotifications(searchText, notifications) {
+    if (!searchText.trim()) {
+        return notifications; // Return all if search is empty
+    }
+    
+    const searchLower = searchText.toLowerCase();
+    
+    return notifications.filter(notification => {
+        // Check in title
+        let title = 'Notification';
+        if (notification.subject) {
+            title = notification.subject;
+        } else if (notification.type) {
+            title = notification.type
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        // Check in message
+        const message = notification.message || 
+                       notification.details || 
+                       'No message available';
+        
+        // Check in type
+        const type = notification.type || '';
+        
+        // Check in timestamp (for date search)
+        const time = new Date(notification.timestamp);
+        const dateStr = time.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        const timeStr = time.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Search in various fields
+        return title.toLowerCase().includes(searchLower) ||
+               message.toLowerCase().includes(searchLower) ||
+               type.toLowerCase().includes(searchLower) ||
+               dateStr.toLowerCase().includes(searchLower) ||
+               timeStr.toLowerCase().includes(searchLower) ||
+               // Search in violation details if present
+               (notification.violation && 
+                (notification.violation.details || '').toLowerCase().includes(searchLower)) ||
+               // Search in subject if present
+               (notification.subject || '').toLowerCase().includes(searchLower);
+    });
+}
+
+// Function to perform search with debounce
+let searchTimeout;
+function performSearch() {
+    const searchInput = document.getElementById('notificationSearchInput');
+    const searchText = searchInput.value.trim();
+    const clearBtn = document.getElementById('clearSearchBtn');
+    
+    // Show/hide clear button
+    if (searchText) {
+        clearBtn.style.display = 'flex';
+    } else {
+        clearBtn.style.display = 'none';
+    }
+    
+    // Clear previous timeout
+    if (searchTimeout) {
+        clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debouncing (1 second)
+    searchTimeout = setTimeout(() => {
+        if (originalNotifications.length === 0) return;
+        
+        let filteredNotifications;
+        
+        if (!searchText) {
+            // If search is empty, show all notifications
+            filteredNotifications = originalNotifications;
+        } else {
+            // Filter notifications
+            filteredNotifications = filterNotifications(searchText, originalNotifications);
+        }
+        
+        // Update the notification list with filtered results
+        updateNotificationList(filteredNotifications, searchText);
+        
+    }, 1000); // 1 second delay
+}
+
+// Update the updateNotificationList function to accept search parameter
+function updateNotificationList(notifications, searchText = '') {
+    const notificationList = document.getElementById('notificationList');
+    
+    if (notifications.length === 0) {
+        if (searchText) {
+            notificationList.innerHTML = `
+                <div class="search-no-results">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <p>No notifications found for "${searchText}"</p>
+                </div>
+            `;
+        } else {
+            notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
+        }
+        return;
+    }
+    
+    // Add search results info if there's a search term
+    let html = '';
+    if (searchText) {
+        html += `<div class="search-results-info">Found ${notifications.length} notification(s) matching "${searchText}"</div>`;
+    }
+    
+    notifications.forEach(notification => {
+        // Format timestamp
+        const time = new Date(notification.timestamp);
+        const timeStr = time.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Determine notification type
+        let typeClass = 'announcement';
+        let typeText = 'Announcement';
+        
+        if (notification.type && (
+            notification.type.includes('tamper') || 
+            notification.type.includes('Tampering') ||
+            notification.type.includes('violation') ||
+            notification.type.includes('Violation')
+        )) {
+            typeClass = 'violation';
+            typeText = 'Violation';
+        } 
+        else if (notification.type && (
+            notification.type.includes('announce') || 
+            notification.type.includes('Announcement') ||
+            notification.type.includes('acknowledged') ||
+            notification.type.includes('Acknowledged')
+        )) {
+            typeClass = 'announcement';
+            typeText = 'Announcement';
+        }
+        else if (notification.violation) {
+            typeClass = 'violation';
+            typeText = 'Violation';
+        }
+        else if (notification.announcementTime || notification.subject) {
+            typeClass = 'announcement';
+            typeText = 'Announcement';
+        }
+        
+        // Determine notification title
+        let title = 'Notification';
+        if (notification.subject) {
+            title = notification.subject;
+        } else if (notification.type) {
+            title = notification.type
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        // Get the message
+        const message = notification.message || 
+                       notification.details || 
+                       'No message available';
+        
+        // Check if notification is already read
+        const isRead = notification.read === true;
+        
+        html += `
+            <div class="notification-item ${!isRead ? 'unread' : ''}" data-id="${notification.id}">
+                <div class="notification-title">
+                    <span>${title}</span>
+                    <span class="time">
+                        ${isRead ? `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ` : ''}
+                        ${timeStr}
+                    </span>
+                </div>
+                <div class="notification-message">${message}</div>
+                <span class="notification-type ${typeClass}">${typeText}</span>
+            </div>
+        `;
+    });
+    
+    notificationList.innerHTML = html;
+    
+    // Add click handlers for filtered notifications
+    document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', async function(e) {
+            e.stopPropagation();
+            
+            const notificationId = this.getAttribute('data-id');
+            const isUnread = this.classList.contains('unread');
+            
+            if (!isUnread) {
+                return;
+            }
+            
+            try {
+                await markAsRead(currentUsername, notificationId);
+                
+                // Update UI
+                this.classList.remove('unread');
+                
+                const timeSpan = this.querySelector('.time');
+                if (timeSpan) {
+                    const currentText = timeSpan.textContent;
+                    const cleanText = currentText.replace(/✓ Read • /g, '').trim();
+                    timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${cleanText}`;
+                }
+                
+                updateBadgeCountAfterRead();
+                
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+}
+
+// Update the loadNotifications function to store original notifications
 async function loadNotifications(username) {
     try {
         const notificationsRef = ref(database, 'credentials/' + username + '/notifications');
@@ -1141,9 +1474,7 @@ async function loadNotifications(username) {
         if (snapshot.exists()) {
             const notificationsData = snapshot.val();
             
-            // Process each notification
             Object.entries(notificationsData).forEach(([key, notification]) => {
-                // Check if notification is unread (doesn't have read:true)
                 const isUnread = !notification.read || notification.read !== true;
                 
                 if (isUnread) {
@@ -1158,14 +1489,16 @@ async function loadNotifications(username) {
                 });
             });
             
-            // Sort notifications by timestamp (newest first)
             notifications.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         }
+        
+        // Store original notifications for filtering
+        originalNotifications = [...notifications];
         
         // Update badge count
         updateNotificationBadge(unreadCount);
         
-        // Update notification list
+        // Update notification list (show all initially)
         updateNotificationList(notifications);
         
         console.log(`Notifications loaded: ${unreadCount} unread out of ${notifications.length} total`);
@@ -1176,6 +1509,7 @@ async function loadNotifications(username) {
         updateNotificationList([]);
     }
 }
+        
 
 // Update notification badge
 function updateNotificationBadge(count) {
@@ -1190,140 +1524,7 @@ function updateNotificationBadge(count) {
     }
 }
 
-// Update notification list in dropdown
-function updateNotificationList(notifications) {
-    const notificationList = document.getElementById('notificationList');
-    
-    if (notifications.length === 0) {
-        notificationList.innerHTML = '<div class="notification-empty">No notifications</div>';
-        return;
-    }
-    
-    let html = '';
-    
-    notifications.forEach(notification => {
-        // Format timestamp
-        const time = new Date(notification.timestamp);
-        const timeStr = time.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        // Determine notification type based on multiple criteria
-        let typeClass = 'announcement';
-        let typeText = 'Announcement';
-        
-        // Check for VIOLATION types
-        if (notification.type && (
-            notification.type.includes('tamper') || 
-            notification.type.includes('Tampering') ||
-            notification.type.includes('violation') ||
-            notification.type.includes('Violation')
-        )) {
-            typeClass = 'violation';
-            typeText = 'Violation';
-        } 
-        // Check for ANNOUNCEMENT types
-        else if (notification.type && (
-            notification.type.includes('announce') || 
-            notification.type.includes('Announcement') ||
-            notification.type.includes('acknowledged') ||
-            notification.type.includes('Acknowledged')
-        )) {
-            typeClass = 'announcement';
-            typeText = 'Announcement';
-        }
-        // Check if it has a violation object (tampering notification)
-        else if (notification.violation) {
-            typeClass = 'violation';
-            typeText = 'Violation';
-        }
-        // Check if it has announcement properties
-        else if (notification.announcementTime || notification.subject) {
-            typeClass = 'announcement';
-            typeText = 'Announcement';
-        }
-        
-        // Determine notification title
-        let title = 'Notification';
-        if (notification.subject) {
-            title = notification.subject;
-        } else if (notification.type) {
-            // Format the type for display
-            title = notification.type
-                .replace(/_/g, ' ')
-                .replace(/\b\w/g, l => l.toUpperCase());
-        }
-        
-        // Get the message
-        const message = notification.message || 
-                       notification.details || 
-                       'No message available';
-        
-   // Check if notification is already read
-const isRead = notification.read === true;
-const readTime = notification.readAt ? new Date(notification.readAt).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-}) : '';
 
-html += `
-    <div class="notification-item ${!isRead ? 'unread' : ''}" data-id="${notification.id}">
-        <div class="notification-title">
-            <span>${title}</span>
-            <span class="time">
-                ${isRead ? `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ` : ''}
-                ${timeStr}
-            </span>
-        </div>
-        <div class="notification-message">${message}</div>
-        <span class="notification-type ${typeClass}">${typeText}</span>
-    </div>
-`;
-    });
-    
-    notificationList.innerHTML = html;
-    
-// Add click handlers for notifications
-document.querySelectorAll('.notification-item').forEach(item => {
-    item.addEventListener('click', async function(e) {
-        e.stopPropagation();
-        
-        const notificationId = this.getAttribute('data-id');
-        const isUnread = this.classList.contains('unread');
-        
-        if (!isUnread) {
-            return; // Already read - dropdown stays open
-        }
-        
-        // Mark as read but don't close dropdown
-        try {
-            await markAsRead(currentUsername, notificationId);
-            
-            // Update UI without closing dropdown
-            this.classList.remove('unread');
-            
-            // Update time display
-            const timeSpan = this.querySelector('.time');
-            if (timeSpan) {
-                const currentText = timeSpan.textContent;
-                const cleanText = currentText.replace(/✓ Read • /g, '').trim();
-                timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${cleanText}`;
-            }
-            
-            // Update badge
-            updateBadgeCountAfterRead();
-            
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    });
-});
-}
 
 // Mark a notification as read
 async function markAsRead(username, notificationId) {
@@ -1429,6 +1630,30 @@ function initializeEventListeners() {
         e.stopPropagation();
         profileDropdown.classList.toggle('active');
     });
+
+    const searchInput = document.getElementById('notificationSearchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        // Search as user types (with debounce)
+        searchInput.addEventListener('input', performSearch);
+        
+        // Clear search when clicking X button
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            clearSearchBtn.style.display = 'none';
+            updateNotificationList(originalNotifications); // Show all notifications
+        });
+        
+        // Clear search when pressing Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                clearSearchBtn.style.display = 'none';
+                updateNotificationList(originalNotifications);
+            }
+        });
+    }
     
     // Notification dropdown functionality
     const notificationBtn = document.getElementById('notificationBtn');
@@ -1439,6 +1664,24 @@ function initializeEventListeners() {
         notificationDropdown.classList.toggle('active');
         profileDropdown.classList.remove('active'); // Close profile dropdown if open
     });
+
+    // When closing notification dropdown, reset search
+notificationBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    notificationDropdown.classList.toggle('active');
+    profileDropdown.classList.remove('active');
+    
+    // Reset search when opening dropdown
+    if (notificationDropdown.classList.contains('active')) {
+        const searchInput = document.getElementById('notificationSearchInput');
+        if (searchInput) {
+            searchInput.value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
+            // Show all notifications when opening
+            updateNotificationList(originalNotifications);
+        }
+    }
+});
     
     // Mark all as read button
     const markAllReadBtn = document.getElementById('markAllReadBtn');
