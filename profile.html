@@ -911,6 +911,47 @@
         font-size: 16px;
     }
 }
+
+ /* Add this to your existing CSS */
+.info-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2C3E50;
+    background: rgba(37, 159, 222, 0.05);
+    padding: 12px 18px;
+    border-radius: 10px;
+    border-left: 3px solid #259FDE;
+    /* Add these properties to handle long text */
+    word-break: break-word; /* Break long words */
+    white-space: normal; /* Allow wrapping */
+    overflow-wrap: anywhere; /* Modern property for breaking */
+    min-height: 44px; /* Minimum height to accommodate content */
+    display: flex;
+    align-items: center; /* Vertically center the text */
+}
+
+/* Specific rule for email field to handle long emails */
+.info-value#infoEmail {
+    white-space: normal;
+    word-break: break-all; /* More aggressive breaking for emails */
+}
+
+/* Adjust for responsive design */
+@media (max-width: 768px) {
+    .info-value {
+        font-size: 16px;
+        padding: 10px 15px;
+        min-height: 40px;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-value {
+        font-size: 15px;
+        padding: 8px 12px;
+        min-height: 38px;
+    }
+}       
     </style>
 </head>
 <body>
