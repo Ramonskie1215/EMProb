@@ -705,44 +705,7 @@
         const database = getDatabase(app);
         const auth = getAuth(app);
 
-// ============================================
-// ALTERNATIVE COORDINATES VIA URL PARAMETERS
-// ============================================
 
-function getAlternativeCoordinates() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const coordsParam = urlParams.get('coords');
-        
-        if (!coordsParam) return null;
-        
-        // Parse "lat,lng" format
-        const [latStr, lngStr] = coordsParam.split(',');
-        const lat = parseFloat(latStr.trim());
-        const lng = parseFloat(lngStr.trim());
-        
-        if (isNaN(lat) || isNaN(lng)) {
-            console.error("Invalid coordinates in URL parameter:", coordsParam);
-            return null;
-        }
-        
-        console.log(`Using alternative coordinates from URL: ${lat}, ${lng}`);
-        return {
-            lat: lat.toFixed(6),
-            lng: lng.toFixed(6),
-            accuracy: 50, // Default accuracy for manual coordinates
-            source: 'url_parameter',
-            timestamp: new Date().toISOString()
-        };
-    } catch (error) {
-        console.error("Error parsing alternative coordinates:", error);
-        return null;
-    }
-}
-
-// Call this early to check for coordinates
-const alternativeCoords = getAlternativeCoordinates();
-        
         // ============================================
 // AUDIO/BUZZER FUNCTIONALITY
 // ============================================
@@ -2087,7 +2050,7 @@ function updateGPSIcon(status) {
 }
 
 // ============================================
-// GEOLOCATION TRACKER (FIXED VERSION WITH ALTERNATIVE COORDINATES)
+// GEOLOCATION TRACKER (FIXED VERSION)
 // ============================================
 
 class GeolocationTracker {
@@ -2101,37 +2064,25 @@ class GeolocationTracker {
         this.isAvailable = 'geolocation' in navigator;
         this.permissionGranted = false;
         this.lastError = null;
-        this.alternativeCoords = getAlternativeCoordinates(); // Store alternative coords
         
-        console.log("GeolocationTracker created. Available:", this.isAvailable);
-        if (this.alternativeCoords) {
-            console.log("Alternative coordinates available from URL");
-        }
+        //console.log("GeolocationTracker created. Available:", this.isAvailable);
     }
     
     // Initialize GPS tracking
     async start() {
         if (!this.isAvailable) {
             console.error("Geolocation not available in this browser");
-            
-            // Check if we have alternative coordinates
-            if (this.alternativeCoords) {
-                console.log("Using alternative coordinates (geolocation not available)");
-                await this.useAlternativeCoordinates();
-                return true;
-            }
-            
             updateGPSIcon('error');
             return false;
         }
         
-        console.log("Starting GPS tracking...");
+        //console.log("Starting GPS tracking...");
         updateGPSIcon('searching');
         
         // Test permissions first
         const hasPermission = await this.checkPermission();
         if (!hasPermission) {
-            console.log("Waiting for user to grant permission...");
+            //console.log("Waiting for user to grant permission...");
             // We'll try anyway - browser will prompt
         }
         
@@ -2142,41 +2093,34 @@ class GeolocationTracker {
     // Check if we have permission
     async checkPermission() {
         if (!navigator.permissions || !navigator.permissions.query) {
-            console.log("Permission API not available, will rely on browser prompt");
+            //console.log("Permission API not available, will rely on browser prompt");
             return true; // Assume we can ask
         }
         
         try {
             const permission = await navigator.permissions.query({ name: 'geolocation' });
-            console.log("Current permission state:", permission.state);
+            //console.log("Current permission state:", permission.state);
             
             this.permissionGranted = permission.state === 'granted';
             
             // Listen for permission changes
             permission.onchange = () => {
-                console.log("Permission changed to:", permission.state);
+                //console.log("Permission changed to:", permission.state);
                 this.permissionGranted = permission.state === 'granted';
                 
                 if (this.permissionGranted && !this.isTracking) {
-                    console.log("Permission granted, restarting GPS...");
+                    //console.log("Permission granted, restarting GPS...");
                     this.startWatching();
                 } else if (!this.permissionGranted) {
-                    console.log("Permission revoked, stopping GPS...");
+                    //console.log("Permission revoked, stopping GPS...");
                     this.stop();
-                    
-                    // Check if we have alternative coordinates to use
-                    if (this.alternativeCoords) {
-                        console.log("Using alternative coordinates after permission revoked");
-                        this.useAlternativeCoordinates();
-                    } else {
-                        updateGPSIcon('error');
-                    }
+                    updateGPSIcon('error');
                 }
             };
             
             return this.permissionGranted;
         } catch (error) {
-            console.log("Error checking permissions:", error);
+            //console.log("Error checking permissions:", error);
             return true; // Assume we can ask
         }
     }
@@ -2184,7 +2128,7 @@ class GeolocationTracker {
     // Start watching position
     startWatching() {
         if (this.watchId !== null) {
-            console.log("GPS already watching, clearing old watch");
+            //console.log("GPS already watching, clearing old watch");
             this.stop();
         }
         
@@ -2203,19 +2147,11 @@ class GeolocationTracker {
             
             this.isTracking = true;
             this.retryCount = 0; // Reset retry count
-            console.log("GPS watch started successfully. Watch ID:", this.watchId);
+            //console.log("GPS watch started successfully. Watch ID:", this.watchId);
             
             return true;
         } catch (error) {
             console.error("Failed to start GPS watch:", error);
-            
-            // Check if we have alternative coordinates to use
-            if (this.alternativeCoords) {
-                console.log("Using alternative coordinates after watch start failed");
-                this.useAlternativeCoordinates();
-                return true;
-            }
-            
             updateGPSIcon('error');
             return false;
         }
@@ -2223,7 +2159,7 @@ class GeolocationTracker {
     
     // Handle successful position
     async handlePositionSuccess(position) {
-        console.log("GPS position acquired!");
+        //console.log("GPS position acquired!");
         
         const coords = position.coords;
         this.currentCoords = {
@@ -2233,12 +2169,11 @@ class GeolocationTracker {
             altitude: coords.altitude,
             heading: coords.heading,
             speed: coords.speed,
-            timestamp: new Date(position.timestamp).toISOString(),
-            source: 'gps'
+            timestamp: new Date(position.timestamp).toISOString()
         };
         
-        console.log(`Location: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
-        console.log(`Accuracy: ${this.currentCoords.accuracy} meters`);
+        //console.log(`Location: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
+        //console.log(`Accuracy: ${this.currentCoords.accuracy} meters`);
         
         // Update UI
         updateGPSIcon('connected');
@@ -2269,103 +2204,36 @@ class GeolocationTracker {
         switch(error.code) {
             case error.PERMISSION_DENIED:
                 console.error("User denied geolocation permission");
-                
-                // CHECK IF WE HAVE ALTERNATIVE COORDINATES
-                if (this.alternativeCoords) {
-                    console.log("Using alternative coordinates from URL parameter");
-                    this.useAlternativeCoordinates();
-                    return; // Don't show error or schedule retry
-                }
-                
                 updateGPSIcon('error');
                 this.showPermissionAlert();
                 break;
                 
             case error.POSITION_UNAVAILABLE:
                 console.error("Location information unavailable");
-                
-                // CHECK IF WE HAVE ALTERNATIVE COORDINATES
-                if (this.alternativeCoords) {
-                    console.log("Using alternative coordinates from URL parameter");
-                    this.useAlternativeCoordinates();
-                    return;
-                }
-                
                 this.scheduleRetry();
                 break;
                 
             case error.TIMEOUT:
                 console.error("Location request timed out");
-                
-                // CHECK IF WE HAVE ALTERNATIVE COORDINATES
-                if (this.alternativeCoords) {
-                    console.log("Using alternative coordinates from URL parameter");
-                    this.useAlternativeCoordinates();
-                    return;
-                }
-                
                 this.scheduleRetry();
                 break;
                 
             default:
                 console.error("Unknown geolocation error");
-                
-                // CHECK IF WE HAVE ALTERNATIVE COORDINATES
-                if (this.alternativeCoords) {
-                    console.log("Using alternative coordinates from URL parameter");
-                    this.useAlternativeCoordinates();
-                    return;
-                }
-                
                 updateGPSIcon('error');
         }
     }
-    
-async useAlternativeCoordinates() {
-    if (!this.alternativeCoords) return;
-    
-    this.currentCoords = this.alternativeCoords;
-    
-    console.log(`Using alternative coordinates: ${this.currentCoords.lat}, ${this.currentCoords.lng}`);
-    
-    // Update UI to show we're using manual coordinates
-    updateGPSIcon('manual'); // Changed from 'connected' to 'manual'
-    
-    // Add a special indicator
-    const statusIndicator = document.getElementById('statusIndicator');
-    if (statusIndicator) {
-        const originalText = statusIndicator.textContent;
-        statusIndicator.textContent = `GPS: Manual (${this.currentCoords.accuracy}m)`;
-        statusIndicator.style.color = '#FFA500'; // Orange for manual
-        
-        setTimeout(() => {
-            statusIndicator.textContent = originalText;
-            statusIndicator.style.color = '#5E5E5E';
-        }, 3000);
-    }
-    
-    // Save to Firebase
-    await this.saveToFirebase();
-}
     
     // Schedule a retry
     scheduleRetry() {
         if (this.retryCount >= this.maxRetries) {
             console.error(`Max retries reached (${this.maxRetries}). Stopping GPS.`);
-            
-            // Check if we have alternative coordinates before giving up
-            if (this.alternativeCoords) {
-                console.log("Using alternative coordinates after max retries");
-                this.useAlternativeCoordinates();
-                return;
-            }
-            
             updateGPSIcon('error');
             return;
         }
         
         this.retryCount++;
-        console.log(`GPS retry ${this.retryCount}/${this.maxRetries}. Next retry in ${this.retryDelay/1000}s`);
+        //console.log(`GPS retry ${this.retryCount}/${this.maxRetries}. Next retry in ${this.retryDelay/1000}s`);
         
         updateGPSIcon('searching');
         
@@ -2377,7 +2245,7 @@ async useAlternativeCoordinates() {
         
         setTimeout(() => {
             if (this.isTracking) {
-                console.log("Retrying GPS...");
+                //console.log("Retrying GPS...");
                 this.startWatching();
             }
         }, this.retryDelay);
@@ -2385,7 +2253,7 @@ async useAlternativeCoordinates() {
     
     // Show permission alert
     showPermissionAlert() {
-        console.log("GPS permission denied. User needs to enable location services.");
+        //console.log("GPS permission denied. User needs to enable location services.");
         
         // You could show a message to the user here
         const statusIndicator = document.getElementById('statusIndicator');
@@ -2417,14 +2285,14 @@ async useAlternativeCoordinates() {
                 accuracy: this.currentCoords.accuracy,
                 timestamp: this.currentCoords.timestamp,
                 updated: new Date().toISOString(),
-                source: this.currentCoords.source || 'gps' // Indicate source
+                source: 'gps'
             };
             
             await set(coordsRef, gpsData);
-            console.log("Coordinates saved to Firebase. Source:", gpsData.source);
+            //console.log("GPS coordinates saved to Firebase");
             
         } catch (error) {
-            console.error("Error saving coordinates to Firebase:", error);
+            console.error("Error saving GPS to Firebase:", error);
         }
     }
     
@@ -2456,7 +2324,7 @@ async useAlternativeCoordinates() {
         if (this.watchId !== null) {
             navigator.geolocation.clearWatch(this.watchId);
             this.watchId = null;
-            console.log("GPS watch stopped");
+            //console.log("GPS watch stopped");
         }
         
         this.isTracking = false;
@@ -2472,29 +2340,8 @@ async useAlternativeCoordinates() {
             retryCount: this.retryCount,
             maxRetries: this.maxRetries,
             currentCoords: this.currentCoords,
-            lastError: this.lastError,
-            hasAlternativeCoords: !!this.alternativeCoords
+            lastError: this.lastError
         };
-    }
-    
-    // NEW METHOD: Set alternative coordinates manually
-    setAlternativeCoordinates(lat, lng, accuracy = 50) {
-        this.alternativeCoords = {
-            lat: lat.toFixed(6),
-            lng: lng.toFixed(6),
-            accuracy: accuracy,
-            source: 'manual_override',
-            timestamp: new Date().toISOString()
-        };
-        
-        console.log(`Alternative coordinates set: ${lat}, ${lng}`);
-        
-        // If we're currently in error state, use them immediately
-        if (this.lastError && this.lastError.code === 1) { // PERMISSION_DENIED
-            this.useAlternativeCoordinates();
-        }
-        
-        return this.alternativeCoords;
     }
 }
 
@@ -2563,12 +2410,7 @@ function updateClock() {
             const uptimeTracker = new UptimeTracker();
             await uptimeTracker.start();
             await gpsTracker.start();
-           const alternativeCoords = getAlternativeCoordinates();
-    if (alternativeCoords) {
-        console.log("Alternative coordinates detected, using them as fallback");
-        // Set the alternative coordinates in the tracker
-        gpsTracker.alternativeCoords = alternativeCoords;
-    }
+
               initializeCircle();
             playBeep(1, 1000, 0, 1000);
             
@@ -2941,8 +2783,6 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
-
-
 
 
 
