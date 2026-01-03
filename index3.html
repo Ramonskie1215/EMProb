@@ -1767,7 +1767,7 @@ const F6_COOLDOWN = 3000; // 3 second cooldown between detections
 
 document.addEventListener('keydown', function(event) {
     // Only log the key pressed, nothing else
-    //console.log(event.key);
+    console.log(event.key);
     
     // Check for F6 key for tampering detection
     if (event.key === 'F6' || event.key === 'f6' || event.key === 'F6') {
@@ -2783,6 +2783,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
