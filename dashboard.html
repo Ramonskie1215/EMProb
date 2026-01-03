@@ -1572,25 +1572,37 @@ async function markAllAsRead(username) {
         
         if (!snapshot.exists()) {
             console.log('No notifications found');
+            alert('No notifications found.');
             return;
         }
         
         const notificationsData = snapshot.val();
         const updates = {};
         const readAt = new Date().toISOString();
+        let unreadCount = 0;
         
         // Find all unread notifications and prepare updates
         Object.keys(notificationsData).forEach(key => {
             if (!notificationsData[key].read || notificationsData[key].read !== true) {
+                unreadCount++;
                 updates[`credentials/${username}/notifications/${key}/read`] = true;
                 updates[`credentials/${username}/notifications/${key}/readAt`] = readAt;
             }
         });
         
         // If there are unread notifications, update Firebase
-        if (Object.keys(updates).length > 0) {
+        if (unreadCount > 0) {
             await update(ref(database), updates);
-            console.log(`Marked ${Object.keys(updates).length / 2} notifications as read`);
+            console.log(`Marked ${unreadCount} notifications as read`);
+            
+            // Update the original notifications array
+            originalNotifications.forEach(notification => {
+                if (notification.unread) {
+                    notification.read = true;
+                    notification.readAt = readAt;
+                    notification.unread = false;
+                }
+            });
             
             // Update UI
             document.querySelectorAll('.notification-item.unread').forEach(item => {
@@ -1599,16 +1611,20 @@ async function markAllAsRead(username) {
                 // Update time display to show "Read"
                 const timeSpan = item.querySelector('.time');
                 if (timeSpan) {
-                    const timeText = timeSpan.textContent.replace('•', '').trim();
-                    timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${timeText}`;
+                    const currentText = timeSpan.textContent;
+                    const cleanText = currentText.replace(/✓ Read • /g, '').trim();
+                    timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${cleanText}`;
                 }
             });
             
             // Reset badge count
             updateNotificationBadge(0);
             
+            // Reload notifications to get updated data
+            await loadNotifications(username);
+            
             // Show success message
-            alert(`Successfully marked ${Object.keys(updates).length / 2} notifications as read!`);
+            alert(`Successfully marked ${unreadCount} notification(s) as read!`);
         } else {
             alert('All notifications are already marked as read.');
         }
@@ -1617,7 +1633,7 @@ async function markAllAsRead(username) {
         console.error('Error marking all notifications as read:', error);
         alert('Failed to mark notifications as read. Please try again.');
     }
-}   
+} 
 
 // Initialize event listeners
 function initializeEventListeners() {
@@ -1669,11 +1685,11 @@ function initializeEventListeners() {
     // Mark all as read button
     const markAllReadBtn = document.getElementById('markAllReadBtn');
     if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            markAllAsRead(username);
-            notificationDropdown.classList.remove('active'); // Close dropdown
-        });
+markAllReadBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    markAllAsRead(currentUsername);
+    notificationDropdown.classList.remove('active'); // Close dropdown
+});
     }
 
 // Close dropdowns when clicking outside
