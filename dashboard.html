@@ -1631,29 +1631,7 @@ function initializeEventListeners() {
         profileDropdown.classList.toggle('active');
     });
 
-    const searchInput = document.getElementById('notificationSearchInput');
-    const clearSearchBtn = document.getElementById('clearSearchBtn');
-    
-    if (searchInput) {
-        // Search as user types (with debounce)
-        searchInput.addEventListener('input', performSearch);
-        
-        // Clear search when clicking X button
-        clearSearchBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            clearSearchBtn.style.display = 'none';
-            updateNotificationList(originalNotifications); // Show all notifications
-        });
-        
-        // Clear search when pressing Escape
-        searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                this.value = '';
-                clearSearchBtn.style.display = 'none';
-                updateNotificationList(originalNotifications);
-            }
-        });
-    }
+
     
     // Notification dropdown functionality
     const notificationBtn = document.getElementById('notificationBtn');
@@ -1665,23 +1643,7 @@ function initializeEventListeners() {
         profileDropdown.classList.remove('active'); // Close profile dropdown if open
     });
 
-    // When closing notification dropdown, reset search
-notificationBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    notificationDropdown.classList.toggle('active');
-    profileDropdown.classList.remove('active');
-    
-    // Reset search when opening dropdown
-    if (notificationDropdown.classList.contains('active')) {
-        const searchInput = document.getElementById('notificationSearchInput');
-        if (searchInput) {
-            searchInput.value = '';
-            document.getElementById('clearSearchBtn').style.display = 'none';
-            // Show all notifications when opening
-            updateNotificationList(originalNotifications);
-        }
-    }
-});
+
     
     // Mark all as read button
     const markAllReadBtn = document.getElementById('markAllReadBtn');
