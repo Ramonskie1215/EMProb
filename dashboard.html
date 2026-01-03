@@ -1452,8 +1452,7 @@ function updateNotificationList(notifications, searchText = '') {
                     const cleanText = currentText.replace(/✓ Read • /g, '').trim();
                     timeSpan.innerHTML = `<span style="color: #27AE60; font-weight: 600;">✓ Read</span> • ${cleanText}`;
                 }
-                
-                updateBadgeCountAfterRead();
+                loadNotifications(currentUsername);
                 
             } catch (error) {
                 console.error('Error:', error);
