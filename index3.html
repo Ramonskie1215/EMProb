@@ -1514,7 +1514,7 @@ async function logBoundaryViolationToFirebase(probationerKey, probationerId, sta
         // Create notification
         const notification = {
             type: "Boundary Violation",
-            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(6)}, ${statuses.coordinates.lng.toFixed(6)}`,
+            message: `${probationerKey} left the probation area. Current location: ${statuses.coordinates.lat.toFixed(8)}, ${statuses.coordinates.lng.toFixed(8)}`,
             violation: violation,
             timestamp: new Date().toISOString(),
             acknowledged: false
@@ -2372,8 +2372,8 @@ function setManualCoordinates(coordinateString) {
         // Update GPS tracker's current coordinates
         if (window.gpsTracker) {
             window.gpsTracker.currentCoords = {
-                lat: lat.toFixed(6),
-                lng: lng.toFixed(6),
+                lat: lat.toFixed(9),
+                lng: lng.toFixed(9),
                 accuracy: 5, // Manual input, assume 5m accuracy
                 timestamp: new Date().toISOString(),
                 source: 'manual'
@@ -2854,6 +2854,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
