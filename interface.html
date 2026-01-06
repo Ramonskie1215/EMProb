@@ -2505,8 +2505,7 @@ async function loadAndPlotSavedBoundaryForProbationer(probationerKey) {
     }
 }
         
-// In the probationer controls section, find the addProbationerMarker function:
-function addProbationerMarker(lat, lng, probationer) {
+function addProbationerMarker(lat, lng, probationer, shouldZoom = true) { // Added shouldZoom parameter
     // Create a custom marker with pulsing effect for real-time updates
     const probationerIcon = L.divIcon({
         html: `<div style="
@@ -2546,12 +2545,16 @@ function addProbationerMarker(lat, lng, probationer) {
     // Store marker reference
     probationerMarkers[selectedProbationer] = marker;
     
-    if (!window.currentShape || !map.hasLayer(window.currentShape)) {
-        map.setView([lat, lng], 15);
-        console.log("Zoomed to probationer (no boundary available)");
-    } else {
-        console.log("Boundary is displayed, not zooming to probationer");
-    }  
+    // Only zoom if explicitly told to (for initial selection)
+    if (shouldZoom) {
+        if (!window.currentShape || !map.hasLayer(window.currentShape)) {
+            map.setView([lat, lng], 15);
+            console.log("Zoomed to probationer (no boundary available)");
+        } else {
+            console.log("Boundary is displayed, not zooming to probationer");
+        }
+    }
+    
     console.log(`Marker created at: ${lat}, ${lng}`);
 }
 
@@ -2600,11 +2603,11 @@ function startRealTimeTracking(probationerKey) {
         }
     });
     
-    // Set up interval for backup updates (every 10 seconds)
-    probationerUpdateInterval = setInterval(() => {
-        // Force refresh probationer data
-        loadProbationerDetails(probationerKey);
-    }, 10000);
+    // REMOVED: The interval that was causing auto-zooms every 10 seconds
+    // probationerUpdateInterval = setInterval(() => {
+    //     // Force refresh probationer data
+    //     loadProbationerDetails(probationerKey);
+    // }, 10000);
 }
 
 // Start tracking watch coordinates
@@ -2763,7 +2766,6 @@ function getStatusBasedOnTime(probationer) {
     }
 }
         
-// Find the updateMarkerPosition function and modify the popup content:
 function updateMarkerPosition(lat, lng, probationer) {
     const marker = probationerMarkers[selectedProbationer];
     
@@ -2800,8 +2802,8 @@ function updateMarkerPosition(lat, lng, probationer) {
             
         console.log(`Updated position: ${lat}, ${lng} at ${new Date().toLocaleTimeString()}`);
     } else {
-        // If marker doesn't exist, create it WITHOUT opening popup
-        addProbationerMarker(lat, lng, probationer);
+        // If marker doesn't exist, create it WITHOUT zooming
+        addProbationerMarker(lat, lng, probationer, false); // Pass false to prevent zoom
     }
 }
 
