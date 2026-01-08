@@ -1453,8 +1453,8 @@
             
             <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Full Name *</label>
-                    <input type="text" class="form-input" id="fullName" placeholder="Enter full name" required>
+                    <label class="form-label">Code Name *</label>
+                    <input type="text" class="form-input" id="fullName" placeholder="Enter code name" required>
                 </div>
                 
                 <div class="form-group">
@@ -1463,35 +1463,10 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input" id="email" placeholder="Enter email address">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Phone Number</label>
-                    <input type="tel" class="form-input" id="phone" placeholder="Enter phone number">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Address</label>
+                    <label class="form-label">Area of Residence</label>
                     <input type="text" class="form-input" id="address" placeholder="Enter address">
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Date of Birth</label>
-                    <input type="date" class="form-input" id="dob">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Probation Start Date</label>
-                    <input type="date" class="form-input" id="startDate">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Probation End Date</label>
-                    <input type="date" class="form-input" id="endDate">
-                </div>
-                                
+                     
                 <div class="form-group">
                     <label class="form-label">Officer In Charge</label>
                     <input type="text" class="form-input" id="officerInCharge" placeholder="Enter officer name">
@@ -2823,27 +2798,22 @@ card.innerHTML = `
             });
         }
 
-        // Reset modal form
-        function resetModalForm() {
-            document.getElementById('fullName').value = '';
-            document.getElementById('assignedId').value = '';
-            document.getElementById('email').value = '';
-            document.getElementById('phone').value = '';
-            document.getElementById('address').value = '';
-            document.getElementById('dob').value = '';
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            
-            document.getElementById('avatarInitial').textContent = '?';
-            document.getElementById('avatarImagePreview').style.display = 'none';
-            document.getElementById('avatarInitial').style.display = 'block';
-            
-            selectedFile = null;
-            fileReader = null;
-            editingId = null;
-            
-            document.getElementById('modalTitle').textContent = 'Add New Probationer';
-        }
+// Reset modal form
+function resetModalForm() {
+    document.getElementById('fullName').value = '';
+    document.getElementById('assignedId').value = '';
+    document.getElementById('address').value = 'Malolos, Bulacan'; // Set default value
+    
+    document.getElementById('avatarInitial').textContent = '?';
+    document.getElementById('avatarImagePreview').style.display = 'none';
+    document.getElementById('avatarInitial').style.display = 'block';
+    
+    selectedFile = null;
+    fileReader = null;
+    editingId = null;
+    
+    document.getElementById('modalTitle').textContent = 'Add New Probationer';
+}
 
 // Open modal for adding/editing
 function openModal(probationer = null) {
@@ -2856,14 +2826,10 @@ function openModal(probationer = null) {
         document.getElementById('fullName').value = probationer.fullName || '';
         document.getElementById('assignedId').value = probationer.assignedId || '';
         document.getElementById('assignedId').disabled = true;
-        document.getElementById('email').value = probationer.email || '';
-        document.getElementById('phone').value = probationer.phone || '';
-        document.getElementById('address').value = probationer.address || '';
-        document.getElementById('dob').value = probationer.dob || '';
-        document.getElementById('startDate').value = probationer.startDate || '';
-        document.getElementById('endDate').value = probationer.endDate || '';
+        // KEEP ONLY ADDRESS (now Area of Residence)
+        document.getElementById('address').value = probationer.address || 'Malolos, Bulacan';
         document.getElementById('officerInCharge').value = probationer.officerInCharge || '';
-
+        
         // Calculate clean ID (without "probationer_" prefix, just the assignedId cleaned)
         const cleanCurrentId = (probationer.assignedId || '')
             .trim()
@@ -2972,15 +2938,10 @@ async function saveProbationerFromModal() {
         }
     }
     
-    // Update only the fields that are in the form
+    // Update only the fields that are in the form (REMOVED unwanted fields)
     probationerData.fullName = fullName;
     probationerData.assignedId = assignedId;
-    probationerData.email = document.getElementById('email').value.trim();
-    probationerData.phone = document.getElementById('phone').value.trim();
-    probationerData.address = document.getElementById('address').value.trim();
-    probationerData.dob = document.getElementById('dob').value;
-    probationerData.startDate = document.getElementById('startDate').value;
-    probationerData.endDate = document.getElementById('endDate').value; 
+    probationerData.address = document.getElementById('address').value.trim() || 'Malolos, Bulacan'; // Area of Residence
     probationerData.officerInCharge = document.getElementById('officerInCharge').value.trim() || 'Not Assigned';
     probationerData.watch = document.getElementById('assignedWatch').value;
     probationerData.updatedAt = new Date().toISOString();
