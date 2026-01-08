@@ -2661,7 +2661,7 @@ const tagalogMonths = [
     // Show modal
     announcementModal.style.display = 'flex';
     setTimeout(() => announcementModal.style.opacity = '1', 50);
-    
+     playBeep(3);
     // Resize text after short delay (allows rendering)
     setTimeout(resizeTextToFit, 100);
 }
@@ -2854,6 +2854,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
