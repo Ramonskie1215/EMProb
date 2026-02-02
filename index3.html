@@ -1574,16 +1574,40 @@ async function handleTamperingDetection() {
     
     lastF6PressTime = now;
     
+    // 1. PLAY SOUND AND SHOW VISUAL ALERT IMMEDIATELY (NO DELAY)
+    playBeep(3);
+    showTamperingAlert(); // Show visual alert IMMEDIATELY
+    
+    // 2. Update UI status right away
+    const statusIndicator = document.getElementById('statusIndicator');
+    if (statusIndicator) {
+        const originalText = statusIndicator.textContent;
+        statusIndicator.textContent = "Tampering Logged!";
+        statusIndicator.style.color = '#DE3725';
+        
+        // Store the original text to restore later
+        statusIndicator._originalText = originalText;
+        statusIndicator._originalColor = statusIndicator.style.color;
+    }
+    
     try {
-        playBeep(3);
-        // 1. Check if we have a probationer assigned
+        // 3. Check if we have a probationer assigned
         const uptimeTracker = window.uptimeTracker;
         if (!uptimeTracker || !uptimeTracker.deviceId) {
             //console.log("No device ID available, cannot log tampering");
+            // Restore status indicator after 2 seconds
+            setTimeout(() => {
+                if (statusIndicator && statusIndicator._originalText) {
+                    statusIndicator.textContent = statusIndicator._originalText;
+                    statusIndicator.style.color = statusIndicator._originalColor || '#5E5E5E';
+                    delete statusIndicator._originalText;
+                    delete statusIndicator._originalColor;
+                }
+            }, 2000);
             return;
         }
         
-        // 2. Get assigned probationer
+        // 4. Get assigned probationer (continue with Firebase operations)
         const probationerRef = ref(database, `watch/watch_${uptimeTracker.deviceId}/probationer`);
         const snapshot = await get(probationerRef);
         const probationerId = (snapshot.val() || "").toString().trim();
@@ -1591,23 +1615,25 @@ async function handleTamperingDetection() {
         if (!probationerId || probationerId === "none") {
             //console.log("No probationer assigned, cannot log tampering violation");
             
-            // Show brief notification that tampering was detected but no probationer assigned
-            const statusIndicator = document.getElementById('statusIndicator');
+            // Update status to show no probationer assigned
             if (statusIndicator) {
-                const originalText = statusIndicator.textContent;
-                statusIndicator.textContent = "Tampering Detected";
+                statusIndicator.textContent = "Tampering Detected (No Probationer)";
                 statusIndicator.style.color = '#FFA500';
-                
-                setTimeout(() => {
-                    statusIndicator.textContent = originalText;
-                    statusIndicator.style.color = '#5E5E5E';
-                }, 2000);
             }
+            
+            setTimeout(() => {
+                if (statusIndicator && statusIndicator._originalText) {
+                    statusIndicator.textContent = statusIndicator._originalText;
+                    statusIndicator.style.color = statusIndicator._originalColor || '#5E5E5E';
+                    delete statusIndicator._originalText;
+                    delete statusIndicator._originalColor;
+                }
+            }, 2000);
             
             return;
         }
         
-        // 3. Get current location if available
+        // 5. Get current location if available
         let location = "Unknown location";
         let coordinates = null;
         
@@ -1635,7 +1661,7 @@ async function handleTamperingDetection() {
             }
         }
         
-        // 4. Get battery info if available
+        // 6. Get battery info if available
         let batteryInfo = "N/A";
         if (battery && 'level' in battery) {
             batteryInfo = `${Math.round(battery.level * 100)}%`;
@@ -1644,7 +1670,7 @@ async function handleTamperingDetection() {
             }
         }
         
-        // 5. Create violation object
+        // 7. Create violation object
         const violation = {
             type: "Device Tampering",
             details: "Probationer attempted to remove or tamper with tracking device",
@@ -1657,10 +1683,10 @@ async function handleTamperingDetection() {
             status: "pending_review"
         };
         
-        // 6. Generate unique violation ID
+        // 8. Generate unique violation ID
         const violationId = `tamper_${Date.now()}`;
         
-        // 7. Save to probationer's violations array
+        // 9. Save to probationer's violations array
         const probationerKey = `probationer_${probationerId}`;
         const violationsRef = ref(database, `probationers/${probationerKey}/violations`);
         const violationsSnap = await get(violationsRef);
@@ -1676,22 +1702,18 @@ async function handleTamperingDetection() {
         // Save updated array
         await set(violationsRef, violationsArray);
         
-        // 8. Also create a separate log entry in /violations path
-        //const globalViolationRef = ref(database, `violations/${probationerKey}/${violationId}`);
-       // await set(globalViolationRef, violation);
-        
-        // 9. Update probationer's device status to "tampered"
+        // 10. Update probationer's device status to "tampered"
         const deviceStatusRef = ref(database, `probationers/${probationerKey}/deviceStatus`);
         await set(deviceStatusRef, "tampered");
         
-        // 10. Create a notification
-     const notification = {
-    type: "Device Tampering",
-    message: `${probationerKey} attempted to remove or tamper the device. `,
-    violation: violation,
-    timestamp: new Date().toISOString(), 
-    acknowledged: false
-};
+        // 11. Create a notification
+        const notification = {
+            type: "Device Tampering",
+            message: `${probationerKey} attempted to remove or tamper the device. `,
+            violation: violation,
+            timestamp: new Date().toISOString(), 
+            acknowledged: false
+        };
         
         const notificationId = `tamper_${Date.now()}_notif`;
         const notificationRef = ref(database, `probationers/${probationerKey}/notifications/${notificationId}`);
@@ -1700,43 +1722,62 @@ async function handleTamperingDetection() {
         
         //console.log(`Tampering violation logged for ${probationerKey}:`, violation);
         
-        // 11. Visual feedback
-        showTamperingAlert();
+        // 12. Visual feedback already shown at the beginning
+        // showTamperingAlert(); // REMOVED - Already shown at the beginning
         
-        // 12. Update UI status
-        const statusIndicator = document.getElementById('statusIndicator');
-        if (statusIndicator) {
-            const originalText = statusIndicator.textContent;
-            statusIndicator.textContent = "Tampering Logged!";
-            statusIndicator.style.color = '#DE3725';
-            
-            setTimeout(() => {
-                statusIndicator.textContent = originalText;
-                statusIndicator.style.color = '#5E5E5E';
-            }, 3000);
-        }
+        // 13. Update UI status (already updated at the beginning)
+        // Restore after 3 seconds
+        setTimeout(() => {
+            if (statusIndicator && statusIndicator._originalText) {
+                statusIndicator.textContent = statusIndicator._originalText;
+                statusIndicator.style.color = statusIndicator._originalColor || '#5E5E5E';
+                delete statusIndicator._originalText;
+                delete statusIndicator._originalColor;
+            }
+        }, 3000);
         
     } catch (error) {
         console.error("Error logging tampering violation:", error);
         
         // Show error feedback
-        const statusIndicator = document.getElementById('statusIndicator');
         if (statusIndicator) {
-            const originalText = statusIndicator.textContent;
             statusIndicator.textContent = "Tampering Log Error";
             statusIndicator.style.color = '#DE3725';
-            
-            setTimeout(() => {
-                statusIndicator.textContent = originalText;
-                statusIndicator.style.color = '#5E5E5E';
-            }, 3000);
         }
+        
+        setTimeout(() => {
+            if (statusIndicator && statusIndicator._originalText) {
+                statusIndicator.textContent = statusIndicator._originalText;
+                statusIndicator.style.color = statusIndicator._originalColor || '#5E5E5E';
+                delete statusIndicator._originalText;
+                delete statusIndicator._originalColor;
+            }
+        }, 3000);
+    }
+}
+
+// Helper function to restore status indicator
+function restoreStatusIndicator(statusIndicator) {
+    if (statusIndicator && statusIndicator._originalText) {
+        statusIndicator.textContent = statusIndicator._originalText;
+        statusIndicator.style.color = statusIndicator._originalColor || '#5E5E5E';
+        
+        // Clean up stored values
+        delete statusIndicator._originalText;
+        delete statusIndicator._originalColor;
     }
 }
 
 function showTamperingAlert() {
+    // Remove any existing alert first to prevent duplicates
+    const existingAlert = document.querySelector('.tampering-alert-overlay');
+    if (existingAlert && existingAlert.parentNode) {
+        existingAlert.parentNode.removeChild(existingAlert);
+    }
+    
     // Create a temporary alert overlay
     const alertDiv = document.createElement('div');
+    alertDiv.className = 'tampering-alert-overlay'; // Add class for easy removal
     alertDiv.style.position = 'fixed';
     alertDiv.style.top = '0';
     alertDiv.style.left = '0';
@@ -1756,17 +1797,29 @@ function showTamperingAlert() {
     alertDiv.style.padding = '5vmin';
     alertDiv.style.letterSpacing = '1vmin';
     alertDiv.style.textShadow = '0 0 3vmin rgba(255, 255, 255, 0.8)';
-    alertDiv.style.animation = 'pulse 0.5s 3';
+    
+    // Apply animation using CSS class for better performance
+    alertDiv.style.animation = 'tamperPulse 0.5s 3';
     
     alertDiv.innerHTML = `
         <div style="margin-bottom: 5vmin;">⚠️</div>
         <div>TAMPER DETECTED!</div>
         <div style="font-size: 4vmin; margin-top: 5vmin; opacity: 0.8;">
-
+            Device tampering detected and logged
         </div>
     `;
     
     document.body.appendChild(alertDiv);
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes tamperPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+    `;
+    document.head.appendChild(style);
     
     // Remove after 2.5 seconds
     setTimeout(() => {
@@ -1776,8 +1829,11 @@ function showTamperingAlert() {
             if (alertDiv.parentNode) {
                 alertDiv.parentNode.removeChild(alertDiv);
             }
+            if (style.parentNode) {
+                style.parentNode.removeChild(style);
+            }
         }, 500);
-    }, 10000);
+    }, 2500);
 }
 
         
@@ -2879,6 +2935,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
