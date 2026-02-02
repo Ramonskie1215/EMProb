@@ -1246,7 +1246,6 @@ function initializeCircle() {
 }
        
 // Helper function to save all statuses and detect violations
-// PREFIX: Updated boundary detection with circle control
 async function saveProbationerStatuses(probationerKey, statuses) {
     try {
         //console.log(`Saving status for ${probationerKey}`, statuses);
@@ -1274,36 +1273,34 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             const isInside = statuses.probationerAreaInside;
             const newState = isInside ? 'inside' : 'outside';
             const oldState = currentBoundaryState;
-            currentBoundaryState = isInside ? 'inside' : 'outside';
-
-             if (statuses.isProbationerhasBoundaries && 
+            
+            // 1. Play sound immediately when going outside
+            if (statuses.isProbationerhasBoundaries && 
                 statuses.isProbationerhasCoordinate && 
                 !statuses.probationerAreaInside) {
-                playBeep(3); // 3 beeps, higher pitch for boundary violation
+                playBeep(3, 1000, 200, 300); // Play sound immediately
             }
             
-              if (oldState !== newState) {
-                currentBoundaryState = newState;
-                lastBoundaryStatusChangeTime = Date.now();
-                updateCircleColor();
-                //console.log(`Boundary state changed: ${oldState} -> ${newState}`);
-            }
+            // 2. Update state immediately
+            currentBoundaryState = newState;
             
-            // DETECT BOUNDARY VIOLATION
+            // 3. DETECT BOUNDARY VIOLATION IMMEDIATELY
             // Only trigger if: 1) Has boundaries, 2) Has coordinates, 3) Was inside, 4) Now outside
             if (wasInsideBoundary && !isInside) {
                 //console.log(`⚠️ Boundary violation transition detected!`);
                 //console.log(`Previous: inside, Current: outside`);
-                await handleBoundaryViolation(probationerKey, statuses);
+                
+                // Call handleBoundaryViolation immediately (without await if you want it to run in background)
+                handleBoundaryViolation(probationerKey, statuses);
             } else {
                 //console.log(`No violation. Previous inside: ${wasInsideBoundary}, Current inside: ${isInside}`);
             }
             
-            // Update previous state for next check
+            // 4. Update previous state for next check
             wasInsideBoundary = isInside;
             //console.log(`Updated wasInsideBoundary to: ${wasInsideBoundary}`);
             
-            // Update circle if state changed
+            // 5. Update circle if state changed
             if (oldState !== currentBoundaryState) {
                 lastBoundaryStatusChangeTime = Date.now();
                 updateCircleColor();
@@ -1316,7 +1313,7 @@ async function saveProbationerStatuses(probationerKey, statuses) {
             updates.coordinates = statuses.coordinates;
         }
         
-        // Save to probationer status path
+        // 6. Save to Firebase in the background
         const statusRef = ref(database, `probationers/${probationerKey}`);
         await update(statusRef, updates);
         
@@ -1470,40 +1467,47 @@ async function handleBoundaryViolation(probationerKey, statuses) {
             //console.log("Could not fetch probationer name:", error);
         }
         
-        // Show visual alert
+        // 1. SHOW VISUAL ALERT IMMEDIATELY
         showBoundaryViolationAlert(probationerName, statuses.coordinates);
         
-        // Update status indicator
+        // 2. PLAY SOUND IMMEDIATELY
+        playBeep(3, 1000, 200, 300); // Higher pitch for boundary violation
+        
+        // 3. Update status indicator immediately
         const statusIndicator = document.getElementById('statusIndicator');
         if (statusIndicator) {
             const originalText = statusIndicator.textContent;
             statusIndicator.textContent = "BOUNDARY VIOLATION!";
             statusIndicator.style.color = '#DE3725';
             
-            setTimeout(() => {
-                statusIndicator.textContent = originalText;
-                statusIndicator.style.color = '#5E5E5E';
-            }, 5000);
+            // Store for restoration
+            statusIndicator._originalText = originalText;
+            statusIndicator._originalColor = statusIndicator.style.color;
         }
         
-        // Log violation to Firebase
+        // 4. Update circle immediately (make it red/blink)
+        const circle = document.querySelector('.blinking-circle');
+        if (circle) {
+            circle.style.animation = 'none'; // Clear any animation
+            circle.style.backgroundColor = '#DE3725'; // Red
+        }
+        
+        // 5. Log violation to Firebase (background operation)
         await logBoundaryViolationToFirebase(probationerKey, probationerId, statuses);
+        
+        // 6. Restore status indicator after 5 seconds
+        setTimeout(() => {
+            if (statusIndicator && statusIndicator._originalText) {
+                statusIndicator.textContent = statusIndicator._originalText;
+                statusIndicator.style.color = statusIndicator._originalColor || '#5E5E5E';
+                delete statusIndicator._originalText;
+                delete statusIndicator._originalColor;
+            }
+        }, 5000);
         
     } catch (error) {
         console.error("Error handling boundary violation:", error);
     }
-    // Update status indicator
-const statusIndicator = document.getElementById('statusIndicator');
-if (statusIndicator) {
-    const originalText = statusIndicator.textContent;
-    statusIndicator.textContent = "BOUNDARY VIOLATION!";
-    statusIndicator.style.color = '#DE3725';
-    
-    setTimeout(() => {
-        statusIndicator.textContent = originalText;
-        statusIndicator.style.color = '#5E5E5E';
-    }, 5000);
-}
 }
 
 // Log boundary violation to Firebase
@@ -2934,6 +2938,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
