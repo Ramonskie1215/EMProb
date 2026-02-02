@@ -913,12 +913,26 @@ function playBeep(count = 3, frequency = 2000, interval = 400, duration = 200) {
                     this.sendUptime();
                 }, 3000);
 
-                // Send uptime when page becomes visible
-                document.addEventListener('visibilitychange', () => {
-                    if (!document.hidden) {
-                        this.sendUptime();
-                    }
-                });
+// Send uptime when page becomes visible, but trigger TAMPER alert immediately when hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        // 1. TRIGGER VISUAL ALERT IMMEDIATELY (No delay)
+        showTamperAlert(); 
+        
+        // 2. PLAY SOUND IMMEDIATELY
+        playBeep(5, 1000, 200, 150); 
+        
+        // 3. LOG TO FIREBASE
+        if (window.currentProbationerKey) {
+             handleTamperDetection(window.currentProbationerKey);
+        }
+    } else {
+        // When they come back, refresh the uptime immediately
+        if (window.uptimeTracker) {
+            window.uptimeTracker.sendUptime();
+        }
+    }
+});
 
                 // Send uptime when coming back online
                 window.addEventListener('online', () => {
@@ -2861,6 +2875,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
