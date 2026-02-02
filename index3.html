@@ -913,21 +913,21 @@ function playBeep(count = 3, frequency = 2000, interval = 400, duration = 200) {
                     this.sendUptime();
                 }, 3000);
 
-// Send uptime when page becomes visible, but trigger TAMPER alert immediately when hidden
+// Replace the visibilitychange section in your <script>
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        // 1. TRIGGER VISUAL ALERT IMMEDIATELY (No delay)
-        showTamperAlert(); 
-        
+        // 1. TRIGGER VISUAL ALERT IMMEDIATELY (Priority #1)
+        showTamperAlert("TAMPER DETECTED", "APPLICATION MINIMIZED"); 
+
         // 2. PLAY SOUND IMMEDIATELY
         playBeep(5, 1000, 200, 150); 
         
-        // 3. LOG TO FIREBASE
+        // 3. LOG TO FIREBASE (Background task)
         if (window.currentProbationerKey) {
              handleTamperDetection(window.currentProbationerKey);
         }
     } else {
-        // When they come back, refresh the uptime immediately
+        // When they come back, refresh the uptime
         if (window.uptimeTracker) {
             window.uptimeTracker.sendUptime();
         }
@@ -2875,6 +2875,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
