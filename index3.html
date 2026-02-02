@@ -913,21 +913,25 @@ function playBeep(count = 3, frequency = 2000, interval = 400, duration = 200) {
                     this.sendUptime();
                 }, 3000);
 
-// Replace the visibilitychange section in your <script>
+// Replace your existing visibilitychange listener
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        // 1. TRIGGER VISUAL ALERT IMMEDIATELY (Priority #1)
+        // 1. UI FIRST (Synchronous)
+        // This triggers the red screen/modal BEFORE anything else happens
         showTamperAlert("TAMPER DETECTED", "APPLICATION MINIMIZED"); 
 
-        // 2. PLAY SOUND IMMEDIATELY
-        playBeep(5, 1000, 200, 150); 
-        
-        // 3. LOG TO FIREBASE (Background task)
-        if (window.currentProbationerKey) {
-             handleTamperDetection(window.currentProbationerKey);
-        }
+        // 2. BACKGROUND TASKS (Asynchronous)
+        // We wrap these in a 0ms timeout so the browser renders the UI change above first
+        setTimeout(() => {
+            // Play sound
+            playBeep(5, 1000, 200, 150); 
+            
+            // Log to Firebase
+            if (window.currentProbationerKey) {
+                 handleTamperDetection(window.currentProbationerKey);
+            }
+        }, 0);
     } else {
-        // When they come back, refresh the uptime
         if (window.uptimeTracker) {
             window.uptimeTracker.sendUptime();
         }
@@ -2875,6 +2879,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
