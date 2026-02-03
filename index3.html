@@ -2869,6 +2869,7 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F1' && announcementModal.style.display === 'flex') {
         e.preventDefault();
+        console.log(`F1`);
         acknowledgeCurrentAnnouncement();
     }
 });
@@ -2938,4 +2939,5 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
