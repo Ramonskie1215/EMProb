@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0E3CBD 0%, #1C1C1C 50%, #0E3CBD 100%);
+            background: linear-gradient(135deg, #0E3CBD 0%, #1C1C1C 50%, #0E3CBD 100%);handl
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -2857,28 +2857,33 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
     }
 }
             
-
-// Listen for F1 key - Make sure this is at the global level, not inside another function
-document.addEventListener('keydown', function(e) {
-    console.log("Key pressed:", e.key, e.code); // Debug log
+// Global keydown listener - put this at the bottom of your script
+window.addEventListener('keydown', function(e) {
+    console.log("Key:", e.key, "Code:", e.code);
     
-    // F1 for announcement acknowledgement
-    if (e.key === 'F1' || e.key === 'f1' || e.code === 'F1') {
-        e.preventDefault(); // Prevent browser help menu
-        console.log("F1 pressed - Acknowledging announcement");
+    // Handle F1
+    if (e.key === 'F1' || e.code === 'F1') {
+        e.preventDefault();
+        e.stopPropagation();
         
-        if (announcementModal.style.display === 'flex' || announcementModal.style.display === '') {
+        // Check if modal is visible in multiple ways
+        const modal = document.getElementById('announcementModal');
+        if (modal && 
+            (modal.style.display === 'flex' || 
+             window.getComputedStyle(modal).display === 'flex')) {
             acknowledgeCurrentAnnouncement();
+            return false;
         }
     }
     
-    // F6 for tampering detection (keep existing)
-    if (e.key === 'F6' || e.key === 'f6' || e.key === 'F6') {
+    // Handle F6
+    if (e.key === 'F6' || e.code === 'F6') {
         e.preventDefault();
-        console.log("F6 pressed - Tampering detection triggered");
+        e.stopPropagation();
         handleTamperingDetection();
+        return false;
     }
-});
+}, true); // Use capture phase
 
 // Poll every 5 seconds (or on load + when probationer changes)
 setInterval(checkForAnnouncements, 5000);
@@ -2945,6 +2950,7 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
 
