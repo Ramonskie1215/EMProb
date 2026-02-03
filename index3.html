@@ -2865,11 +2865,25 @@ async function logAnnouncementAcknowledgement(probationerKey, announcement) {
 }
             
 
-// Listen for F1 key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'F1' && announcementModal.style.display === 'flex') {
+// Listen for F1 key - Make sure this is at the global level, not inside another function
+document.addEventListener('keydown', function(e) {
+    console.log("Key pressed:", e.key, e.code); // Debug log
+    
+    // F1 for announcement acknowledgement
+    if (e.key === 'F1' || e.key === 'f1' || e.code === 'F1') {
+        e.preventDefault(); // Prevent browser help menu
+        console.log("F1 pressed - Acknowledging announcement");
+        
+        if (announcementModal.style.display === 'flex' || announcementModal.style.display === '') {
+            acknowledgeCurrentAnnouncement();
+        }
+    }
+    
+    // F6 for tampering detection (keep existing)
+    if (e.key === 'F6' || e.key === 'f6' || e.key === 'F6') {
         e.preventDefault();
-        acknowledgeCurrentAnnouncement();
+        console.log("F6 pressed - Tampering detection triggered");
+        handleTamperingDetection();
     }
 });
 
@@ -2938,5 +2952,6 @@ observer.observe(announcementModal, { attributes: true });
     </script>
 </body>
 </html>
+
 
 
